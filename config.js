@@ -6,5 +6,5 @@ window.QV_CONFIG = {
   // Supabase > Project Settings > API > anon public key
   supabaseAnonKey: "",
   // TMDB > Ajustes > API > "Clave de la API" (v3) o "Token de acceso de lectura" (v4)
-  tmdbKey: ""
+  tmdbKey: "a1ce5848a3ea8e6250b35aa9251e305b"
 };
