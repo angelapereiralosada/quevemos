@@ -1,0 +1,1050 @@
+[
+ {
+  "title": "La casa de papel",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2017,
+  "origin": "es",
+  "dur": "5 partes",
+  "tags": [
+   "enganche",
+   "accion",
+   "crimen",
+   "tension"
+  ],
+  "q": 4,
+  "syn": "El Profesor y su banda asaltan la Fábrica de Moneda y Timbre."
+ },
+ {
+  "title": "Stranger Things",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2016,
+  "origin": "us",
+  "dur": "5 temporadas",
+  "tags": [
+   "enganche",
+   "scifi",
+   "miedo",
+   "misterio"
+  ],
+  "q": 5,
+  "syn": "Niños de los 80, un laboratorio secreto y el Mundo del Revés."
+ },
+ {
+  "title": "Dark",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2017,
+  "origin": "eu",
+  "dur": "3 temporadas",
+  "tags": [
+   "pensar",
+   "scifi",
+   "misterio",
+   "enganche"
+  ],
+  "q": 5,
+  "syn": "Desapariciones en un pueblo alemán y viajes en el tiempo entre cuatro generaciones."
+ },
+ {
+  "title": "Adolescencia",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2025,
+  "origin": "eu",
+  "dur": "4 episodios",
+  "tags": [
+   "mini",
+   "emocion",
+   "pensar",
+   "tension"
+  ],
+  "q": 5,
+  "syn": "Un chico de 13 años detenido por asesinato. Cada capítulo, un plano secuencia."
+ },
+ {
+  "title": "Bebé reno",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2024,
+  "origin": "eu",
+  "dur": "7 episodios",
+  "tags": [
+   "mini",
+   "real",
+   "tension",
+   "adulto"
+  ],
+  "q": 4,
+  "syn": "Un cómico y la acosadora que le cambia la vida. Basada en su propia historia."
+ },
+ {
+  "title": "El juego del calamar",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2021,
+  "origin": "asia",
+  "dur": "3 temporadas",
+  "tags": [
+   "tension",
+   "enganche",
+   "accion",
+   "adulto"
+  ],
+  "q": 4,
+  "syn": "Juegos infantiles a vida o muerte por un premio millonario."
+ },
+ {
+  "title": "Gambito de dama",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2020,
+  "origin": "us",
+  "dur": "7 episodios",
+  "tags": [
+   "mini",
+   "emocion",
+   "bonito",
+   "historico"
+  ],
+  "q": 5,
+  "syn": "Una huérfana prodigio del ajedrez en los años 60."
+ },
+ {
+  "title": "Mindhunter",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2017,
+  "origin": "us",
+  "dur": "2 temporadas",
+  "tags": [
+   "crimen",
+   "real",
+   "pensar",
+   "tension"
+  ],
+  "q": 5,
+  "syn": "Los agentes del FBI que inventaron el perfil criminal entrevistando a asesinos en serie."
+ },
+ {
+  "title": "Ozark",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2017,
+  "origin": "us",
+  "dur": "4 temporadas",
+  "tags": [
+   "crimen",
+   "tension",
+   "enganche"
+  ],
+  "q": 4,
+  "syn": "Un asesor financiero blanquea dinero para un cártel en los lagos de Misuri."
+ },
+ {
+  "title": "Miércoles",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2022,
+  "origin": "us",
+  "dur": "2 temporadas",
+  "tags": [
+   "risa",
+   "misterio",
+   "fantasia",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Miércoles Addams investiga crímenes en su internado."
+ },
+ {
+  "title": "La maldición de Hill House",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2018,
+  "origin": "us",
+  "dur": "10 episodios",
+  "tags": [
+   "mini",
+   "miedo",
+   "emocion"
+  ],
+  "q": 5,
+  "syn": "Una familia rota por la casa encantada donde se criaron."
+ },
+ {
+  "title": "Arcane",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2021,
+  "origin": "eu",
+  "dur": "2 temporadas",
+  "tags": [
+   "animacion",
+   "fantasia",
+   "accion",
+   "emocion"
+  ],
+  "q": 5,
+  "syn": "Dos hermanas en lados opuestos de una ciudad en guerra. Animación espectacular."
+ },
+ {
+  "title": "La sociedad de la nieve",
+  "platforms": "Netflix",
+  "type": "movie",
+  "year": 2023,
+  "origin": "es",
+  "dur": "144 min",
+  "tags": [
+   "real",
+   "emocion",
+   "tension"
+  ],
+  "q": 5,
+  "syn": "La tragedia de los Andes de 1972, de J.A. Bayona."
+ },
+ {
+  "title": "El hoyo",
+  "platforms": "Netflix",
+  "type": "movie",
+  "year": 2019,
+  "origin": "es",
+  "dur": "94 min",
+  "tags": [
+   "pensar",
+   "miedo",
+   "tension",
+   "adulto"
+  ],
+  "q": 4,
+  "syn": "Una prisión vertical donde la comida baja por niveles."
+ },
+ {
+  "title": "Glass Onion: Puñales por la espalda",
+  "platforms": "Netflix",
+  "type": "movie",
+  "year": 2022,
+  "origin": "us",
+  "dur": "139 min",
+  "tags": [
+   "risa",
+   "misterio",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Benoit Blanc resuelve un crimen en la isla de un multimillonario."
+ },
+ {
+  "title": "Los Bridgerton",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2020,
+  "origin": "us",
+  "dur": "4 temporadas",
+  "tags": [
+   "romance",
+   "desconectar",
+   "historico"
+  ],
+  "q": 3,
+  "syn": "Romances y escándalos en la alta sociedad londinense."
+ },
+ {
+  "title": "The Crown",
+  "platforms": "Netflix",
+  "type": "tv",
+  "year": 2016,
+  "origin": "eu",
+  "dur": "6 temporadas",
+  "tags": [
+   "historico",
+   "real",
+   "pensar"
+  ],
+  "q": 4,
+  "syn": "El reinado de Isabel II."
+ },
+ {
+  "title": "Fariña",
+  "platforms": "Netflix Atresplayer",
+  "type": "tv",
+  "year": 2018,
+  "origin": "es",
+  "dur": "10 episodios",
+  "tags": [
+   "real",
+   "crimen",
+   "galicia",
+   "enganche"
+  ],
+  "q": 5,
+  "syn": "El narcotráfico en las rías gallegas de los 80."
+ },
+ {
+  "title": "The Last of Us",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2023,
+  "origin": "us",
+  "dur": "2 temporadas",
+  "tags": [
+   "emocion",
+   "tension",
+   "scifi",
+   "miedo"
+  ],
+  "q": 5,
+  "syn": "Un contrabandista escolta a una adolescente por una América devastada."
+ },
+ {
+  "title": "Chernobyl",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2019,
+  "origin": "eu",
+  "dur": "5 episodios",
+  "tags": [
+   "mini",
+   "real",
+   "tension",
+   "historico",
+   "pensar"
+  ],
+  "q": 5,
+  "syn": "El desastre nuclear de 1986 y su encubrimiento."
+ },
+ {
+  "title": "Succession",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2018,
+  "origin": "us",
+  "dur": "4 temporadas",
+  "tags": [
+   "pensar",
+   "risa",
+   "adulto"
+  ],
+  "q": 5,
+  "syn": "Los hijos de un magnate se pelean por heredar el imperio."
+ },
+ {
+  "title": "The White Lotus",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2021,
+  "origin": "us",
+  "dur": "3 temporadas",
+  "tags": [
+   "risa",
+   "misterio",
+   "pensar",
+   "adulto"
+  ],
+  "q": 4,
+  "syn": "Ricos de vacaciones en un hotel de lujo y un cadáver."
+ },
+ {
+  "title": "True Detective",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2014,
+  "origin": "us",
+  "dur": "8 episodios por temporada",
+  "tags": [
+   "crimen",
+   "pensar",
+   "tension",
+   "misterio"
+  ],
+  "q": 5,
+  "syn": "Dos detectives y un asesino ritual en Luisiana (temporada 1)."
+ },
+ {
+  "title": "Mare of Easttown",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2021,
+  "origin": "us",
+  "dur": "7 episodios",
+  "tags": [
+   "mini",
+   "crimen",
+   "emocion",
+   "misterio"
+  ],
+  "q": 5,
+  "syn": "Kate Winslet investiga un asesinato en su pueblo."
+ },
+ {
+  "title": "Patria",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2020,
+  "origin": "es",
+  "dur": "8 episodios",
+  "tags": [
+   "mini",
+   "real",
+   "emocion",
+   "historico"
+  ],
+  "q": 4,
+  "syn": "Dos familias vascas separadas por ETA."
+ },
+ {
+  "title": "Barry",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2018,
+  "origin": "us",
+  "dur": "4 temporadas",
+  "tags": [
+   "risa",
+   "crimen",
+   "adulto"
+  ],
+  "q": 4,
+  "syn": "Un sicario que quiere ser actor."
+ },
+ {
+  "title": "Hacks",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2021,
+  "origin": "us",
+  "dur": "4 temporadas",
+  "tags": [
+   "risa",
+   "bonito",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Una cómica veterana y su joven guionista."
+ },
+ {
+  "title": "The Pitt",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2025,
+  "origin": "us",
+  "dur": "2 temporadas",
+  "tags": [
+   "enganche",
+   "tension",
+   "emocion"
+  ],
+  "q": 5,
+  "syn": "Un turno de urgencias, una hora por capítulo."
+ },
+ {
+  "title": "El Pingüino",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2024,
+  "origin": "us",
+  "dur": "8 episodios",
+  "tags": [
+   "mini",
+   "crimen",
+   "tension",
+   "super",
+   "adulto"
+  ],
+  "q": 4,
+  "syn": "El ascenso del Pingüino en los bajos fondos de Gotham."
+ },
+ {
+  "title": "Juego de tronos",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2011,
+  "origin": "us",
+  "dur": "8 temporadas",
+  "tags": [
+   "fantasia",
+   "enganche",
+   "accion",
+   "adulto"
+  ],
+  "q": 5,
+  "syn": "Las familias de Poniente luchan por el Trono de Hierro."
+ },
+ {
+  "title": "Los Soprano",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 1999,
+  "origin": "us",
+  "dur": "6 temporadas",
+  "tags": [
+   "crimen",
+   "pensar",
+   "risa",
+   "adulto"
+  ],
+  "q": 5,
+  "syn": "Un mafioso de Nueva Jersey va al psicólogo."
+ },
+ {
+  "title": "Veep",
+  "platforms": "HBO Max",
+  "type": "tv",
+  "year": 2012,
+  "origin": "us",
+  "dur": "7 temporadas",
+  "tags": [
+   "risa",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Una vicepresidenta de EE. UU. rodeada de incompetentes."
+ },
+ {
+  "title": "The Boys",
+  "platforms": "Prime Video",
+  "type": "tv",
+  "year": 2019,
+  "origin": "us",
+  "dur": "5 temporadas",
+  "tags": [
+   "accion",
+   "risa",
+   "super",
+   "adulto"
+  ],
+  "q": 4,
+  "syn": "Superhéroes corruptos y los que intentan pararlos."
+ },
+ {
+  "title": "Fleabag",
+  "platforms": "Prime Video",
+  "type": "tv",
+  "year": 2016,
+  "origin": "eu",
+  "dur": "2 temporadas",
+  "tags": [
+   "risa",
+   "emocion",
+   "adulto"
+  ],
+  "q": 5,
+  "syn": "Una londinense caótica habla a cámara. Capítulos de 25 minutos."
+ },
+ {
+  "title": "La maravillosa Sra. Maisel",
+  "platforms": "Prime Video",
+  "type": "tv",
+  "year": 2017,
+  "origin": "us",
+  "dur": "5 temporadas",
+  "tags": [
+   "risa",
+   "bonito",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Una ama de casa de los 50 se lanza a la comedia."
+ },
+ {
+  "title": "Invencible",
+  "platforms": "Prime Video",
+  "type": "tv",
+  "year": 2021,
+  "origin": "us",
+  "dur": "4 temporadas",
+  "tags": [
+   "animacion",
+   "accion",
+   "super",
+   "adulto"
+  ],
+  "q": 4,
+  "syn": "El hijo del superhéroe más poderoso de la Tierra. Animación para adultos."
+ },
+ {
+  "title": "Fallout",
+  "platforms": "Prime Video",
+  "type": "tv",
+  "year": 2024,
+  "origin": "us",
+  "dur": "2 temporadas",
+  "tags": [
+   "scifi",
+   "risa",
+   "accion"
+  ],
+  "q": 4,
+  "syn": "Una chica sale del refugio nuclear a un mundo arrasado."
+ },
+ {
+  "title": "Good Omens",
+  "platforms": "Prime Video",
+  "type": "tv",
+  "year": 2019,
+  "origin": "eu",
+  "dur": "3 temporadas",
+  "tags": [
+   "fantasia",
+   "risa"
+  ],
+  "q": 4,
+  "syn": "Un ángel y un demonio intentan evitar el Apocalipsis."
+ },
+ {
+  "title": "Sr. y Sra. Smith",
+  "platforms": "Prime Video",
+  "type": "tv",
+  "year": 2024,
+  "origin": "us",
+  "dur": "8 episodios",
+  "tags": [
+   "accion",
+   "romance",
+   "risa"
+  ],
+  "q": 4,
+  "syn": "Dos desconocidos se hacen pasar por matrimonio para ser espías."
+ },
+ {
+  "title": "Air",
+  "platforms": "Prime Video",
+  "type": "movie",
+  "year": 2023,
+  "origin": "us",
+  "dur": "112 min",
+  "tags": [
+   "real",
+   "bonito",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Cómo Nike fichó a Michael Jordan."
+ },
+ {
+  "title": "El sonido del metal",
+  "platforms": "Prime Video",
+  "type": "movie",
+  "year": 2019,
+  "origin": "us",
+  "dur": "120 min",
+  "tags": [
+   "emocion",
+   "pensar"
+  ],
+  "q": 4,
+  "syn": "Un batería que pierde el oído."
+ },
+ {
+  "title": "The Bear",
+  "platforms": "Disney+",
+  "type": "tv",
+  "year": 2022,
+  "origin": "us",
+  "dur": "4 temporadas",
+  "tags": [
+   "risa",
+   "emocion",
+   "enganche"
+  ],
+  "q": 5,
+  "syn": "Un chef de alta cocina vuelve a llevar el bar de sándwiches familiar. Capítulos de 30 minutos."
+ },
+ {
+  "title": "Shōgun",
+  "platforms": "Disney+",
+  "type": "tv",
+  "year": 2024,
+  "origin": "asia",
+  "dur": "10 episodios",
+  "tags": [
+   "historico",
+   "tension",
+   "pensar",
+   "adulto"
+  ],
+  "q": 5,
+  "syn": "Intrigas de poder en el Japón feudal."
+ },
+ {
+  "title": "Andor",
+  "platforms": "Disney+",
+  "type": "tv",
+  "year": 2022,
+  "origin": "us",
+  "dur": "2 temporadas",
+  "tags": [
+   "scifi",
+   "pensar",
+   "tension"
+  ],
+  "q": 5,
+  "syn": "Star Wars para adultos: el nacimiento de la rebelión."
+ },
+ {
+  "title": "The Mandalorian",
+  "platforms": "Disney+",
+  "type": "tv",
+  "year": 2019,
+  "origin": "us",
+  "dur": "3 temporadas",
+  "tags": [
+   "scifi",
+   "accion",
+   "familia",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Un cazarrecompensas y Grogu."
+ },
+ {
+  "title": "Solo asesinatos en el edificio",
+  "platforms": "Disney+",
+  "type": "tv",
+  "year": 2021,
+  "origin": "us",
+  "dur": "5 temporadas",
+  "tags": [
+   "risa",
+   "misterio",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Tres vecinos hacen un pódcast sobre un crimen en su edificio."
+ },
+ {
+  "title": "Abbott Elementary",
+  "platforms": "Disney+",
+  "type": "tv",
+  "year": 2021,
+  "origin": "us",
+  "dur": "5 temporadas",
+  "tags": [
+   "risa",
+   "bonito",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Profesores de un colegio público de Filadelfia."
+ },
+ {
+  "title": "Up",
+  "platforms": "Disney+",
+  "type": "movie",
+  "year": 2009,
+  "origin": "us",
+  "dur": "96 min",
+  "tags": [
+   "animacion",
+   "familia",
+   "emocion",
+   "bonito"
+  ],
+  "q": 5,
+  "syn": "Un anciano ata globos a su casa para cumplir un sueño."
+ },
+ {
+  "title": "Del revés 2",
+  "platforms": "Disney+",
+  "type": "movie",
+  "year": 2024,
+  "origin": "us",
+  "dur": "96 min",
+  "tags": [
+   "animacion",
+   "familia",
+   "emocion",
+   "risa",
+   "bonito"
+  ],
+  "q": 4,
+  "syn": "Las emociones de Riley llegan a la adolescencia."
+ },
+ {
+  "title": "Los Simpson",
+  "platforms": "Disney+",
+  "type": "tv",
+  "year": 1989,
+  "origin": "us",
+  "dur": "más de 35 temporadas",
+  "tags": [
+   "risa",
+   "desconectar",
+   "animacion"
+  ],
+  "q": 4,
+  "syn": "Springfield de siempre."
+ },
+ {
+  "title": "Rapa",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2022,
+  "origin": "es",
+  "dur": "3 temporadas",
+  "tags": [
+   "crimen",
+   "misterio",
+   "galicia",
+   "enganche"
+  ],
+  "q": 4,
+  "syn": "Un profesor y una guardia civil investigan un crimen en Cedeira."
+ },
+ {
+  "title": "Hierro",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2019,
+  "origin": "es",
+  "dur": "2 temporadas",
+  "tags": [
+   "crimen",
+   "misterio",
+   "tension"
+  ],
+  "q": 4,
+  "syn": "Una jueza en la isla de El Hierro."
+ },
+ {
+  "title": "La Mesías",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2023,
+  "origin": "es",
+  "dur": "7 episodios",
+  "tags": [
+   "mini",
+   "pensar",
+   "emocion",
+   "adulto"
+  ],
+  "q": 5,
+  "syn": "Dos hermanos marcados por una madre religiosa, de los Javis."
+ },
+ {
+  "title": "Antidisturbios",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2020,
+  "origin": "es",
+  "dur": "6 episodios",
+  "tags": [
+   "mini",
+   "tension",
+   "real",
+   "adulto"
+  ],
+  "q": 5,
+  "syn": "Un desahucio sale mal. De Rodrigo Sorogoyen."
+ },
+ {
+  "title": "Muertos S.L.",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2024,
+  "origin": "es",
+  "dur": "2 temporadas",
+  "tags": [
+   "risa",
+   "desconectar"
+  ],
+  "q": 4,
+  "syn": "Una funeraria familiar en Zaragoza."
+ },
+ {
+  "title": "Poquita fe",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2023,
+  "origin": "es",
+  "dur": "2 temporadas",
+  "tags": [
+   "risa",
+   "desconectar",
+   "bonito"
+  ],
+  "q": 4,
+  "syn": "Una pareja normal de Madrid. Capítulos de 15 minutos."
+ },
+ {
+  "title": "La Peste",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2017,
+  "origin": "es",
+  "dur": "2 temporadas",
+  "tags": [
+   "historico",
+   "crimen",
+   "tension"
+  ],
+  "q": 4,
+  "syn": "Un asesino en la Sevilla del siglo XVI."
+ },
+ {
+  "title": "Arde Madrid",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2018,
+  "origin": "es",
+  "dur": "8 episodios",
+  "tags": [
+   "risa",
+   "historico"
+  ],
+  "q": 4,
+  "syn": "Ava Gardner en el Madrid franquista."
+ },
+ {
+  "title": "Querer",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2024,
+  "origin": "es",
+  "dur": "4 episodios",
+  "tags": [
+   "mini",
+   "emocion",
+   "pensar",
+   "real",
+   "adulto"
+  ],
+  "q": 5,
+  "syn": "Una mujer denuncia a su marido tras 30 años de matrimonio."
+ },
+ {
+  "title": "Celeste",
+  "platforms": "Movistar Plus+",
+  "type": "tv",
+  "year": 2024,
+  "origin": "es",
+  "dur": "6 episodios",
+  "tags": [
+   "mini",
+   "risa",
+   "tension"
+  ],
+  "q": 4,
+  "syn": "Una inspectora de Hacienda persigue a una estrella del pop."
+ },
+ {
+  "title": "Veneno",
+  "platforms": "Atresplayer Netflix",
+  "type": "tv",
+  "year": 2020,
+  "origin": "es",
+  "dur": "8 episodios",
+  "tags": [
+   "mini",
+   "real",
+   "emocion"
+  ],
+  "q": 5,
+  "syn": "La vida de Cristina Ortiz, La Veneno."
+ },
+ {
+  "title": "El tiempo entre costuras",
+  "platforms": "Atresplayer",
+  "type": "tv",
+  "year": 2013,
+  "origin": "es",
+  "dur": "11 episodios",
+  "tags": [
+   "historico",
+   "romance",
+   "tension"
+  ],
+  "q": 4,
+  "syn": "Una modista española metida en el espionaje de los años 40."
+ },
+ {
+  "title": "Los protegidos",
+  "platforms": "Atresplayer",
+  "type": "tv",
+  "year": 2010,
+  "origin": "es",
+  "dur": "3 temporadas",
+  "tags": [
+   "fantasia",
+   "familia",
+   "misterio"
+  ],
+  "q": 3,
+  "syn": "Familias con niños con poderes que se esconden."
+ },
+ {
+  "title": "La cocinera de Castamar",
+  "platforms": "Atresplayer",
+  "type": "tv",
+  "year": 2021,
+  "origin": "es",
+  "dur": "12 episodios",
+  "tags": [
+   "historico",
+   "romance"
+  ],
+  "q": 3,
+  "syn": "Una cocinera en el Madrid del siglo XVIII."
+ },
+ {
+  "title": "Mentiras",
+  "platforms": "Atresplayer",
+  "type": "tv",
+  "year": 2020,
+  "origin": "es",
+  "dur": "6 episodios",
+  "tags": [
+   "mini",
+   "tension",
+   "crimen"
+  ],
+  "q": 3,
+  "syn": "Una mujer denuncia una agresión y nadie la cree."
+ },
+ {
+  "title": "Pequeñas coincidencias",
+  "platforms": "Atresplayer",
+  "type": "tv",
+  "year": 2018,
+  "origin": "es",
+  "dur": "4 temporadas",
+  "tags": [
+   "romance",
+   "risa",
+   "desconectar"
+  ],
+  "q": 3,
+  "syn": "Las casualidades que unen a una pareja."
+ },
+ {
+  "title": "Entre tierras",
+  "platforms": "Atresplayer",
+  "type": "tv",
+  "year": 2023,
+  "origin": "es",
+  "dur": "2 temporadas",
+  "tags": [
+   "historico",
+   "emocion",
+   "romance"
+  ],
+  "q": 3,
+  "syn": "Una mujer lucha por su tierra en la España rural de los 60."
+ },
+ {
+  "title": "Perdiendo el juicio",
+  "platforms": "Atresplayer",
+  "type": "tv",
+  "year": 2025,
+  "origin": "es",
+  "dur": "1 temporada",
+  "tags": [
+   "risa",
+   "desconectar"
+  ],
+  "q": 3,
+  "syn": "Comedia judicial española."
+ }
+]

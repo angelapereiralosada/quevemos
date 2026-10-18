@@ -1,0 +1,1177 @@
+{
+ "updated": "2026-10-18",
+ "label": "18 de octubre de 2026",
+ "platforms": {
+  "Netflix": {
+   "source": "Top 10 España · FlixPatrol",
+   "ranked": true,
+   "series": [
+    {
+     "title": "Bajo la superficie",
+     "tags": [
+      "miedo",
+      "tension",
+      "mini"
+     ],
+     "syn": "Miniserie de terror de 6 capítulos: una criatura marina acecha un pueblo pesquero de Terranova. Con Josh Hartnett.",
+     "year": "2026",
+     "dur": "6 episodios",
+     "origin": "otros",
+     "type": "tv"
+    },
+    {
+     "title": "La trampa",
+     "tags": [
+      "tension",
+      "crimen",
+      "enganche"
+     ],
+     "syn": "Una novelista que no sale de casa desde que vio asesinar a su hermana se usa a sí misma como cebo al reconocer al asesino en la tele.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "A Day Like No Other",
+     "tags": [],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "La diplomática",
+     "tags": [
+      "tension",
+      "pensar",
+      "enganche"
+     ],
+     "syn": "Temporada 4 del thriller político con Kate Wyler intentando contener una crisis internacional.",
+     "year": "2023",
+     "dur": "4 temporadas",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Al este del Edén",
+     "tags": [
+      "emocion",
+      "historico",
+      "mini"
+     ],
+     "syn": "Miniserie basada en la novela de Steinbeck, con Florence Pugh.",
+     "year": "2026",
+     "dur": "miniserie",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Tyson",
+     "tags": [
+      "docu",
+      "real"
+     ],
+     "syn": "Documental en 4 episodios sobre Mike Tyson, de su infancia en Brooklyn a campeón de los pesos pesados.",
+     "year": "2026",
+     "dur": "4 episodios",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "El problema final",
+     "tags": [
+      "misterio",
+      "tension",
+      "mini"
+     ],
+     "syn": "Miniserie española de 4 capítulos basada en la novela de Pérez-Reverte, con José Coronado.",
+     "year": "2026",
+     "dur": "4 episodios",
+     "origin": "es",
+     "type": "tv"
+    },
+    {
+     "title": "Doctor X: Mafia in White",
+     "tags": [],
+     "syn": "Serie asiática en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "asia",
+     "type": "tv"
+    },
+    {
+     "title": "Instadocs: AI Gone Wild",
+     "tags": [
+      "docu"
+     ],
+     "syn": "Documental en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Veneno",
+     "tags": [
+      "real",
+      "emocion",
+      "mini"
+     ],
+     "syn": "La vida de Cristina Ortiz, La Veneno, por los Javis.",
+     "year": "2020",
+     "dur": "8 episodios",
+     "origin": "es",
+     "type": "tv"
+    }
+   ],
+   "movies": [
+    {
+     "title": "Animales",
+     "tags": [],
+     "syn": "Película dirigida y protagonizada por Ben Affleck, estrenada el 9 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Therapy Done Right",
+     "tags": [],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "A Sucker's Born Every Minute",
+     "tags": [],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Within",
+     "tags": [],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "The Storm",
+     "tags": [],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Kraven el cazador",
+     "tags": [
+      "accion",
+      "super"
+     ],
+     "syn": "Película del universo Spider-Man de Sony.",
+     "year": "2024",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Unabomber",
+     "tags": [
+      "real",
+      "crimen"
+     ],
+     "syn": "Sobre el caso Unabomber.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Doing Life",
+     "tags": [],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "The Soul Eater",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Doctor Sueño",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "Secuela de El resplandor, basada en Stephen King.",
+     "year": "2019",
+     "dur": "152 min",
+     "origin": "us",
+     "type": "movie"
+    }
+   ]
+  },
+  "HBO Max": {
+   "source": "Top 10 España · FlixPatrol",
+   "ranked": true,
+   "series": [
+    {
+     "title": "Crystal Lake",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "Precuela de Viernes 13: Pam Voorhees tras perder a su hijo ahogado.",
+     "year": "2026",
+     "dur": "1 temporada",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Furia",
+     "tags": [],
+     "syn": "Temporada 2, completa desde el 9 de octubre.",
+     "year": "2026",
+     "dur": "2 temporadas",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Lanterns",
+     "tags": [
+      "accion",
+      "super",
+      "scifi"
+     ],
+     "syn": "Serie de DC sobre los Green Lantern.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Georgie & Mandy's First Marriage",
+     "tags": [
+      "risa",
+      "desconectar"
+     ],
+     "syn": "Spin-off de El joven Sheldon.",
+     "year": "2024",
+     "dur": "",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Kill Jackie",
+     "tags": [
+      "accion"
+     ],
+     "syn": "Estreno semanal cada viernes.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Captive",
+     "tags": [],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Youth",
+     "tags": [],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Paolo",
+     "tags": [],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "4 Blocks Zero",
+     "tags": [
+      "crimen"
+     ],
+     "syn": "Precuela de la serie alemana 4 Blocks.",
+     "year": "2026",
+     "dur": "",
+     "origin": "eu",
+     "type": "tv"
+    },
+    {
+     "title": "Zmora",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "eu",
+     "type": "tv"
+    }
+   ],
+   "movies": [
+    {
+     "title": "Backrooms",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "Película de terror en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Garra de hierro",
+     "tags": [
+      "real",
+      "emocion"
+     ],
+     "syn": "La historia real de la familia de luchadores Von Erich.",
+     "year": "2023",
+     "dur": "132 min",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Freddy contra Jason",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "Clásico de terror slasher.",
+     "year": "2003",
+     "dur": "97 min",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Viernes 13",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "El origen de la saga de Jason.",
+     "year": "1980",
+     "dur": "95 min",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Supergirl",
+     "tags": [
+      "accion",
+      "super"
+     ],
+     "syn": "Película de DC.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Jason X",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "Jason en el espacio.",
+     "year": "2001",
+     "dur": "91 min",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Al filo del mañana",
+     "tags": [
+      "accion",
+      "scifi"
+     ],
+     "syn": "Tom Cruise revive el mismo día de batalla una y otra vez.",
+     "year": "2014",
+     "dur": "113 min",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Jóvenes ocultos",
+     "tags": [
+      "miedo",
+      "risa"
+     ],
+     "syn": "Vampiros adolescentes en los 80.",
+     "year": "1987",
+     "dur": "97 min",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Tuner",
+     "tags": [],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Ni contigo ni sin mí",
+     "tags": [
+      "romance"
+     ],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    }
+   ]
+  },
+  "Prime Video": {
+   "source": "Top 10 España · FlixPatrol",
+   "ranked": true,
+   "series": [
+    {
+     "title": "Carrie",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "Serie de Mike Flanagan basada en la novela de Stephen King.",
+     "year": "2026",
+     "dur": "1 temporada",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Reina Roja",
+     "tags": [
+      "tension",
+      "crimen",
+      "enganche"
+     ],
+     "syn": "Temporada 2 (Loba negra) del thriller de Juan Gómez-Jurado.",
+     "year": "2024",
+     "dur": "2 temporadas",
+     "origin": "es",
+     "type": "tv"
+    },
+    {
+     "title": "Neagley",
+     "tags": [
+      "accion"
+     ],
+     "syn": "Spin-off de Reacher protagonizado por Maria Sten.",
+     "year": "2026",
+     "dur": "1 temporada",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Mía es la venganza",
+     "tags": [
+      "tension"
+     ],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Pa' quererte",
+     "tags": [
+      "romance"
+     ],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "latam",
+     "type": "tv"
+    },
+    {
+     "title": "Reacher",
+     "tags": [
+      "accion",
+      "desconectar",
+      "enganche"
+     ],
+     "syn": "Jack Reacher resuelve a puñetazos lo que no puede resolver hablando.",
+     "year": "2022",
+     "dur": "3 temporadas",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Off Campus",
+     "tags": [
+      "romance"
+     ],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "The Trial",
+     "tags": [],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "La que se avecina",
+     "tags": [
+      "risa",
+      "desconectar"
+     ],
+     "syn": "La comedia de Mirador de Montepinar.",
+     "year": "2007",
+     "dur": "15 temporadas",
+     "origin": "es",
+     "type": "tv"
+    },
+    {
+     "title": "Sterling Point",
+     "tags": [],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    }
+   ],
+   "movies": [
+    {
+     "title": "Haciendo amigos",
+     "tags": [
+      "risa"
+     ],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "El amor de tu vida",
+     "tags": [
+      "romance"
+     ],
+     "syn": "Estreno del 14 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Normal",
+     "tags": [],
+     "syn": "Estreno del 2 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "La hipótesis del amor",
+     "tags": [
+      "romance",
+      "risa"
+     ],
+     "syn": "Comedia romántica basada en la novela de Ali Hazelwood.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Masterplan",
+     "tags": [],
+     "syn": "Estreno del 16 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "The Test",
+     "tags": [],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Bight",
+     "tags": [],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "You+Me – Against the World",
+     "tags": [
+      "romance"
+     ],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Drawn Together",
+     "tags": [],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Little Bone Lodge",
+     "tags": [
+      "miedo",
+      "tension"
+     ],
+     "syn": "Película en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    }
+   ]
+  },
+  "Disney+": {
+   "source": "Top 10 España · FlixPatrol",
+   "ranked": true,
+   "series": [
+    {
+     "title": "VisionQuest",
+     "tags": [
+      "super",
+      "scifi",
+      "accion"
+     ],
+     "syn": "Visión huye de Ultron con un joven que podría ser la reencarnación de su hijo. Capítulos nuevos cada miércoles.",
+     "year": "2026",
+     "dur": "miniserie",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Dragon Ball Super",
+     "tags": [
+      "animacion",
+      "accion"
+     ],
+     "syn": "Anime en el top de esta semana.",
+     "year": "2015",
+     "dur": "",
+     "origin": "asia",
+     "type": "tv"
+    },
+    {
+     "title": "Coven Academy",
+     "tags": [
+      "fantasia"
+     ],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Pesadilla en la cocina",
+     "tags": [
+      "risa",
+      "desconectar"
+     ],
+     "syn": "Chicote rescata restaurantes al borde del cierre.",
+     "year": "2012",
+     "dur": "",
+     "origin": "es",
+     "type": "tv"
+    },
+    {
+     "title": "WandaVision",
+     "tags": [
+      "super",
+      "scifi",
+      "pensar"
+     ],
+     "syn": "La serie de Marvel que precede a VisionQuest.",
+     "year": "2021",
+     "dur": "9 episodios",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Masterchef Celebrity Legends",
+     "tags": [
+      "desconectar"
+     ],
+     "syn": "Concurso de cocina con famosos.",
+     "year": "2026",
+     "dur": "",
+     "origin": "es",
+     "type": "tv"
+    },
+    {
+     "title": "Merry Berry Love",
+     "tags": [
+      "romance"
+     ],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Loki",
+     "tags": [
+      "super",
+      "scifi",
+      "risa"
+     ],
+     "syn": "El dios del engaño y la Autoridad de Variación Temporal.",
+     "year": "2021",
+     "dur": "2 temporadas",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Furious",
+     "tags": [
+      "accion"
+     ],
+     "syn": "Serie en el top de esta semana.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Bluey",
+     "tags": [
+      "familia",
+      "animacion",
+      "bonito",
+      "risa"
+     ],
+     "syn": "Episodios de 7 minutos que disfrutan niños y padres.",
+     "year": "2018",
+     "dur": "3 temporadas",
+     "origin": "otros",
+     "type": "tv"
+    }
+   ],
+   "movies": [
+    {
+     "title": "Toy Story 5",
+     "tags": [
+      "familia",
+      "animacion",
+      "risa"
+     ],
+     "syn": "La nueva de Pixar.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "La Patrulla Canina: La película",
+     "tags": [
+      "familia",
+      "animacion"
+     ],
+     "syn": "Para los más pequeños.",
+     "year": "2021",
+     "dur": "88 min",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Pesadilla antes de Navidad",
+     "tags": [
+      "familia",
+      "animacion",
+      "bonito"
+     ],
+     "syn": "El clásico de Halloween y Navidad.",
+     "year": "1993",
+     "dur": "76 min",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Padre de familia: Happy Hell-o-ween",
+     "tags": [
+      "risa"
+     ],
+     "syn": "Especial de Halloween.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "El diablo viste de Prada 2",
+     "tags": [
+      "risa",
+      "desconectar"
+     ],
+     "syn": "Vuelven Miranda Priestly y Andy.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Soulm8te",
+     "tags": [
+      "miedo",
+      "tension"
+     ],
+     "syn": "Thriller de la factoría M3GAN.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Hoppers",
+     "tags": [
+      "familia",
+      "animacion",
+      "risa"
+     ],
+     "syn": "Película de Pixar.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Vaiana",
+     "tags": [
+      "familia",
+      "animacion",
+      "bonito"
+     ],
+     "syn": "Aventura en la Polinesia.",
+     "year": "2016",
+     "dur": "107 min",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "The Mandalorian and Grogu",
+     "tags": [
+      "scifi",
+      "accion",
+      "familia"
+     ],
+     "syn": "Película de Star Wars.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "Coco",
+     "tags": [
+      "familia",
+      "animacion",
+      "emocion",
+      "bonito"
+     ],
+     "syn": "Un niño viaja a la Tierra de los Muertos.",
+     "year": "2017",
+     "dur": "105 min",
+     "origin": "us",
+     "type": "movie"
+    }
+   ]
+  },
+  "Movistar Plus+": {
+   "source": "Estrenos destacados de octubre · prensa (Movistar no publica ranking)",
+   "ranked": false,
+   "series": [
+    {
+     "title": "Vigil: Conspiración en el Ártico",
+     "tags": [
+      "crimen",
+      "tension"
+     ],
+     "syn": "Temporada 3: un asesinato en una estación ártica destapa una disputa por recursos.",
+     "year": "2021",
+     "dur": "3 temporadas",
+     "origin": "eu",
+     "type": "tv"
+    },
+    {
+     "title": "Ludwig",
+     "tags": [
+      "misterio",
+      "risa"
+     ],
+     "syn": "Temporada 2: un creador de crucigramas resuelve asesinatos en Cambridge.",
+     "year": "2024",
+     "dur": "2 temporadas",
+     "origin": "eu",
+     "type": "tv"
+    },
+    {
+     "title": "El castillo",
+     "tags": [],
+     "syn": "Miniserie completa desde el 8 de octubre.",
+     "year": "2026",
+     "dur": "miniserie",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Big Mood",
+     "tags": [
+      "risa"
+     ],
+     "syn": "Temporadas 1 y 2 completas desde el 7 de octubre.",
+     "year": "2024",
+     "dur": "2 temporadas",
+     "origin": "eu",
+     "type": "tv"
+    },
+    {
+     "title": "Negocios turbios",
+     "tags": [
+      "tension"
+     ],
+     "syn": "Thriller, completo desde el 22 de octubre.",
+     "year": "2026",
+     "dur": "miniserie",
+     "origin": "",
+     "type": "tv"
+    },
+    {
+     "title": "Trigger Point",
+     "tags": [
+      "tension",
+      "accion"
+     ],
+     "syn": "Temporada 4 desde el 28 de octubre.",
+     "year": "2022",
+     "dur": "4 temporadas",
+     "origin": "eu",
+     "type": "tv"
+    },
+    {
+     "title": "Doc",
+     "tags": [
+      "emocion"
+     ],
+     "syn": "Temporada 3, capítulos semanales desde el 29 de octubre.",
+     "year": "2025",
+     "dur": "3 temporadas",
+     "origin": "",
+     "type": "tv"
+    }
+   ],
+   "movies": [
+    {
+     "title": "Outcome",
+     "tags": [
+      "risa"
+     ],
+     "syn": "Con Keanu Reeves y Cameron Diaz. Desde el 12 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Incontrolable",
+     "tags": [
+      "real"
+     ],
+     "syn": "Basada en hechos reales. Desde el 16 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Cleaner: Rescate vertical",
+     "tags": [
+      "accion",
+      "tension"
+     ],
+     "syn": "Desde el 2 de octubre.",
+     "year": "2025",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "La cita",
+     "tags": [],
+     "syn": "Desde el 23 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Un buen chico",
+     "tags": [],
+     "syn": "Desde el 29 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    },
+    {
+     "title": "Hokum",
+     "tags": [
+      "miedo"
+     ],
+     "syn": "Terror para la noche de Halloween. Desde el 31 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "",
+     "type": "movie"
+    }
+   ]
+  },
+  "Otras": {
+   "source": "Apple TV, SkyShowtime y Filmin · top y estrenos",
+   "ranked": false,
+   "series": [
+    {
+     "title": "Ted Lasso",
+     "tags": [
+      "risa",
+      "bonito",
+      "desconectar"
+     ],
+     "syn": "Nº1 en Apple TV. El entrenador más optimista del fútbol inglés.",
+     "year": "2020",
+     "dur": "4 temporadas",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Slow Horses",
+     "tags": [
+      "tension",
+      "risa"
+     ],
+     "syn": "Espías británicos caídos en desgracia. Apple TV.",
+     "year": "2022",
+     "dur": "5 temporadas",
+     "origin": "eu",
+     "type": "tv"
+    },
+    {
+     "title": "Separación",
+     "tags": [
+      "pensar",
+      "scifi",
+      "misterio"
+     ],
+     "syn": "Severance. Oficinistas con la memoria partida en dos. Apple TV.",
+     "year": "2022",
+     "dur": "2 temporadas",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Tulsa King",
+     "tags": [
+      "crimen",
+      "risa"
+     ],
+     "syn": "Temporada 4 en SkyShowtime desde el 22 de octubre.",
+     "year": "2022",
+     "dur": "4 temporadas",
+     "origin": "us",
+     "type": "tv"
+    },
+    {
+     "title": "Dexter: Resurrección",
+     "tags": [
+      "crimen",
+      "tension"
+     ],
+     "syn": "Temporada 2 en SkyShowtime desde el 31 de octubre.",
+     "year": "2025",
+     "dur": "2 temporadas",
+     "origin": "us",
+     "type": "tv"
+    }
+   ],
+   "movies": [
+    {
+     "title": "Super Mario Galaxy: La película",
+     "tags": [
+      "familia",
+      "animacion",
+      "risa"
+     ],
+     "syn": "En SkyShowtime desde el 17 de octubre.",
+     "year": "2026",
+     "dur": "",
+     "origin": "us",
+     "type": "movie"
+    },
+    {
+     "title": "F1",
+     "tags": [
+      "accion"
+     ],
+     "syn": "Con Brad Pitt. Apple TV.",
+     "year": "2025",
+     "dur": "155 min",
+     "origin": "us",
+     "type": "movie"
+    }
+   ]
+  }
+ }
+}
