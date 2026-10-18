@@ -30,6 +30,7 @@ const PLATFORMS = [
 ];
 const DEFAULT_PLATS = ["Netflix", "Prime Video", "HBO Max", "Disney+", "Movistar Plus+", "Atresplayer"];
 const OTHER_GROUP = ["Apple TV", "SkyShowtime", "Filmin"];
+const PLAT_COL = { "Netflix": "#e50914", "Prime Video": "#1399ff", "HBO Max": "#5a2de5", "Disney+": "#113ccf", "Movistar Plus+": "#0b8fd6", "Atresplayer": "#ff6b00", "Filmin": "#1d1640", "Apple TV": "#1d1640", "SkyShowtime": "#2f1e6e", "RTVE Play": "#e2001a", "Otras": "#1d1640" };
 
 const MOODS = {
   risa:       { label: "Reírnos",       c: "var(--sun)",    s: "var(--sun-soft)",    tag: "risa",       re: /(re[ií]r|risa|comedi|gracios|divertid|humor|carcajad)/, g: { movie: [35], tv: [35] }, icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM8.5 8a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM6.8 13.5h10.4A5.4 5.4 0 0 1 12 18a5.4 5.4 0 0 1-5.2-4.5z" },
@@ -274,9 +275,9 @@ async function itemProviders(it) {
 
 /* ---------- tarjetas ---------- */
 function posterEl(it, opts = {}) {
-  const col = PH_COLORS[hash(it.title) % PH_COLORS.length];
-  const box = h("div", { class: "poster", style: `background:${col}` });
-  const ph = h("div", { class: "ph" }, it.title);
+  const hv = hash(it.title), col = PH_COLORS[hv % PH_COLORS.length], col2 = PH_COLORS[(hv + 3) % PH_COLORS.length];
+  const box = h("div", { class: "poster", style: `--a:${col};--b:${col2}` });
+  const ph = h("div", { class: "ph" }, h("span", { class: "ph-type" }, it.type === "tv" ? "Serie" : "Película"), h("span", { class: "ph-t" }, it.title));
   box.append(ph);
   const paint = () => { if (it.poster) { const img = h("img", { src: IMG + "w342" + it.poster, alt: "", loading: "lazy" }); img.onload = () => ph.remove(); box.prepend(img); } };
   if (it.poster) paint(); else if (TMDB && !it.id) resolve(it).then(paint);
@@ -290,6 +291,11 @@ function posterEl(it, opts = {}) {
 function tile(it, opts = {}) {
   it.key = it.key || keyOf(it);
   const sub = opts.sub !== undefined ? opts.sub : [it.type === "tv" ? "Serie" : "Película", it.year].filter(Boolean).join(" · ");
+  if (opts.rank) {
+    return h("button", { class: "tile ranked", onclick: () => openItem(it) },
+      h("span", { class: "bignum", "aria-label": "Puesto " + opts.rank }, opts.rank),
+      h("span", { class: "rk-body" }, posterEl(it, { ...opts, rank: null }), h("span", { class: "t" }, it.title)));
+  }
   const b = h("button", { class: "tile", onclick: () => openItem(it) },
     posterEl(it, opts),
     h("span", { class: "t" }, it.title),
@@ -299,6 +305,20 @@ function tile(it, opts = {}) {
 }
 
 /* ---------- vistas ---------- */
+const emptyBox = (...kids) => emptyBox( h("div", { class: "empty-art", "aria-hidden": "true" }, h("i"), h("i"), h("i")), ...kids);
+function featureCard(it, label) {
+  const hv = hash(it.title);
+  const bg = h("div", { class: "feature-bg", style: `--a:${PH_COLORS[hv % PH_COLORS.length]};--b:${PH_COLORS[(hv + 3) % PH_COLORS.length]}` });
+  const el = h("button", { class: "feature", onclick: () => openItem(it) }, bg,
+    h("div", { class: "feature-in" },
+      h("span", { class: "feature-tag" }, label),
+      h("b", null, it.title),
+      it.syn ? h("span", { class: "feature-syn" }, it.syn) : null,
+      h("span", { class: "feature-cta" }, "Ver ficha")));
+  const paint = () => { const img = it.backdrop || it.poster; if (img) { bg.style.backgroundImage = `url(${IMG}${it.backdrop ? "w780" : "w500"}${img})`; bg.classList.add("img"); } };
+  if (it.backdrop || it.poster) paint(); else if (TMDB) resolve(it).then(paint);
+  return el;
+}
 function rerender() {
   if (S.view === "home") renderHome();
   else if (S.view === "find") renderFind(true);
@@ -327,29 +347,32 @@ function trendItems(plat, kind) {
 function renderHome() {
   const v = $("v-home"); v.replaceChildren();
   const me = PROF[S.profile];
-  v.append(h("div", { class: "hello" }, h("h1", null, `Hola, ${me.name}`), h("p", null, "¿Qué os apetece ver hoy?")));
+  v.append(h("div", { class: "hello" }, h("h1", null, `Hola, ${me.name}`)));
   v.append(h("button", { class: "cta", onclick: () => go("find") },
-    h("div", null, h("b", null, "Decidir qué vemos"), h("span", null, "Elige el plan y te propongo títulos")), h("span", { class: "arrow", "aria-hidden": "true" }, "→")));
+    h("div", null, h("b", null, "¿Qué vemos hoy?"), h("span", null, "Dime el plan y te propongo títulos")), h("span", { class: "arrow", "aria-hidden": "true" }, "→")));
 
   const common = S.data.lists.filter(x => x.owner === "comun" && !seenBy(x.key).includes(S.profile));
   if (common.length) {
-    v.append(h("div", { class: "sec-h" }, h("h2", null, h("span", { class: "dot", style: "background:var(--violet)" }), "En la lista común"), h("small", null, `${common.length} pendiente${common.length > 1 ? "s" : ""}`)));
+    v.append(h("div", { class: "sec-h" }, h("h2", null, "En la lista común"), h("small", null, `${common.length} pendiente${common.length > 1 ? "s" : ""}`)));
     v.append(h("div", { class: "rail" }, common.slice(0, 15).map(x => tile({ ...x.item, key: x.key }, { sub: `Añadida por ${PROF[x.by] ? PROF[x.by].name : ""}` }))));
   }
 
   if (S.trends) {
     const plats = ownedTrendPlats();
     if (!plats.length) {
-      v.append(h("div", { class: "empty" }, h("b", null, "Elige vuestras plataformas"), h("p", null, "Toca tu foto arriba a la derecha y marca las plataformas que tenéis."), h("button", { class: "btn solid", onclick: openSettings }, "Elegir plataformas")));
+      v.append(emptyBox( h("b", null, "Elige vuestras plataformas"), h("p", null, "Toca tu foto arriba a la derecha y marca las plataformas que tenéis."), h("button", { class: "btn solid", onclick: openSettings }, "Elegir plataformas")));
     } else {
       if (!plats.includes(S.homePlat)) S.homePlat = plats[0];
       const d = S.trends.platforms[S.homePlat];
-      v.append(h("div", { class: "sec-h" }, h("h2", null, h("span", { class: "dot", style: "background:var(--coral)" }), "Lo más visto"), h("small", null, S.trends.label)));
-      v.append(h("div", { class: "pill-row" }, plats.map(p => h("button", { class: "pill", "aria-pressed": p === S.homePlat ? "true" : "false", onclick: () => { S.homePlat = p; renderHome(); } }, p === "Otras" ? "Apple TV y otras" : p))));
-      for (const [kind, lab] of [["tv", "Series"], ["movie", "Películas"]]) {
-        const items = trendItems(S.homePlat, kind); if (!items.length) continue;
-        v.append(h("div", { class: "sec-h" }, h("h2", { style: "font-size:16px" }, lab), h("small", null, d.ranked ? "Top 10 en España" : "Estrenos destacados")));
-        v.append(h("div", { class: "rail" }, items.map(it => tile(it, { rank: it.trend.n }))));
+      v.append(h("div", { class: "sec-h" }, h("h2", null, "Lo más visto esta semana")));
+      v.append(h("div", { class: "pill-row" }, plats.map(p => h("button", { class: "pill", style: `--pc:${PLAT_COL[p] || "#1d1640"}`, "aria-pressed": p === S.homePlat ? "true" : "false", onclick: () => { S.homePlat = p; renderHome(); } }, h("span", { class: "dot", style: `background:${PLAT_COL[p] || "#1d1640"}` }), p === "Otras" ? "Apple TV y otras" : p))));
+      const series = trendItems(S.homePlat, "tv"), movies = trendItems(S.homePlat, "movie");
+      const top = series[0] || movies[0];
+      if (top) v.append(featureCard(top, d.ranked ? `Nº 1 en ${S.homePlat === "Otras" ? "su plataforma" : S.homePlat}` : `Nuevo en ${S.homePlat}`));
+      for (const [items, lab] of [[series[0] === top ? series.slice(1) : series, "Series"], [movies[0] === top ? movies.slice(1) : movies, "Películas"]]) {
+        if (!items.length) continue;
+        v.append(h("div", { class: "sec-h" }, h("h2", { class: "h3" }, lab), h("small", null, d.ranked ? "Top 10 en España" : "Estrenos destacados")));
+        v.append(h("div", { class: "rail" }, items.map(it => d.ranked ? tile(it, { rank: it.trend.n }) : tile(it))));
       }
       v.append(h("p", { class: "foot" }, "Fuente: " + d.source + "."));
     }
@@ -357,7 +380,7 @@ function renderHome() {
 
   if (TMDB && PROV) {
     const box = h("div", { class: "rail" }, Array.from({ length: 5 }, () => h("div", { class: "tile" }, h("div", { class: "poster skel" }))));
-    v.append(h("div", { class: "sec-h" }, h("h2", null, h("span", { class: "dot", style: "background:var(--teal)" }), "Recién estrenadas"), h("small", null, "en vuestras plataformas")), box);
+    v.append(h("div", { class: "sec-h" }, h("h2", null, "Recién estrenadas"), h("small", null, "en vuestras plataformas")), box);
     recentReleases().then(items => {
       box.replaceChildren(...(items.length ? items.map(it => tile(it, { sub: [it.type === "tv" ? "Serie" : "Película", it.vote ? "★ " + it.vote.toFixed(1) : ""].filter(Boolean).join(" · ") })) : [h("p", { class: "note" }, "No he encontrado estrenos recientes.")]));
     });
@@ -406,7 +429,7 @@ function parseText(text) {
 function renderFind(keepResults) {
   const v = $("v-find"); v.replaceChildren();
   const f = S.find;
-  v.append(h("div", { class: "hello" }, h("h1", null, "¿Qué os apetece?"), h("p", null, "Toca las opciones o escríbelo tal cual.")));
+  v.append(h("div", { class: "hello" }, h("h1", null, "¿Qué os apetece?")));
   const inp = h("input", { id: "askInput", type: "text", autocomplete: "off", enterkeyhint: "search", placeholder: "Ej.: algo de risa y corto, o «como Fariña»", value: f.text || "" });
   v.append(h("form", { class: "askbox", onsubmit: e => { e.preventDefault(); f.text = inp.value; const p = parseText(inp.value); renderFind(); run(p); } }, inp, h("button", { type: "submit" }, "Buscar")));
 
@@ -414,10 +437,12 @@ function renderFind(keepResults) {
     h("div", { class: "choices " + cls }, entries.map(([k, x]) => h("button", { class: "choice", style: x.c ? `--c:${x.c};--c2:${x.s}` : "", "aria-pressed": isOn(k) ? "true" : "false", onclick: () => { onTap(k); renderFind(true); } },
       x.icon ? h("span", { class: "ic" }, svg(x.icon)) : null, x.label, x.sub ? h("small", null, x.sub) : null))));
 
-  v.append(step("Qué", "", Object.entries(TYPES).map(([k, l]) => [k, { label: l }]), k => f.type === k, k => { f.type = k; if (k === "movie" && f.time === "mini") f.time = "any"; }));
-  v.append(step("Con quién", "four", Object.entries(WHO), k => f.who === k, k => { f.who = f.who === k ? null : k; }));
-  v.append(step("Plan (elige uno o varios)", "two", Object.entries(MOODS), k => f.moods.includes(k), k => { f.moods = f.moods.includes(k) ? f.moods.filter(x => x !== k) : [...f.moods, k]; }));
-  v.append(step("Tiempo", "", Object.entries(TIMES), k => f.time === k, k => { f.time = k; if (k === "mini") f.type = "tv"; }));
+  v.append(step("El plan · elige uno o varios", "moods", Object.entries(MOODS), k => f.moods.includes(k), k => { f.moods = f.moods.includes(k) ? f.moods.filter(x => x !== k) : [...f.moods, k]; }));
+  const seg = (title, entries, isOn, onTap) => h("div", { class: "step" }, h("h3", null, title), h("div", { class: "seg-pills" }, entries.map(([k, l]) =>
+    h("button", { class: "pill", "aria-pressed": isOn(k) ? "true" : "false", onclick: () => { onTap(k); renderFind(true); } }, l))));
+  v.append(seg("Qué", Object.entries(TYPES), k => f.type === k, k => { f.type = k; if (k === "movie" && f.time === "mini") f.time = "any"; }));
+  v.append(seg("Con quién", Object.entries(WHO).map(([k, x]) => [k, x.label]), k => f.who === k, k => { f.who = f.who === k ? null : k; }));
+  v.append(seg("Tiempo", Object.entries(TIMES).map(([k, x]) => [k, x.label]), k => f.time === k, k => { f.time = k; if (k === "mini") f.type = "tv"; }));
   v.append(h("div", { class: "step" }, h("h3", null, "Nada de"), h("div", { class: "filters" }, Object.entries(AVOIDS).map(([k, a]) =>
     h("button", { class: "pill", "aria-pressed": f.avoid.includes(k) ? "true" : "false", onclick: () => { f.avoid = f.avoid.includes(k) ? f.avoid.filter(x => x !== k) : [...f.avoid, k]; renderFind(true); } }, a.label)))));
   v.append(h("button", { class: "go", id: "goBtn", onclick: () => { f.text = ""; f.like = null; run({ recognized: true }); } }, "Ver propuestas"));
@@ -562,7 +587,7 @@ function paintResults() {
       r.search ? null : h("button", { class: "btn violet", onclick: () => { S.page++; run(null, true); } }, "Otras ideas"),
       h("button", { class: "btn", onclick: () => window.scrollTo({ top: 0, behavior: "smooth" }) }, "Cambiar el plan")) : null));
   if (!r.items.length) {
-    box.append(h("div", { class: "empty" }, h("b", null, r.error ? "No he podido buscar" : "Nada encaja del todo"),
+    box.append(emptyBox( h("b", null, r.error ? "No he podido buscar" : "Nada encaja del todo"),
       h("p", null, r.error ? "Revisa la conexión y vuelve a probar." : "Quita algún filtro o añade plataformas en tu perfil.")));
     return;
   }
@@ -576,7 +601,7 @@ function paintResults() {
 /* ---------- Común ---------- */
 function renderCommon() {
   const v = $("v-common"); v.replaceChildren();
-  v.append(h("div", { class: "hello" }, h("h1", null, "Lista común"), h("p", null, "Lo que queremos ver juntos. Toca un título para comentar.")));
+  v.append(h("div", { class: "hello" }, h("h1", null, "Lista común")));
   let items = S.data.lists.filter(x => x.owner === "comun");
   v.append(h("div", { class: "filters" }, [["recent", "Recientes"], ["votes", "Más apetecibles"], ["seen", "Ya vistas"]].map(([k, l]) =>
     h("button", { class: "pill", "aria-pressed": S.commonSort === k ? "true" : "false", onclick: () => { S.commonSort = k; renderCommon(); } }, l))));
@@ -585,7 +610,7 @@ function renderCommon() {
   else items = items.filter(x => !allSeen(x.key));
   if (S.commonSort === "votes") items = [...items].sort((a, b) => likesOf(b.key).length - likesOf(a.key).length || commentsOf(b.key).length - commentsOf(a.key).length);
   if (!items.length) {
-    v.append(h("div", { class: "empty" }, h("b", null, S.commonSort === "seen" ? "Aún no habéis visto ninguna" : "La lista común está vacía"),
+    v.append(emptyBox( h("b", null, S.commonSort === "seen" ? "Aún no habéis visto ninguna" : "La lista común está vacía"),
       h("p", null, "Abre cualquier título y pulsa «Común» para añadirlo. Así los tres podéis votar y comentar."),
       h("button", { class: "btn coral", onclick: () => go("find") }, "Buscar algo")));
     return;
@@ -610,7 +635,7 @@ function renderCommon() {
 function renderMine() {
   const v = $("v-mine"); v.replaceChildren();
   const who = S.mineOf || S.profile, p = PROF[who], mine = who === S.profile;
-  v.append(h("div", { class: "hello" }, h("h1", null, mine ? "Mi lista" : `Lista de ${p.name}`), h("p", null, mine ? "Lo que quieres ver tú y lo que ya has visto." : `Lo que ${p.name} tiene pendiente.`)));
+  v.append(h("div", { class: "hello" }, h("h1", null, mine ? "Mi lista" : `Lista de ${p.name}`)));
   v.append(h("div", { class: "filters" }, PROFILES.map(x => h("button", { class: "pill", "aria-pressed": x.id === who ? "true" : "false", onclick: () => { S.mineOf = x.id; renderMine(); } }, avatar(x.id, "xs"), x.id === S.profile ? "Yo" : x.name))));
   const todo = S.data.lists.filter(x => x.owner === who);
   const done = S.data.seen.filter(x => x.owner === who);
@@ -619,7 +644,7 @@ function renderMine() {
     h("button", { "aria-pressed": S.mineTab === "done" ? "true" : "false", onclick: () => { S.mineTab = "done"; renderMine(); } }, `Vistas (${done.length})`)));
   const arr = S.mineTab === "todo" ? todo : done;
   if (!arr.length) {
-    v.append(h("div", { class: "empty" }, h("b", null, S.mineTab === "todo" ? "Nada pendiente" : "Nada visto todavía"),
+    v.append(emptyBox( h("b", null, S.mineTab === "todo" ? "Nada pendiente" : "Nada visto todavía"),
       h("p", null, S.mineTab === "todo" ? "Abre un título y pulsa «Mi lista» para guardarlo aquí." : "Cuando marques algo como visto aparecerá aquí y no te lo volveré a proponer."),
       mine && S.mineTab === "todo" ? h("button", { class: "btn coral", onclick: () => go("find") }, "Buscar algo") : null));
     return;
