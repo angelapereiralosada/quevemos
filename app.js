@@ -436,10 +436,7 @@ function paintBadge() {
 /* ---------- Descubrir ---------- */
 function paintDiscover() {
   const v = $("v-discover"); v.replaceChildren();
-  v.append(h("div", { class: "duo" },
-    h("button", { class: "ask", onclick: openChat }, emo("🤖"), h("b", null, "Pregúntale a la IA"), h("span", null, "«Algo de risa, nada largo»")),
-    h("button", { class: "ask night", onclick: openNight }, emo("🍿"), h("b", null, "Noche de peli"), h("span", null, "Lo que os apetece a todos y ruleta"))));
-  v.append(h("button", { class: "searchbar", onclick: () => openSearch() }, svg("M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.8 4.8-1.4 1.4-4.8-4.8A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"), "Busca un título o un tema: lesbianas, navidad…"));
+  v.append(h("button", { class: "searchbar", onclick: () => openSearch() }, svg("M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.8 4.8-1.4 1.4-4.8-4.8A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"), "Busca título o tema: navidad, atracos…"));
   const F = S.f;
   const set = (patch) => { Object.assign(S.f, patch); paintDiscover(); buildDeck(true); };
   const chip = (label, on, fn, e) => h("button", { class: "chip", "aria-pressed": on ? "true" : "false", onclick: fn }, e ? emo(e) : null, label);
@@ -453,16 +450,21 @@ function paintDiscover() {
     chip("Con niños", F.kids, () => set({ kids: !F.kids }), "🧸"),
     ...S.plats.map(p => h("button", { class: "chip", "aria-pressed": F.plat === p ? "true" : "false", onclick: () => set({ plat: F.plat === p ? null : p }) },
       PROV && PROV.logos[p] ? h("img", { src: IMG + "w92" + PROV.logos[p], alt: "" }) : h("span", { class: "dot", style: `background:${PCOL[p]}` }), p))));
-  const A = (cls, e, label, fn, id) => h("button", { class: "act " + cls, "aria-label": label, onclick: fn, id }, h("span", { class: "b" }, emo(e)), label);
+  const A = (cls, e, label, fn, id) => h("button", { class: "act " + cls, "aria-label": label, onclick: fn, id }, emo(e), label);
   v.append(h("div", { class: "deck-wrap" },
     h("div", { class: "deck", id: "deck" }),
-    h("div", { class: "actions" },
-      A("sm", "↩️", "Atrás", undo, "undoBtn"),
-      A("lg no", "😴", "Paso", () => swipeTop("no")),
-      A("md seen", "👀", "Ya la vi", () => swipeTop("seen")),
-      A("md all", "📣", "A todos", () => swipeTop("all")),
-      A("lg yes", "😍", "Me apetece", () => swipeTop("yes")))));
-  v.append(h("p", { class: "foot" }, "Desliza a la derecha 😍, a la izquierda 😴 o hacia arriba 📣. Cuanto más uses, mejor te conoce."));
+    h("div", { class: "vcr" },
+      h("div", { class: "vcr-screen" }, h("span", { id: "vcrL" }, "▶ PLAY"), h("span", { id: "vcrR" }, "")),
+      h("div", { class: "actions" },
+        A("", "⏪", "Atrás", undo, "undoBtn"),
+        A("no", "✖️", "Paso", () => swipeTop("no")),
+        A("seen", "👀", "Vista", () => swipeTop("seen")),
+        A("all", "📣", "Todos", () => swipeTop("all")),
+        A("yes", "❤️", "Llevar", () => swipeTop("yes"))))));
+  v.append(h("div", { class: "duo" },
+    h("button", { class: "ask ai", onclick: openChat }, emo("🤖"), h("b", null, "El dependiente"), h("span", null, "Pídele algo: «risa, nada largo»")),
+    h("button", { class: "ask night", onclick: openNight }, emo("🍿"), h("b", null, "Noche de peli"), h("span", null, "Lo que os apetece a todos y ruleta"))));
+  v.append(h("p", { class: "foot" }, "Desliza la cinta: a la derecha te la llevas, a la izquierda la devuelves y hacia arriba se la propones a todos."));
   paintDeck();
   if (S.deck.length < 4 && !S.deckBusy) buildDeck(false);
 }
@@ -470,9 +472,11 @@ function paintDeck() {
   const d = $("deck"); if (!d) return;
   d.replaceChildren();
   const u = $("undoBtn"); if (u) u.disabled = !S.history.length;
+  const vr = $("vcrR"); if (vr) vr.textContent = `CINTA ${String(S.history.length + 1).padStart(3, "0")}`;
+  const vl = $("vcrL"); if (vl) vl.textContent = S.deckBusy && !S.deck.length ? "⏩ BUSCANDO" : "▶ PLAY";
   if (!S.deck.length) {
     const anyF = S.f.plat || S.f.short || S.f.mini || S.f.es || S.f.kids;
-    d.append(S.deckBusy ? h("div", { class: "deck-empty skel" }, emo("🔎"), h("b", null, "Buscando para ti…"))
+    d.append(S.deckBusy ? h("div", { class: "deck-empty noise" }, h("b", null, "Rebobinando…"), h("p", { class: "note" }, "Buscando cintas para ti"))
       : h("div", { class: "deck-empty" }, emo("🫠"), h("b", null, "No quedan propuestas"),
         h("p", { class: "note" }, !TMDB ? "Falta la clave de TMDB para buscar en el catálogo." : anyF ? "Con estos filtros no encuentro más. Quita alguno." : "Prueba a añadir plataformas en tu perfil."),
         anyF ? h("button", { class: "btn sun", onclick: () => { S.f = { type: "all", plat: null, short: false, mini: false, es: false, kids: false }; paintDiscover(); buildDeck(true); } }, "Quitar filtros")
@@ -488,18 +492,22 @@ function paintDeck() {
   });
   if (S.deck.length < 6 && !S.deckBusy) buildDeck(false);
 }
-const STICK = ["", "pop", "mint", "sky", "grape", "white"];
+const TAGC = ["", "mag", "teal", "vio", "ora"];
+function whyTag(why) {
+  if (!why) return null;
+  return h("span", { class: "tag-price why-tag " + TAGC[hash(why) % TAGC.length] }, why);
+}
 function cardEl(c, depth) {
   const it = c.it;
   const provBox = h("span", { class: "provs-mini" });
-  const meta = h("div", { class: "card-meta" }, it.vote ? h("span", { class: "rate" }, svg("star"), Number(it.vote).toFixed(1)) : null, h("span", null, [typeLabel(it.type), it.year].filter(Boolean).join(" · ")), provBox);
-  const sc = STICK[hash(c.why || it.title) % STICK.length];
+  const meta = h("div", { class: "card-meta" }, it.vote ? h("span", { class: "rate" }, "★ " + Number(it.vote).toFixed(1)) : null, h("span", null, [typeLabel(it.type).toUpperCase(), it.year].filter(Boolean).join(" · ")), provBox);
   const el = h("div", { class: "card" + (depth === 1 ? " behind" : depth === 2 ? " behind2" : " enter"), "data-key": it.key },
-    posterEl(it, false),
-    c.why && depth === 0 ? h("span", { class: "sticker why-sticker " + sc }, c.why) : null,
-    h("span", { class: "sticker stamp yes mint" }, emo("😍"), "¡Me apetece!"), h("span", { class: "sticker stamp no pop" }, emo("😴"), "Paso"), h("span", { class: "sticker stamp all sky" }, emo("📣"), "¡A todos!"),
-    depth === 0 ? h("button", { class: "card-tap", "aria-label": "Ver ficha", onclick: e => { e.stopPropagation(); openItem(it); } }, svg("info")) : null,
-    h("div", { class: "card-info" }, h("h3", null, it.title), meta));
+    h("div", { class: "vhs-top" }, h("b", null, "VHS"), h("span", null, it.type === "tv" ? "SERIE · SP" : "HI-FI STEREO")),
+    h("div", { class: "cover" }, posterEl(it, false)),
+    depth === 0 ? whyTag(c.why) : null,
+    h("span", { class: "stamp yes" }, "¡ME LA LLEVO!"), h("span", { class: "stamp no" }, "DEVUELTA"), h("span", { class: "stamp all" }, "¡A TODOS!"),
+    depth === 0 ? h("button", { class: "card-tap", "aria-label": "Ver la contraportada", onclick: e => { e.stopPropagation(); openItem(it); } }, svg("info")) : null,
+    h("div", { class: "vhs-label" }, h("h3", null, it.title), meta));
   if (depth === 0) providersOf(it).then(pv => { if (pv && pv.own.length) fill(provBox, ...pv.own.slice(0, 3).map(p => p.logo ? h("img", { src: IMG + "w92" + p.logo, alt: p.name, title: p.name }) : null)); });
   if (depth <= 1 && it.poster) { const pre = new Image(); pre.src = IMG + "w500" + it.poster; }
   return el;
@@ -539,7 +547,8 @@ function decide(kind) {
   if (S.history.length > 20) S.history.shift();
   if (kind === "yes" || kind === "all") {
     act("listAdd", S.profile, it);
-    if (kind === "all") { act("listAdd", "comun", it); toast("Propuesta a todos"); }
+    if (kind === "yes") toast("❤ A TU ESTANTE");
+    if (kind === "all") { act("listAdd", "comun", it); toast("📣 PROPUESTA A TODOS"); }
     const w = wantedBy(it.key);
     if (PROFILES.every(p => w.includes(p.id))) {
       if (!inList("comun", it.key)) act("listAdd", "comun", it);
@@ -568,10 +577,11 @@ function trendItems(plat, kind) {
 }
 function renderTop() {
   const v = $("v-top"); v.replaceChildren();
-  v.append(h("div", { class: "head" }, h("div", null, h("h1", null, "Lo más ", h("em", null, "visto")), h("p", null, S.trends ? `En España · ${S.trends.label}` : ""))));
+  v.append(h("div", { class: "head" }, h("div", null, h("h1", null, "Lo más ", h("span", { class: "hl" }, "alquilado")), h("p", null, S.trends ? `Lo más visto en España · ${S.trends.label}` : ""))));
   const plats = ownedTrendPlats();
   if (!plats.length) { v.append(empty("Elige vuestras plataformas", "Toca tu inicial arriba a la derecha y marca las que tenéis.", h("button", { class: "btn dark", onclick: openSettings }, "Elegir plataformas"))); return; }
   if (!plats.includes(S.topPlat)) S.topPlat = plats[0];
+  v.append(h("div", { class: "marquee", "aria-hidden": "true" }, Array.from({ length: 22 }, () => h("i"))));
   v.append(h("div", { class: "chips" }, plats.map(p => h("button", { class: "chip", "aria-pressed": p === S.topPlat ? "true" : "false", onclick: () => { S.topPlat = p; renderTop(); } },
     h("span", { class: "dot", style: `background:${PCOL[p] || "#111216"}` }), p === "Otras" ? "Apple TV y otras" : p))));
   const d = S.trends.platforms[S.topPlat];
@@ -579,7 +589,7 @@ function renderTop() {
   const top = series[0] || movies[0];
   if (top) {
     const bg = h("div", { class: "feature-bg" });
-    v.append(h("button", { class: "feature", onclick: () => openItem(top) }, bg, h("span", { class: "sticker" }, emo("🔥"), d.ranked ? `Nº 1 en ${S.topPlat === "Otras" ? "su plataforma" : S.topPlat}` : "Novedad"), h("div", { class: "feature-in" },
+    v.append(h("button", { class: "feature", onclick: () => openItem(top) }, bg, h("span", { class: "tag-price mag" }, d.ranked ? `Nº 1 en ${S.topPlat === "Otras" ? "su plataforma" : S.topPlat}` : "¡Novedad!"), h("div", { class: "feature-in" },
       h("b", null, top.title), top.overview ? h("span", { class: "feature-syn" }, top.overview) : null)));
     resolve(top).then(() => { const img = top.backdrop || top.poster; if (img) bg.style.backgroundImage = `url(${IMG}w780${img})`; });
   }
@@ -596,11 +606,11 @@ const attributionText = () => TMDB ? "Carátulas y datos de TMDB (esta app usa l
 function renderMine() {
   const v = $("v-mine"); v.replaceChildren();
   const who = S.mineOf || S.profile, mine = who === S.profile;
-  v.append(h("div", { class: "head" }, h("h1", null, mine ? h("span", null, "Mi ", h("em", null, "lista")) : h("span", null, "Lista de ", h("em", null, PROF[who].name)))));
+  v.append(h("div", { class: "head" }, h("h1", null, mine ? h("span", null, "Mi ", h("span", { class: "hl" }, "estante")) : h("span", null, "Estante de ", h("span", { class: "hl" }, PROF[who].name)))));
   v.append(h("div", { class: "chips wrap" }, PROFILES.map(p => h("button", { class: "chip", "aria-pressed": p.id === who ? "true" : "false", onclick: () => { S.mineOf = p.id; renderMine(); } }, avatar(p.id, "xs"), p.id === S.profile ? "Yo" : p.name))));
   const todo = S.data.lists.filter(x => x.owner === who), done = S.data.seen.filter(x => x.owner === who);
   v.append(h("div", { class: "seg" },
-    h("button", { "aria-pressed": S.mineTab === "todo" ? "true" : "false", onclick: () => { S.mineTab = "todo"; renderMine(); } }, `Quiero ver · ${todo.length}`),
+    h("button", { "aria-pressed": S.mineTab === "todo" ? "true" : "false", onclick: () => { S.mineTab = "todo"; renderMine(); } }, `Por ver · ${todo.length}`),
     h("button", { "aria-pressed": S.mineTab === "done" ? "true" : "false", onclick: () => { S.mineTab = "done"; renderMine(); } }, `Vistas · ${done.length}`)));
   const arr = S.mineTab === "todo" ? todo : done;
   if (!arr.length) {
@@ -609,7 +619,7 @@ function renderMine() {
       : empty("Nada visto todavía", "Marca 👀 en lo que ya hayas visto y ponle nota. Así no te lo vuelvo a proponer y aprendo lo que te gusta.", null, "👀"));
     return;
   }
-  v.append(h("div", { class: "grid" }, arr.map(x => {
+  v.append(h("div", { class: "shelf" }, arr.map(x => {
     const it = { ...x.item, key: x.key };
     const others2 = wantedBy(x.key).filter(u => u !== who);
     if (S.mineTab === "done") return tile(it, x.rating ? `${FACES[x.rating - 1][0]} ${FACES[x.rating - 1][1]}` : "Sin nota");
@@ -620,7 +630,7 @@ function renderMine() {
 /* ---------- Todos ---------- */
 function renderAll() {
   const v = $("v-all"); v.replaceChildren();
-  v.append(h("div", { class: "head" }, h("div", null, h("h1", null, "Para ", h("em", null, "todos")), h("p", null, "Lo que proponemos ver juntos. Toca un título para comentar."))));
+  v.append(h("div", { class: "head" }, h("div", null, h("h1", null, "Para ", h("span", { class: "hl" }, "todos")), h("p", null, "Lo que proponemos ver juntos. Toca un título para comentar."))));
   const all = S.data.lists.filter(x => x.owner === "comun");
   const everyone = k => PROFILES.every(p => seenBy(k).includes(p.id));
   const todo = all.filter(x => !everyone(x.key)), done = all.filter(x => everyone(x.key));
@@ -1025,8 +1035,8 @@ function openNight() {
       h("div", { class: "chat-head" }, emo("🍿"), h("div", null, h("h2", null, "Noche de peli"), h("p", { class: "note" }, "¿Quién la va a ver?"))),
       h("div", { class: "night-who" }, PROFILES.map(p => h("button", { "aria-pressed": who.has(p.id) ? "true" : "false", onclick: () => { if (who.has(p.id) && who.size > 1) who.delete(p.id); else who.add(p.id); paint(); } }, avatar(p.id, "sm"), p.id === S.profile ? "Yo" : p.name))),
       h("div", { class: "chips wrap", style: "justify-content:center" }, [["all", "Lo que sea"], ["movie", "Peli"], ["tv", "Serie"]].map(([k, l]) => h("button", { class: "chip", "aria-pressed": type === k ? "true" : "false", onclick: () => { type = k; paint(); } }, l))),
-      ranked.length ? h("div", { class: "wheel", id: "wheel" }, emo("🎰", ""), h("b", null, "¿No os decidís?"), h("p", { class: "note" }, `La ruleta elige entre ${ranked.length} título${ranked.length > 1 ? "s" : ""} de vuestras listas`),
-        h("button", { class: "btn sun", onclick: () => spin(ranked) }, "¡Girar la ruleta!")) : null,
+      ranked.length ? h("div", { class: "wheel", id: "wheel" }, h("div", { class: "reels", "aria-hidden": "true" }, h("i"), h("i")), h("span", { class: "lcd" }, "¿NO OS DECIDÍS?"), h("p", { class: "note" }, `La ruleta elige entre ${ranked.length} cinta${ranked.length > 1 ? "s" : ""} de vuestras listas`),
+        h("button", { class: "btn sun", onclick: () => spin(ranked) }, "⏩ ¡Girar la ruleta!")) : null,
       perfect.length ? h("div", { class: "sec" }, h("h2", null, sel.length > 1 ? "Os apetece a todos" : "Te apetece"), h("small", null, "")) : null,
       perfect.length ? h("div", { class: "grid" }, perfect.slice(0, 9).map(c => tile(c.it, "💯 Match"))) : null,
       ranked.filter(c => !perfect.includes(c)).length ? h("div", { class: "sec" }, h("h2", null, "También os puede encajar"), h("small", null, "")) : null,
@@ -1040,14 +1050,18 @@ function openNight() {
     const final = weighted[Math.floor(Math.random() * weighted.length)];
     let i = 0, delay = 60;
     const slot = h("div", { style: "width:150px" });
-    w.replaceChildren(h("b", null, "Girando…"), slot);
+    w.replaceChildren(h("div", { class: "reels spin", "aria-hidden": "true" }, h("i"), h("i")), h("span", { class: "lcd" }, "⏩ BUSCANDO CINTA…"), slot);
     const tick = () => {
       const c = i < 14 ? ranked[i % ranked.length] : final;
       slot.replaceChildren(posterEl(c.it, false)); i++;
       if (i <= 14) { delay *= 1.15; setTimeout(tick, delay); }
       else {
         spinning = false; confetti(90);
-        w.replaceChildren(h("span", { class: "sticker" }, emo("🎉"), "¡Esta noche toca!"), slot, h("b", null, final.it.title),
+        const d = new Date();
+        w.replaceChildren(h("div", { class: "ticket" },
+            h("div", null, "VIDEOCLUB ¿QUÉ VEMOS?"), h("div", null, `${d.toLocaleDateString("es-ES")}  ${d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}`), h("hr"),
+            h("div", null, "ESTA NOCHE TOCA:"), h("div", { class: "ttl" }, final.it.title), h("div", null, [typeLabel(final.it.type).toUpperCase(), final.it.year].filter(Boolean).join(" · ")), h("hr"),
+            h("div", null, `SOCIOS: ${[...who].map(u => PROF[u].name.toUpperCase()).join(", ")}`), h("div", null, "PALOMITAS ....... OBLIGATORIAS"), h("div", null, "DEVOLVER REBOBINADA")),
           h("div", { style: "display:flex;gap:8px;flex-wrap:wrap;justify-content:center" },
             h("button", { class: "btn sun", onclick: () => openItem(final.it) }, "Ver ficha"),
             h("button", { class: "btn", onclick: () => spin(ranked) }, "Otra vez")));
@@ -1099,6 +1113,57 @@ function openNews() {
   const b = $("bellN"); if (b) b.hidden = true;
 }
 
+/* ---------- tutorial ---------- */
+function demoCard(title, cls) {
+  return h("div", { class: "demo-card " + (cls || "") }, posterEl({ title, type: "movie" }, false), h("div", { class: "lbl" }, title));
+}
+const TOUR = [
+  { osd: "▶ PLAY", vis: () => h("div", { style: "display:flex;flex-direction:column;align-items:center;gap:14px" }, h("span", { class: "sign-box sign", style: "font-size:22px" }, "VIDEOCLUB"), h("span", { class: "emo pulse", style: "font-size:56px" }, "📼")),
+    t: () => `¡Hola, ${PROF[S.profile].name}!`, p: "Esto es vuestro videoclub: aquí decidís qué ver Oswaldo, Ana y Ángela. Te lo enseño todo en un minuto." },
+  { osd: "▶ DESLIZA", vis: () => h("div", { style: "position:relative;width:100%;height:100%;display:grid;place-items:center" }, h("div", { class: "demo-swipe" }, demoCard("Tu próxima peli")), h("div", { class: "demo-hint" }, h("span", null, "← DEVOLVER"), h("span", null, "ME LA LLEVO →"))),
+    t: () => "Desliza las cintas", list: [["❤️", "A la derecha: te apetece y va a tu estante."], ["✖️", "A la izquierda: paso, no te la vuelvo a enseñar."], ["🧠", "Con cada cinta aprendo lo que te gusta y afino las siguientes."]] },
+  { osd: "⏏ ARRIBA", vis: () => h("div", { style: "display:flex;flex-direction:column;align-items:center;gap:10px" }, h("div", { class: "demo-up" }, demoCard("Para los tres")), h("span", { class: "sign", style: "color:var(--vio);font-size:15px;background:#fff;padding:4px 10px;border-radius:6px" }, "¡A TODOS!")),
+    t: () => "Hacia arriba: ¡a todos!", list: [["📣", "Se la propones a los tres y aparece en «Todos»."], ["🎉", "Si a los tres os apetece la misma, hay match y confeti."]] },
+  { osd: "⏸ BOTONES", vis: () => h("div", { class: "demo-btns" }, h("span", { class: "act" }, emo("⏪"), "Atrás"), h("span", { class: "act seen" }, emo("👀"), "Vista"), h("span", { class: "act yes" }, emo("❤️"), "Llevo")),
+    t: () => "La botonera", list: [["⏪", "Atrás: deshace la última cinta."], ["👀", "Vista: ya la has visto. Le pones nota de 😖 a 🤩."], ["ℹ️", "El botón redondo de la cinta abre la contraportada: sinopsis, tráiler y dónde verla."]] },
+  { osd: "🔍 BUSCAR", vis: () => h("div", { style: "display:flex;flex-direction:column;gap:10px;align-items:center;padding:0 16px" }, h("div", { class: "searchbar", style: "pointer-events:none" }, "🔍 lesbianas, navidad, atracos…"), h("div", { class: "chips wrap", style: "justify-content:center" }, ["⚡ Miniseries", "⏱️ < 2 h", "🇪🇸 Españolas", "🧸 Con niños"].map(x => h("span", { class: "chip" }, x)))),
+    t: () => "Busca y filtra", list: [["🔍", "Busca por título o por tema, aunque la palabra no esté en el título."], ["🎛️", "Filtra las cintas: miniseries, menos de 2 h, españolas, con niños o una sola plataforma."]] },
+  { osd: "🍿 SESIÓN", vis: () => h("div", { style: "display:flex;gap:16px;align-items:center" }, h("span", { class: "emo", style: "font-size:56px" }, "🤖"), h("div", { class: "reels spin" }, h("i"), h("i")), h("span", { class: "emo", style: "font-size:56px" }, "🍿")),
+    t: () => "El dependiente y la noche de peli", list: [["🤖", "El dependiente: pídele lo que os apetece con tus palabras y te recomienda."], ["🍿", "Noche de peli: elige quién la ve, mira lo que os apetece a todos o deja que decida la ruleta."]] },
+  { osd: "🏆 TOP 10", vis: () => h("div", { class: "demo-row" }, h("span", { class: "bignum", style: "font-size:70px;padding-bottom:20px" }, "1"), demoCard("Lo más visto"), h("span", { class: "bignum", style: "font-size:70px;padding-bottom:20px" }, "2"), demoCard("Semana")),
+    t: () => "Lo más alquilado", p: "En «Top 10» tienes lo más visto esta semana en España, plataforma a plataforma. Se actualiza cada lunes." },
+  { osd: "📚 ESTANTES", vis: () => h("div", { class: "demo-row" }, demoCard("Por ver"), demoCard("Vista 🤩"), demoCard("De Ana")),
+    t: () => "Tu estante y el de todos", list: [["📚", "Mi estante: lo que quieres ver y lo que ya viste, con tu nota. También puedes cotillear el de los demás."], ["💬", "Todos: lo que proponéis ver juntos. Entra en una cinta para comentar o reaccionar."]] },
+  { osd: "🔔 AVISOS", vis: () => h("div", { style: "display:flex;flex-direction:column;gap:8px;padding:0 18px;width:100%" }, ["💬 Ana ha comentado: «¿El viernes?»", "💘 A Oswaldo también le apetece", "🆕 ¡Nueva temporada!"].map(x => h("div", { class: "fitem", style: "grid-template-columns:1fr;pointer-events:none;padding:8px 12px" }, h("p", null, x)))),
+    t: () => "La campana", p: "Arriba a la derecha te aviso de comentarios, propuestas, coincidencias y nuevas temporadas de vuestras series." },
+  { osd: "⏏ FIN", vis: () => h("div", { style: "display:flex;flex-direction:column;align-items:center;gap:10px" }, h("span", { class: "emo", style: "font-size:56px" }, "📲"), h("span", { class: "sign", style: "color:var(--sun);font-size:18px" }, "¡A VER PELIS!")),
+    t: () => "Llévala en el móvil", list: [["🍎", "iPhone: Compartir → «Añadir a pantalla de inicio»."], ["🤖", "Android: menú ⋮ → «Instalar aplicación»."], ["📼", "Puedes volver a ver este tutorial desde tu carnet, arriba a la derecha."]] },
+];
+function openTour() {
+  let i = 0;
+  const box = $("tour");
+  const close = () => { box.hidden = true; box.replaceChildren(); store.set("qv_tour_" + S.profile, 1); document.removeEventListener("keydown", onKey); };
+  const go2 = n => { i = Math.max(0, Math.min(TOUR.length - 1, n)); paint(); };
+  const onKey = e => { if (e.key === "ArrowRight") go2(i + 1); else if (e.key === "ArrowLeft") go2(i - 1); else if (e.key === "Escape") close(); };
+  const paint = () => {
+    const sl = TOUR[i], last = i === TOUR.length - 1;
+    fill(box, h("div", { class: "tour-card" },
+      h("div", { class: "tour-tv" }, h("span", { class: "osd" }, sl.osd), h("span", { class: "osd osd-r" }, `CH ${String(i + 1).padStart(2, "0")}`), sl.vis()),
+      h("div", { class: "tour-body" }, h("h2", null, sl.t()), sl.p ? h("p", null, sl.p) : null,
+        sl.list ? h("ul", null, sl.list.map(([e, t]) => h("li", null, emo(e), h("span", null, t)))) : null),
+      h("div", { class: "tour-nav" },
+        i === 0 ? h("button", { class: "tour-skip", onclick: close }, "Saltar") : h("button", { class: "tour-skip", onclick: () => go2(i - 1) }, "← Atrás"),
+        h("div", { class: "tour-dots", "aria-label": `Paso ${i + 1} de ${TOUR.length}` }, TOUR.map((_, k) => h("i", { class: k === i ? "on" : "" }))),
+        h("button", { class: "btn " + (last ? "mag" : "dark"), onclick: () => last ? close() : go2(i + 1) }, last ? "¡A ver pelis!" : "Siguiente"))));
+  };
+  box.hidden = false;
+  document.addEventListener("keydown", onKey);
+  let sx = null;
+  box.onpointerdown = e => { sx = e.clientX; };
+  box.onpointerup = e => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 60) go2(i + (dx < 0 ? 1 : -1)); };
+  paint();
+}
+
 /* ---------- ajustes ---------- */
 function openSettings() {
   const me = PROF[S.profile];
@@ -1110,7 +1175,8 @@ function openSettings() {
         e.currentTarget.setAttribute("aria-pressed", S.plats.includes(p.id) ? "true" : "false"); S.deck = []; } },
         PROV && PROV.logos[p.id] ? h("img", { src: IMG + "w92" + PROV.logos[p.id], alt: "" }) : h("span", { class: "dot", style: `background:${p.c}` }), p.id)))),
     h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
-      h("button", { class: "btn", onclick: () => { closeSheet(); logout(false); } }, "Cambiar de perfil"),
+      h("button", { class: "btn sun", onclick: () => { closeSheet(); openTour(); } }, "📼 Ver el tutorial"),
+      h("button", { class: "btn", onclick: () => { closeSheet(); logout(false); } }, "Cambiar de socio"),
       REMOTE ? h("button", { class: "btn", onclick: () => { closeSheet(); logout(true); } }, "Salir") : null),
     h("p", { class: "note" }, "Instálala como app: en iPhone, Compartir → «Añadir a pantalla de inicio». En Android, menú ⋮ → «Instalar aplicación»."),
     h("p", { class: "foot" }, attributionText())));
@@ -1120,10 +1186,11 @@ function openSettings() {
 let pinBuf = "", chosen = null;
 function showLogin() {
   $("app").hidden = true; $("login").hidden = false;
-  $("who").replaceChildren(...PROFILES.map(p => h("button", { "aria-pressed": chosen === p.id ? "true" : "false", onclick: () => pick(p.id) }, avatar(p.id), p.name)));
+  $("who").replaceChildren(...PROFILES.map((p, i) => h("button", { class: "card-socio", style: `--c:${p.color}`, "aria-pressed": chosen === p.id ? "true" : "false", onclick: () => pick(p.id) },
+    avatar(p.id), h("span", null, h("span", { class: "who-n" }, p.name), h("span", { class: "who-s", style: "display:block" }, `SOCIO Nº 000${i + 1}`)), h("span", { class: "barcode", "aria-hidden": "true" }))));
   const needPin = !!(chosen && REMOTE && !S.pin);
   $("pinbox").hidden = !needPin;
-  $("loginSub").textContent = needPin ? `Hola, ${PROF[chosen].name}. Mete el PIN de casa` : "¿Quién eres?";
+  $("loginSub").textContent = needPin ? `Hola, ${PROF[chosen].name}. Teclea el PIN de casa` : "Enseña tu carnet de socio";
 }
 function pick(id) { chosen = id; if (REMOTE && !S.pin) { pinBuf = ""; showLogin(); paintPin(); return; } enter(id); }
 function paintPin(err) { $("pindots").querySelectorAll("i").forEach((d, i) => d.classList.toggle("on", i < pinBuf.length)); $("pinerr").textContent = err || ""; }
@@ -1146,6 +1213,7 @@ async function enter(id) {
   $("login").hidden = true; $("app").hidden = false;
   $("meBtn").replaceChildren(avatar(id, "sm"));
   go("discover");
+  if (!store.get("qv_tour_" + id, 0)) openTour();
   await refresh(true);
   buildDeck(true);
 }

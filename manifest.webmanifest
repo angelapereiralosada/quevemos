@@ -3,8 +3,8 @@
   "short_name": "Qué vemos",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f6f3ff",
-  "theme_color": "#f6f3ff",
+  "background_color": "#f6f7fb",
+  "theme_color": "#f6f7fb",
   "icons": [
     {
       "src": "icon.svg",
