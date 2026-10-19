@@ -17,6 +17,18 @@ const PROFILES = [
   { id: "angela", name: "Ángela", color: "#4a6bff" },
 ];
 const PROF = Object.fromEntries(PROFILES.map(p => [p.id, p]));
+const PERSONAL = ["oswaldo", "ana", "angela"];
+const SHARED = [
+  { id: "casina", name: "Casiña", short: "Casiña", emo: "🏠", members: ["angela", "oswaldo"], c: "#00bfb3" },
+  { id: "os3", name: "Cando estemos os 3", short: "Os 3", emo: "🍿", members: ["oswaldo", "ana", "angela"], c: "#ff2e88" },
+  { id: "aitor", name: "Para ver co Aitor", short: "Co Aitor", emo: "💑", members: ["ana"], c: "#6c4cff" },
+];
+const LIST = Object.fromEntries(SHARED.map(l => [l.id, l]));
+const canRead = (u, l) => PERSONAL.includes(l) || (LIST[l] ? LIST[l].members.includes(u) : false);
+const myLists = () => [{ id: S.profile, name: "Mi lista", short: "Mi lista", emo: "❤️", members: [S.profile], c: "#ffd60a", personal: true }, ...SHARED.filter(l => l.members.includes(S.profile))];
+const listName = id => PERSONAL.includes(id) ? (id === S.profile ? "Mi lista" : "la lista de " + PROF[id].name) : LIST[id] ? LIST[id].name : id;
+const listEmo = id => PERSONAL.includes(id) ? "❤️" : LIST[id] ? LIST[id].emo : "📼";
+const membersOf = id => PERSONAL.includes(id) ? [id] : LIST[id] ? LIST[id].members : [];
 const PLATFORMS = [
   { id: "Netflix", re: /^netflix$/i, c: "#e50914" },
   { id: "Prime Video", re: /^(amazon )?prime video$/i, c: "#1399ff" },
@@ -24,6 +36,7 @@ const PLATFORMS = [
   { id: "Disney+", re: /^disney (plus|\+)$/i, c: "#113ccf" },
   { id: "Movistar Plus+", re: /^movistar/i, c: "#0b8fd6" },
   { id: "Atresplayer", re: /^atres ?player/i, c: "#ff6b00" },
+  { id: "Mitele", re: /^mitele/i, c: "#00a1e4" },
   { id: "Filmin", re: /^filmin$/i, c: "#111216" },
   { id: "Apple TV", re: /^apple tv/i, c: "#111216" },
   { id: "SkyShowtime", re: /^skyshowtime$/i, c: "#2f1e6e" },
@@ -31,7 +44,8 @@ const PLATFORMS = [
 ];
 const PCOL = Object.fromEntries(PLATFORMS.map(p => [p.id, p.c]));
 PCOL.Otras = "#111216";
-const DEFAULT_PLATS = ["Netflix", "Prime Video", "HBO Max", "Disney+", "Movistar Plus+", "Atresplayer"];
+const DEFAULT_PLATS = ["Netflix", "Prime Video", "HBO Max", "Disney+", "Movistar Plus+", "Atresplayer", "Mitele"];
+const LIVE_TOP = ["Atresplayer", "Mitele"];
 const OTHER_GROUP = ["Apple TV", "SkyShowtime", "Filmin"];
 const GENRE = { 28: "acción", 12: "aventuras", 16: "animación", 35: "comedia", 80: "crimen", 99: "documentales", 18: "drama", 10751: "familia", 14: "fantasía", 36: "historia", 27: "terror", 10402: "música", 9648: "misterio", 10749: "romance", 878: "ciencia ficción", 53: "suspense", 10752: "bélicas", 37: "western", 10759: "acción", 10762: "infantil", 10764: "realities", 10765: "ciencia ficción", 10766: "telenovelas", 10768: "política y guerra" };
 // equivalencias entre géneros de series y de películas para aprender gustos
@@ -99,9 +113,9 @@ const typeLabel = t => t === "tv" ? "Serie" : "Película";
 const S = {
   profile: store.get("qv_profile", null),
   pin: store.get("qv_pin", null),
-  plats: store.get("qv_plats", DEFAULT_PLATS),
+  plats: (() => { let p = store.get("qv_plats", DEFAULT_PLATS); if (!store.get("qv_plats_v4", 0)) { for (const x of ["Atresplayer", "Mitele"]) if (!p.includes(x)) p.push(x); store.set("qv_plats", p); store.set("qv_plats_v4", 1); } return p; })(),
   data: { lists: [], seen: [], nopes: [], comments: [] },
-  view: "discover",
+  view: "discover", listSel: null, listTab: "todo",
   f: { type: "all", plat: null, short: false, mini: false, es: false, kids: false },
   deck: [], deckBusy: false, deckRound: 0, swiped: new Set(), history: [],
   topPlat: null, mineOf: null, mineTab: "todo", allTab: "todo",
@@ -126,7 +140,7 @@ const M = {
   listAdd(owner, it) {
     const d = S.data;
     if (!d.lists.some(x => x.owner === owner && x.key === it.key)) d.lists.unshift({ owner, key: it.key, item: slim(it), by: S.profile, at: now() });
-    if (owner !== "comun") d.nopes = d.nopes.filter(x => !(x.owner === owner && x.key === it.key));
+    if (PERSONAL.includes(owner)) d.nopes = d.nopes.filter(x => !(x.owner === owner && x.key === it.key));
     return REMOTE ? rpc("qv_list_add", { p_pin: S.pin, p_owner: owner, p_key: it.key, p_item: slim(it), p_by: S.profile }) : null;
   },
   listRemove(owner, key) {
@@ -160,9 +174,9 @@ const M = {
     S.data.nopes = S.data.nopes.filter(x => !(x.owner === S.profile && x.key === key));
     return REMOTE ? rpc("qv_unnope", { p_pin: S.pin, p_owner: S.profile, p_key: key }) : null;
   },
-  commentAdd(it, body) {
-    S.data.comments.push({ id: "tmp" + Date.now(), key: it.key, item: slim(it), author: S.profile, body, at: now() });
-    return REMOTE ? rpc("qv_comment_add", { p_pin: S.pin, p_key: it.key, p_item: slim(it), p_author: S.profile, p_body: body }) : null;
+  commentAdd(list, it, body) {
+    S.data.comments.push({ id: "tmp" + Date.now() + Math.random(), list, key: it.key, item: slim(it), author: S.profile, body, at: now() });
+    return REMOTE ? rpc("qv_comment_add", { p_pin: S.pin, p_list: list, p_key: it.key, p_item: slim(it), p_author: S.profile, p_body: body }) : null;
   },
   commentDelete(id) {
     S.data.comments = S.data.comments.filter(c => c.id !== id);
@@ -185,7 +199,7 @@ async function refresh(silent) {
   if (!REMOTE) { S.data = Object.assign({ lists: [], seen: [], nopes: [], comments: [] }, store.get("qv_localdb3", {})); paintBadge(); computeNews(); if (!silent) rerender(); return; }
   if (S.inflight) return;
   try {
-    const d = await rpc("qv_state", { p_pin: S.pin });
+    const d = await rpc("qv_state", { p_pin: S.pin, p_user: S.profile });
     if (S.inflight) return;
     S.data = { lists: d.lists || [], seen: d.seen || [], nopes: d.nopes || [], comments: d.comments || [] };
     paintBadge(); computeNews();
@@ -196,11 +210,13 @@ async function refresh(silent) {
   }
 }
 const inList = (owner, key) => S.data.lists.some(x => x.owner === owner && x.key === key);
-const wantedBy = key => S.data.lists.filter(x => x.owner !== "comun" && x.key === key).map(x => x.owner);
+const wantedBy = key => S.data.lists.filter(x => PERSONAL.includes(x.owner) && x.key === key).map(x => x.owner);
+const visLists = () => S.data.lists.filter(x => canRead(S.profile, x.owner));
+const listsOf = key => visLists().filter(x => x.key === key).map(x => x.owner);
 const seenBy = key => S.data.seen.filter(x => x.key === key).map(x => x.owner);
 const isSeen = key => S.data.seen.some(x => x.owner === S.profile && x.key === key);
 const isNope = key => S.data.nopes.some(x => x.owner === S.profile && x.key === key);
-const commentsOf = key => S.data.comments.filter(c => c.key === key);
+const commentsOf = (key, list) => S.data.comments.filter(c => c.key === key && canRead(S.profile, c.list || "os3") && (!list || (c.list || "os3") === list));
 
 /* ---------- TMDB ---------- */
 const mem = new Map();
@@ -248,7 +264,7 @@ async function resolve(it, alt) {
   if (b) Object.assign(it, { id: b.id, poster: b.poster, backdrop: b.backdrop, vote: b.vote, g: b.g, lang: b.lang, otitle: b.otitle, year: it.year || b.year, overview: it.overview || b.overview, key: b.key });
   return it;
 }
-let PROV = store.get("qv_prov3", null);
+let PROV = store.get("qv_prov4", null);
 async function loadProviders() {
   if (!TMDB || (PROV && Date.now() - PROV.t < 7 * 864e5)) return;
   try {
@@ -260,7 +276,7 @@ async function loadProviders() {
       const pl = PLATFORMS.find(x => x.re.test(name)); if (!pl) continue;
       map[p.provider_id] = pl.id; if (!logos[pl.id]) logos[pl.id] = p.logo_path;
     }
-    PROV = { t: Date.now(), map, logos }; store.set("qv_prov3", PROV);
+    PROV = { t: Date.now(), map, logos }; store.set("qv_prov4", PROV);
   } catch (e) { PROV = null; }
 }
 const providerIds = plats => PROV ? Object.entries(PROV.map).filter(([, p]) => plats.includes(p)).map(([id]) => id) : [];
@@ -285,7 +301,7 @@ function tasteOf(user) {
   const w = {};
   const add = (g, v) => { for (const id of g || []) { w[id] = (w[id] || 0) + v; for (const e of GEQ[id] || []) w[e] = (w[e] || 0) + v * .6; } };
   S.data.lists.filter(x => x.owner === user).forEach(x => add(x.item.g, 2));
-  S.data.lists.filter(x => x.owner === "comun" && x.by === user).forEach(x => add(x.item.g, 1));
+  S.data.lists.filter(x => !PERSONAL.includes(x.owner) && x.by === user).forEach(x => add(x.item.g, 1));
   S.data.seen.filter(x => x.owner === user).forEach(x => add(x.item.g, x.rating ? (x.rating - 3) * 1.3 + (x.rating >= 4 ? 1 : 0) : 1));
   S.data.nopes.filter(x => x.owner === user).forEach(x => add(x.item.g, -1.2));
   const n = S.data.lists.filter(x => x.owner === user).length + S.data.seen.filter(x => x.owner === user).length + S.data.nopes.filter(x => x.owner === user).length;
@@ -334,7 +350,7 @@ async function fillDeck() {
     const both = wantedBy(x.key).filter(u => u !== me);
     add(it, both.length > 1 ? "A los dos les apetece: ¿hacéis match?" : `A ${PROF[o].name} le apetece`, 2.2 * both.length, false);
   }
-  if (!strict) S.data.lists.filter(x => x.owner === "comun").forEach(x => add({ ...x.item, key: x.key }, "Está en la lista de todos", 1.6, false));
+  if (!strict) visLists().filter(x => !PERSONAL.includes(x.owner)).forEach(x => add({ ...x.item, key: x.key }, `Está en ${LIST[x.owner].short}`, 1.6, false));
 
   if (TMDB && ids) {
     // 2) Parecidas a lo que te gustó
@@ -417,21 +433,17 @@ const ratingOf = (user, key) => { const x = S.data.seen.find(s => s.owner === us
 function rerender(silent) {
   if (S.view === "discover") { if (!silent) paintDiscover(); }
   else if (S.view === "top") renderTop();
-  else if (S.view === "mine") renderMine();
-  else if (S.view === "all") renderAll();
+  else if (S.view === "lists") renderLists();
   if (S.openKey && !$("sheet").hidden && $("dSocial")) paintSocial();
 }
 function go(view) {
   S.view = view; document.body.dataset.view = view;
-  for (const v of ["discover", "top", "mine", "all"]) $("v-" + v).hidden = v !== view;
+  for (const v of ["discover", "top", "lists"]) $("v-" + v).hidden = v !== view;
   document.querySelectorAll(".tabbar button").forEach(b => { if (b.dataset.v === view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   rerender();
   window.scrollTo(0, 0);
 }
-function paintBadge() {
-  const n = S.data.lists.filter(x => x.owner === "comun" && !seenBy(x.key).includes(S.profile)).length;
-  const b = $("allBadge"); if (b) { b.hidden = !n; b.textContent = n; }
-}
+function paintBadge() {}
 
 /* ---------- Descubrir ---------- */
 function paintDiscover() {
@@ -459,12 +471,11 @@ function paintDiscover() {
         A("", "⏪", "Atrás", undo, "undoBtn"),
         A("no", "✖️", "Paso", () => swipeTop("no")),
         A("seen", "👀", "Vista", () => swipeTop("seen")),
-        A("all", "📣", "Todos", () => swipeTop("all")),
         A("yes", "❤️", "Llevar", () => swipeTop("yes"))))));
   v.append(h("div", { class: "duo" },
     h("button", { class: "ask ai", onclick: openChat }, emo("🤖"), h("b", null, "El dependiente"), h("span", null, "Pídele algo: «risa, nada largo»")),
     h("button", { class: "ask night", onclick: openNight }, emo("🍿"), h("b", null, "Noche de peli"), h("span", null, "Lo que os apetece a todos y ruleta"))));
-  v.append(h("p", { class: "foot" }, "Desliza la cinta: a la derecha te la llevas, a la izquierda la devuelves y hacia arriba se la propones a todos."));
+  v.append(h("p", { class: "foot" }, "Desliza la cinta: a la derecha la guardas (y eliges en qué lista), a la izquierda la devuelves."));
   paintDeck();
   if (S.deck.length < 4 && !S.deckBusy) buildDeck(false);
 }
@@ -505,7 +516,7 @@ function cardEl(c, depth) {
     h("div", { class: "vhs-top" }, h("b", null, "VHS"), h("span", null, it.type === "tv" ? "SERIE · SP" : "HI-FI STEREO")),
     h("div", { class: "cover" }, posterEl(it, false)),
     depth === 0 ? whyTag(c.why) : null,
-    h("span", { class: "stamp yes" }, "¡ME LA LLEVO!"), h("span", { class: "stamp no" }, "DEVUELTA"), h("span", { class: "stamp all" }, "¡A TODOS!"),
+    h("span", { class: "stamp yes" }, "¡LA GUARDO!"), h("span", { class: "stamp no" }, "DEVUELTA"),
     depth === 0 ? h("button", { class: "card-tap", "aria-label": "Ver la contraportada", onclick: e => { e.stopPropagation(); openItem(it); } }, svg("info")) : null,
     h("div", { class: "vhs-label" }, h("h3", null, it.title), meta));
   if (depth === 0) providersOf(it).then(pv => { if (pv && pv.own.length) fill(provBox, ...pv.own.slice(0, 3).map(p => p.logo ? h("img", { src: IMG + "w92" + p.logo, alt: p.name, title: p.name }) : null)); });
@@ -514,14 +525,14 @@ function cardEl(c, depth) {
 }
 function bindSwipe(el, c) {
   let sx = 0, sy = 0, dx = 0, dy = 0, drag = false, moved = false;
-  const stamps = { yes: el.querySelector(".stamp.yes"), no: el.querySelector(".stamp.no"), all: el.querySelector(".stamp.all") };
-  const setStamps = () => { stamps.yes.style.opacity = Math.max(0, Math.min(1, dx / 90)); stamps.no.style.opacity = Math.max(0, Math.min(1, -dx / 90)); stamps.all.style.opacity = Math.abs(dx) < 60 ? Math.max(0, Math.min(1, -dy / 110)) : 0; };
+  const stamps = { yes: el.querySelector(".stamp.yes"), no: el.querySelector(".stamp.no") };
+  const setStamps = () => { stamps.yes.style.opacity = Math.max(0, Math.min(1, dx / 90)); stamps.no.style.opacity = Math.max(0, Math.min(1, -dx / 90)); };
   el.addEventListener("pointerdown", e => { if (e.target.closest(".card-tap")) return; drag = true; moved = false; sx = e.clientX; sy = e.clientY; dx = dy = 0; el.style.transition = "none"; el.setPointerCapture(e.pointerId); });
   el.addEventListener("pointermove", e => { if (!drag) return; dx = e.clientX - sx; dy = e.clientY - sy; if (Math.abs(dx) + Math.abs(dy) > 6) moved = true; el.style.transform = `translate(${dx}px,${dy}px) rotate(${dx / 18}deg)`; setStamps(); });
   const end = () => {
     if (!drag) return; drag = false;
     if (!moved) { el.style.transform = ""; openItem(c.it); return; }
-    if (dx > 110) fly(el, "yes"); else if (dx < -110) fly(el, "no"); else if (dy < -130 && Math.abs(dx) < 80) fly(el, "all");
+    if (dx > 110) fly(el, "yes"); else if (dx < -110) fly(el, "no");
     else { el.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1)"; el.style.transform = ""; dx = dy = 0; setStamps(); }
   };
   el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
@@ -543,17 +554,23 @@ function fly(el, kind) {
 function decide(kind) {
   const c = S.deck.shift(); if (!c) return;
   const it = c.it; S.swiped.add(it.key);
-  S.history.push({ kind, it, c });
+  const hist = { kind, it, c, added: [] };
+  S.history.push(hist);
   if (S.history.length > 20) S.history.shift();
-  if (kind === "yes" || kind === "all") {
+  if (kind === "yes") {
     act("listAdd", S.profile, it);
-    if (kind === "yes") toast("❤ A TU ESTANTE");
-    if (kind === "all") { act("listAdd", "comun", it); toast("📣 PROPUESTA A TODOS"); }
     const w = wantedBy(it.key);
+    let matched = false;
     if (PROFILES.every(p => w.includes(p.id))) {
-      if (!inList("comun", it.key)) act("listAdd", "comun", it);
-      toast(`🎉 ¡Match! A los tres os apetece ${it.title}`, "match"); confetti();
-    } else if (kind === "yes" && w.length === 2) { toast(`💘 ¡A ${PROF[w.find(u => u !== S.profile)].name} también le apetece!`, "match"); confetti(60); }
+      if (!inList("os3", it.key)) { act("listAdd", "os3", it); hist.added.push("os3"); }
+      toast(`🎉 ¡Match! A los tres os apetece ${it.title}. Va a «Os 3»`, "match"); confetti(); matched = true;
+    } else if (LIST.casina.members.includes(S.profile) && LIST.casina.members.every(u => w.includes(u))) {
+      if (!inList("casina", it.key)) { act("listAdd", "casina", it); hist.added.push("casina"); }
+      toast(`💘 ¡Match en Casiña! A los dos os apetece ${it.title}`, "match"); confetti(70); matched = true;
+    } else if (w.length === 2) { toast(`💘 ¡A ${PROF[w.find(u => u !== S.profile)].name} también le apetece!`, "match"); confetti(50); matched = true; }
+    paintDeck();
+    setTimeout(() => openSave(it, hist), matched ? 900 : 120);
+    return;
   } else if (kind === "no") act("nope", it);
   else if (kind === "seen") { if (!isSeen(it.key)) act("rate", it, null); openRate(it); }
   paintDeck();
@@ -561,12 +578,46 @@ function decide(kind) {
 function undo() {
   const last = S.history.pop(); if (!last) return;
   const it = last.it;
-  if (last.kind === "yes" || last.kind === "all") { act("listRemove", S.profile, it.key); if (last.kind === "all") act("listRemove", "comun", it.key); }
+  if (last.kind === "yes") { act("listRemove", S.profile, it.key); for (const l of last.added) act("listRemove", l, it.key); }
   else if (last.kind === "no") act("unnope", it.key);
   else if (last.kind === "seen" && isSeen(it.key)) act("seenToggle", it);
   S.swiped.delete(it.key);
   S.deck.unshift(last.c);
+  toast("⏪ REBOBINADO");
   paintDeck();
+}
+
+/* ---------- guardar: elegir listas y comentar ---------- */
+const QUICK = ["🔥 ¡Tiene pintaza!", "🍿 ¿Esta noche?", "😂 Para reírnos", "😱 Para pasar miedo", "💬 Me la recomendaron"];
+function openSave(it, hist) {
+  it.key = it.key || keyOf(it);
+  const lists = myLists();
+  const sel = new Set(lists.filter(l => inList(l.id, it.key)).map(l => l.id));
+  if (hist) sel.add(S.profile);
+  const ta = h("textarea", { class: "field", id: "saveCmt", rows: "2", maxlength: "1000", placeholder: "Escribe algo para los demás (opcional)", style: "width:100%" });
+  const listBox = h("div", { class: "save-lists" });
+  const paintLists = () => fill(listBox, lists.map(l => h("button", { class: "save-list" + (sel.has(l.id) ? " on" : ""), style: `--lc:${l.c}`, "aria-pressed": sel.has(l.id) ? "true" : "false",
+    onclick: () => { sel.has(l.id) ? sel.delete(l.id) : sel.add(l.id); paintLists(); } },
+    h("span", { class: "sl-emo" }, emo(l.emo)), h("span", { class: "sl-txt" }, h("b", null, l.name), h("small", null, l.personal ? "Solo tuya" : l.members.length === 3 ? "La veis los tres" : l.members.length === 1 ? "Solo la ves tú" : "La veis " + l.members.map(u => u === S.profile ? "tú" : PROF[u].name).join(" y "))),
+    h("span", { class: "sl-check" }, sel.has(l.id) ? "✓" : ""))));
+  paintLists();
+  const save = () => {
+    const was = new Set(lists.filter(l => inList(l.id, it.key)).map(l => l.id));
+    for (const l of lists) {
+      if (sel.has(l.id) && !was.has(l.id)) { act("listAdd", l.id, it); if (hist && l.id !== S.profile) hist.added.push(l.id); }
+      if (!sel.has(l.id) && was.has(l.id)) act("listRemove", l.id, it.key);
+    }
+    const t = ta.value.trim();
+    if (t) { const targets = [...sel].filter(id => !PERSONAL.includes(id)); (targets.length ? targets : sel.size ? [...sel] : [S.profile]).forEach(id => act("commentAdd", id, it, t)); }
+    const names = lists.filter(l => sel.has(l.id)).map(l => l.short);
+    toast(names.length ? `💾 GUARDADA EN ${names.join(" + ").toUpperCase()}` : "QUITADA DE TUS LISTAS");
+    closeSheet();
+  };
+  openSheet(h("div", { class: "settings" },
+    h("div", { class: "save-head" }, h("div", { style: "width:64px" }, posterEl(it, false)), h("div", null, h("span", { class: "strip sun" }, hist ? "¡GUARDADA!" : "GUARDAR"), h("h2", null, it.title))),
+    h("div", { class: "box" }, h("h4", null, "¿En qué listas?"), listBox),
+    h("div", { class: "box" }, h("h4", null, "Comentario"), h("div", { class: "quick-reacts" }, QUICK.map(q => h("button", { onclick: () => { ta.value = q; } }, q))), ta),
+    h("button", { class: "btn dark", style: "width:100%;font-size:17px", onclick: save }, "💾 Guardar")));
 }
 
 /* ---------- Top ---------- */
@@ -578,12 +629,13 @@ function trendItems(plat, kind) {
 function renderTop() {
   const v = $("v-top"); v.replaceChildren();
   v.append(h("div", { class: "head" }, h("div", null, h("h1", null, "Lo más ", h("span", { class: "hl" }, "alquilado")), h("p", null, S.trends ? `Lo más visto en España · ${S.trends.label}` : ""))));
-  const plats = ownedTrendPlats();
+  const plats = [...ownedTrendPlats(), ...LIVE_TOP.filter(p => S.plats.includes(p))];
   if (!plats.length) { v.append(empty("Elige vuestras plataformas", "Toca tu inicial arriba a la derecha y marca las que tenéis.", h("button", { class: "btn dark", onclick: openSettings }, "Elegir plataformas"))); return; }
   if (!plats.includes(S.topPlat)) S.topPlat = plats[0];
   v.append(h("div", { class: "marquee", "aria-hidden": "true" }, Array.from({ length: 22 }, () => h("i"))));
   v.append(h("div", { class: "chips" }, plats.map(p => h("button", { class: "chip", "aria-pressed": p === S.topPlat ? "true" : "false", onclick: () => { S.topPlat = p; renderTop(); } },
-    h("span", { class: "dot", style: `background:${PCOL[p] || "#111216"}` }), p === "Otras" ? "Apple TV y otras" : p))));
+    h("span", { class: "dot", style: `background:${PCOL[p] || "#111216"}` }), p === "Otras" ? "Apple TV y otras" : p === "Mitele" ? "Mitele (Mediaset)" : p))));
+  if (LIVE_TOP.includes(S.topPlat)) { renderLiveTop(v, S.topPlat); return; }
   const d = S.trends.platforms[S.topPlat];
   const series = trendItems(S.topPlat, "tv"), movies = trendItems(S.topPlat, "movie");
   const top = series[0] || movies[0];
@@ -600,64 +652,81 @@ function renderTop() {
   }
   v.append(h("p", { class: "foot" }, "Fuente: " + d.source + ". " + attributionText()));
 }
+// Atresplayer y Mitele no publican ranking: lo más popular ahora mismo en su catálogo según TMDB
+async function renderLiveTop(v, p) {
+  const box = h("div", { class: "view" }, h("div", { class: "rail" }, Array.from({ length: 4 }, () => h("div", { class: "tile" }, h("div", { class: "poster skel" })))));
+  v.append(box);
+  const ids = providerIds([p]).join("|");
+  if (!TMDB || !ids) { fill(box, h("p", { class: "note" }, "No puedo consultar el catálogo de esta plataforma ahora mismo.")); return; }
+  const base = { watch_region: "ES", with_watch_providers: ids, with_watch_monetization_types: "flatrate|free|ads", sort_by: "popularity.desc", "vote_count.gte": 5 };
+  const [tv, mv] = await Promise.all(["tv", "movie"].map(t => tmdb(`/discover/${t}`, { ...base, without_genres: t === "tv" ? "10763,10767" : undefined }, 12).then(r => r.results.slice(0, 10).map(z => fromTmdb(z, t))).catch(() => [])));
+  if (S.topPlat !== p || S.view !== "top") return;
+  const top = tv[0] || mv[0];
+  const kids = [];
+  if (top) {
+    const bg = h("div", { class: "feature-bg", style: top.backdrop || top.poster ? `background-image:url(${IMG}w780${top.backdrop || top.poster})` : "" });
+    kids.push(h("button", { class: "feature", onclick: () => openItem(top) }, bg, h("span", { class: "tag-price mag" }, `Lo más popular en ${p}`), h("div", { class: "feature-in" }, h("b", null, top.title), top.overview ? h("span", { class: "feature-syn" }, top.overview) : null)));
+  }
+  for (const [items, lab] of [[tv, "Series"], [mv, "Películas"]]) if (items.length) kids.push(h("div", { class: "sec" }, h("h2", null, lab), h("small", null, "Populares ahora")), h("div", { class: "rail" }, items.map((it, i) => tile(it, undefined, i + 1))));
+  if (!kids.length) kids.push(h("p", { class: "note" }, "No encuentro títulos ahora mismo."));
+  kids.push(h("p", { class: "foot" }, `${p === "Mitele" ? "Mitele (Mediaset)" : p} no publica ranking: esto es lo más popular de su catálogo según TMDB. ` + attributionText()));
+  fill(box, kids);
+}
 const attributionText = () => TMDB ? "Carátulas y datos de TMDB (esta app usa la API de TMDB pero no está avalada por TMDB). Disponibilidad: JustWatch." : "";
 
-/* ---------- Mi lista ---------- */
-function renderMine() {
-  const v = $("v-mine"); v.replaceChildren();
-  const who = S.mineOf || S.profile, mine = who === S.profile;
-  v.append(h("div", { class: "head" }, h("h1", null, mine ? h("span", null, "Mi ", h("span", { class: "hl" }, "estante")) : h("span", null, "Estante de ", h("span", { class: "hl" }, PROF[who].name)))));
-  v.append(h("div", { class: "chips wrap" }, PROFILES.map(p => h("button", { class: "chip", "aria-pressed": p.id === who ? "true" : "false", onclick: () => { S.mineOf = p.id; renderMine(); } }, avatar(p.id, "xs"), p.id === S.profile ? "Yo" : p.name))));
-  const todo = S.data.lists.filter(x => x.owner === who), done = S.data.seen.filter(x => x.owner === who);
+/* ---------- Listas ---------- */
+function renderLists() {
+  const v = $("v-lists"); v.replaceChildren();
+  const lists = myLists();
+  if (!lists.some(l => l.id === S.listSel)) S.listSel = S.profile;
+  const L = lists.find(l => l.id === S.listSel);
+  v.append(h("div", { class: "head" }, h("div", null, h("h1", null, "Las ", h("span", { class: "hl" }, "listas")), h("p", null, "Toca una lista para ver lo que hay y comentar."))));
+  const count = id => visLists().filter(x => x.owner === id).length;
+  v.append(h("div", { class: "list-picker" }, lists.map(l => h("button", { class: "lp" + (l.id === S.listSel ? " on" : ""), style: `--lc:${l.c}`, onclick: () => { S.listSel = l.id; renderLists(); } },
+    h("span", { class: "lp-emo" }, emo(l.emo)), h("b", null, l.short), h("span", { class: "lp-n" }, `${count(l.id)} cinta${count(l.id) === 1 ? "" : "s"}`),
+    h("span", { class: "stack" }, l.members.map(u => avatar(u, "xs")))))));
+  const mem = L.members;
+  const all = visLists().filter(x => x.owner === L.id);
+  const doneByAll = k => mem.every(u => seenBy(k).includes(u));
+  const todo = all.filter(x => !doneByAll(x.key));
+  const done = L.personal ? S.data.seen.filter(x => x.owner === S.profile) : all.filter(x => doneByAll(x.key));
   v.append(h("div", { class: "seg" },
-    h("button", { "aria-pressed": S.mineTab === "todo" ? "true" : "false", onclick: () => { S.mineTab = "todo"; renderMine(); } }, `Por ver · ${todo.length}`),
-    h("button", { "aria-pressed": S.mineTab === "done" ? "true" : "false", onclick: () => { S.mineTab = "done"; renderMine(); } }, `Vistas · ${done.length}`)));
-  const arr = S.mineTab === "todo" ? todo : done;
+    h("button", { "aria-pressed": S.listTab === "todo" ? "true" : "false", onclick: () => { S.listTab = "todo"; renderLists(); } }, `Por ver · ${todo.length}`),
+    h("button", { "aria-pressed": S.listTab === "done" ? "true" : "false", onclick: () => { S.listTab = "done"; renderLists(); } }, `Vistas · ${done.length}`)));
+  const arr = S.listTab === "todo" ? todo : done;
   if (!arr.length) {
-    v.append(S.mineTab === "todo"
-      ? empty(mine ? "Tu lista está vacía" : `${PROF[who].name} aún no ha guardado nada`, mine ? "En Descubrir, desliza a la derecha lo que te apetezca y aparecerá aquí." : "Cuando guarde algo, lo verás aquí.", mine ? h("button", { class: "btn sun", onclick: () => go("discover") }, "Ir a Descubrir") : null, "🗒️")
-      : empty("Nada visto todavía", "Marca 👀 en lo que ya hayas visto y ponle nota. Así no te lo vuelvo a proponer y aprendo lo que te gusta.", null, "👀"));
+    v.append(S.listTab === "todo"
+      ? empty(`«${L.name}» está vacía`, L.personal ? "En Descubrir, desliza a la derecha lo que te apetezca y elige esta lista." : `Cuando alguien guarde una cinta en «${L.name}», aparecerá aquí con sus comentarios.`, h("button", { class: "btn sun", onclick: () => go("discover") }, "Ir a Descubrir"), L.emo)
+      : empty("Nada visto todavía", L.personal ? "Marca 👀 en lo que veas y ponle nota." : "Cuando todos la hayáis visto, aparecerá aquí con vuestras notas.", null, "👀"));
     return;
   }
-  v.append(h("div", { class: "shelf" }, arr.map(x => {
-    const it = { ...x.item, key: x.key };
-    const others2 = wantedBy(x.key).filter(u => u !== who);
-    if (S.mineTab === "done") return tile(it, x.rating ? `${FACES[x.rating - 1][0]} ${FACES[x.rating - 1][1]}` : "Sin nota");
-    return tile(it, others2.length ? `💘 También ${others2.map(u => PROF[u].name).join(" y ")}` : undefined);
-  })));
+  const lastAt = x => { const c = commentsOf(x.key, L.id); return c.length ? c[c.length - 1].at : x.at; };
+  const sorted = [...arr].sort((a, b) => String(lastAt(b) || "").localeCompare(String(lastAt(a) || "")));
+  v.append(h("div", { class: "rows" }, sorted.map(x => listRow({ ...x.item, key: x.key }, L, x))));
 }
-
-/* ---------- Todos ---------- */
-function renderAll() {
-  const v = $("v-all"); v.replaceChildren();
-  v.append(h("div", { class: "head" }, h("div", null, h("h1", null, "Para ", h("span", { class: "hl" }, "todos")), h("p", null, "Lo que proponemos ver juntos. Toca un título para comentar."))));
-  const all = S.data.lists.filter(x => x.owner === "comun");
-  const everyone = k => PROFILES.every(p => seenBy(k).includes(p.id));
-  const todo = all.filter(x => !everyone(x.key)), done = all.filter(x => everyone(x.key));
-  v.append(h("div", { class: "seg" },
-    h("button", { "aria-pressed": S.allTab === "todo" ? "true" : "false", onclick: () => { S.allTab = "todo"; renderAll(); } }, `Pendientes · ${todo.length}`),
-    h("button", { "aria-pressed": S.allTab === "done" ? "true" : "false", onclick: () => { S.allTab = "done"; renderAll(); } }, `Vistas por los tres · ${done.length}`)));
-  let arr = S.allTab === "todo" ? todo : done;
-  if (!arr.length) {
-    v.append(S.allTab === "todo"
-      ? empty("Nada propuesto todavía", "En Descubrir, pulsa 📣 o desliza una carátula hacia arriba. También se añade sola cuando a los tres os apetece lo mismo.", h("button", { class: "btn blue", onclick: () => go("discover") }, "Ir a Descubrir"), "📣")
-      : empty("Aún no habéis visto ninguna juntos", "Cuando los tres marquéis una como vista, aparecerá aquí con vuestras notas.", null, "🎬"));
-    return;
-  }
-  const lastAt = k => { const c = commentsOf(k); return c.length ? c[c.length - 1].at : ""; };
-  arr = [...arr].sort((a, b) => (wantedBy(b.key).length - wantedBy(a.key).length) || String(lastAt(b.key) || b.at).localeCompare(String(lastAt(a.key) || a.at)));
-  v.append(h("div", { class: "rows" }, arr.map(x => {
-    const it = { ...x.item, key: x.key }, w = wantedBy(x.key), cm = commentsOf(x.key), sb = seenBy(x.key), last = cm[cm.length - 1];
-    return h("button", { class: "row", onclick: () => openItem(it) }, posterEl(it, false),
-      h("div", null,
-        h("h3", null, it.title),
-        h("div", { class: "meta" }, [typeLabel(it.type), it.year, PROF[x.by] ? `propuesta por ${PROF[x.by].name}` : ""].filter(Boolean).join(" · ")),
-        h("div", { class: "who-wants" },
-          w.length ? [h("span", { class: "stack" }, w.map(u => avatar(u, "xs"))), w.length === 3 ? "💯 ¡Match de los tres!" : "Le apetece"] : "Nadie la ha marcado aún",
-          h("span", { class: "ccount" }, svg("chat"), cm.length),
-          sb.length ? h("span", { class: "ccount" }, sb.map(u => ratingOf(u, x.key) ? emo(FACES[ratingOf(u, x.key) - 1][0]) : emo("👀"))) : null),
-        last ? h("div", { class: "bubble-last" }, h("b", null, PROF[last.author].name + ": "), last.body) : null));
-  })));
+function listRow(it, L, x) {
+  const cms = commentsOf(it.key, L.id), w = wantedBy(it.key).filter(u => L.members.includes(u) || L.personal), sb = seenBy(it.key).filter(u => L.members.includes(u));
+  const inp = h("input", { class: "field", type: "text", maxlength: "1000", placeholder: "Comenta…", enterkeyhint: "send", "aria-label": "Comentario sobre " + it.title });
+  const send = () => { const t = inp.value.trim(); if (!t) return; inp.value = ""; act("commentAdd", L.id, it, t); renderLists(); };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); send(); } });
+  return h("article", { class: "lrow" },
+    h("div", { class: "lrow-top" },
+      h("button", { class: "lrow-poster", onclick: () => openItem(it), "aria-label": "Ver ficha de " + it.title }, posterEl(it, false)),
+      h("div", { class: "lrow-info" },
+        h("button", { class: "lrow-title", onclick: () => openItem(it) }, it.title),
+        h("div", { class: "meta" }, [typeLabel(it.type), it.year].filter(Boolean).join(" · ")),
+        !L.personal && x && x.by ? h("div", { class: "who-wants" }, avatar(x.by, "xs"), x.by === S.profile ? "La guardaste tú" : `La guardó ${PROF[x.by].name}`) : null,
+        !L.personal && w.length ? h("div", { class: "who-wants" }, h("span", { class: "stack" }, w.map(u => avatar(u, "xs"))), w.length === L.members.length && w.length > 1 ? "💯 ¡Os apetece a todos!" : "Le apetece") : null,
+        sb.length ? h("div", { class: "who-wants" }, sb.map(u => h("span", { class: "seenby" }, avatar(u, "xs"), ratingOf(u, it.key) ? emo(FACES[ratingOf(u, it.key) - 1][0]) : emo("👀")))) : null,
+        h("div", { class: "lrow-acts" },
+          !isSeen(it.key) ? h("button", { class: "mini-btn", onclick: () => { act("rate", it, null); openRate(it); } }, "👀 Vista") : null,
+          h("button", { class: "mini-btn", onclick: () => openSave(it) }, "📼 Listas"),
+          S.listTab === "todo" ? h("button", { class: "mini-btn", onclick: () => { act("listRemove", L.id, it.key); toast("QUITADA"); renderLists(); } }, "✕ Quitar") : null))),
+    !L.personal || cms.length ? h("div", { class: "lrow-cmts" },
+      cms.map(c => h("div", { class: "cmt" + (c.author === S.profile ? " mine" : "") }, avatar(c.author, "sm"),
+        h("div", { class: "bub" }, h("b", null, PROF[c.author].name), h("time", null, ago(c.at)), h("p", null, c.body),
+          c.author === S.profile && !String(c.id).startsWith("tmp") ? h("button", { class: "del", onclick: () => { act("commentDelete", c.id); renderLists(); } }, "Borrar") : null))),
+      h("div", { class: "cbox" }, inp, h("button", { class: "btn dark", "aria-label": "Enviar", onclick: send }, svg("send")))) : null);
 }
 
 /* ---------- hoja ---------- */
@@ -713,30 +782,24 @@ async function openItem(it) {
 }
 function paintSocial() {
   const box = $("dSocial"); const it = cur; if (!box || !it) return;
-  const k = it.key, mine = inList(S.profile, k), all = inList("comun", k), seen = isSeen(k);
-  const w = wantedBy(k), sb = seenBy(k), cms = commentsOf(k);
-  const ta = box.querySelector("textarea"), draft = ta ? ta.value : "", focus = ta && document.activeElement === ta;
-  const input = h("textarea", { id: "cmtInput", rows: "1", maxlength: "1000", placeholder: "Escribe un comentario…" });
-  input.value = draft;
-  input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(140, input.scrollHeight) + "px"; });
-  const send = () => { const t = input.value.trim(); if (!t) return; input.value = ""; if (!all) act("listAdd", "comun", it); act("commentAdd", it, t); paintSocial(); };
+  const k = it.key, seen = isSeen(k), r = ratingOf(S.profile, k);
+  const inLists = myLists().filter(l => inList(l.id, k));
+  const sb = seenBy(k);
   fill(box,
-    h("div", { class: "dacts" },
-      h("button", { class: "btn" + (mine ? " on-yes" : ""), onclick: () => { act(mine ? "listRemove" : "listAdd", S.profile, mine ? k : it); toast(mine ? "Quitada de tu lista" : "Guardada en tu lista"); paintSocial(); } }, emo(mine ? "✅" : "😍"), mine ? "En mi lista" : "Me apetece"),
-      h("button", { class: "btn" + (all ? " on-blue" : ""), onclick: () => { act(all ? "listRemove" : "listAdd", "comun", all ? k : it); toast(all ? "Quitada de Todos" : "Propuesta a todos"); paintSocial(); } }, emo(all ? "✅" : "📣"), all ? "En Todos" : "A todos"),
-      h("button", { class: "btn" + (seen ? " on-yes" : ""), onclick: () => { if (seen) { act("seenToggle", it); toast("Desmarcada"); paintSocial(); } else { act("rate", it, null); openRate(it, true); } } }, emo(seen ? (ratingOf(S.profile, k) ? FACES[ratingOf(S.profile, k) - 1][0] : "✅") : "👀"), seen ? "Vista" : "Ya la vi")),
-    (w.length || sb.length) ? h("div", { class: "box" },
-      w.length ? h("div", { class: "wants" }, h("span", { class: "stack" }, w.map(u => avatar(u, "sm"))), w.length === 3 ? "¡A los tres os apetece!" : `Le apetece a ${w.map(u => u === S.profile ? "ti" : PROF[u].name).join(" y ")}`) : null,
-      sb.length ? sb.map(u => h("div", { class: "wants" }, avatar(u, "sm"), `${u === S.profile ? "Tú la viste" : PROF[u].name + " la vio"}`, ratingOf(u, k) ? h("span", null, emo(FACES[ratingOf(u, k) - 1][0]), " ", FACES[ratingOf(u, k) - 1][1]) : null)) : null) : null,
-    h("div", { class: "box" }, h("h4", null, cms.length ? `Comentarios · ${cms.length}` : "Comentarios"),
-      cms.length ? cms.map(c => h("div", { class: "cmt" + (c.author === S.profile ? " mine" : "") }, avatar(c.author, "sm"),
-        h("div", { class: "bub" }, h("b", null, PROF[c.author].name), h("time", null, ago(c.at)), h("p", null, c.body),
-          c.author === S.profile && !String(c.id).startsWith("tmp") ? h("button", { class: "del", onclick: () => { act("commentDelete", c.id); paintSocial(); } }, "Borrar") : null)))
-        : h("p", { class: "note" }, all ? "Nadie ha comentado aún. ¿Qué os parece?" : "Al comentar, se propone a todos automáticamente."),
-      h("div", { class: "quick-reacts" }, ["🔥 ¡Me apunto!", "😍 Tiene pintaza", "🥱 Paso", "🍿 ¿Esta noche?"].map(q => h("button", { onclick: () => { input.value = q; send(); } }, q))),
-      h("div", { class: "cbox" }, input, h("button", { class: "btn blue", "aria-label": "Enviar", onclick: send }, svg("send")))));
-  box.querySelectorAll(".wants svg").forEach(s => s.style.cssText = "width:20px;height:20px;color:var(--muted)");
-  if (focus) input.focus();
+    h("div", { class: "dacts", style: "grid-template-columns:1fr 1fr" },
+      h("button", { class: "btn " + (inLists.length ? "on-yes" : "dark"), onclick: () => openSave(it) }, emo(inLists.length ? "✅" : "💾"), inLists.length ? "En tus listas" : "Guardar en una lista"),
+      h("button", { class: "btn" + (seen ? " sun" : ""), onclick: () => { if (seen) { act("seenToggle", it); toast("DESMARCADA"); paintSocial(); } else { act("rate", it, null); openRate(it, true); } } }, emo(seen ? (r ? FACES[r - 1][0] : "✅") : "👀"), seen ? "Vista · cambiar" : "Ya la vi")),
+    inLists.length ? h("div", { class: "chips wrap" }, inLists.map(l => h("span", { class: "chip", style: `box-shadow:inset 0 0 0 2px ${l.c}` }, emo(l.emo), l.short))) : null,
+    sb.length ? h("div", { class: "box" }, h("h4", null, "Ya la han visto"), sb.map(u => h("div", { class: "wants" }, avatar(u, "sm"), u === S.profile ? "Tú" : PROF[u].name, ratingOf(u, k) ? h("span", null, emo(FACES[ratingOf(u, k) - 1][0]), " ", FACES[ratingOf(u, k) - 1][1]) : null))) : null,
+    ...inLists.filter(l => !l.personal || commentsOf(k, l.id).length).map(l => {
+      const cms = commentsOf(k, l.id);
+      const inp = h("input", { class: "field", type: "text", maxlength: "1000", placeholder: `Comenta en ${l.short}…`, enterkeyhint: "send" });
+      const send = () => { const t = inp.value.trim(); if (!t) return; inp.value = ""; act("commentAdd", l.id, it, t); paintSocial(); };
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); send(); } });
+      return h("div", { class: "box" }, h("h4", null, `${l.emo} Comentarios en ${l.short}`),
+        cms.map(c => h("div", { class: "cmt" + (c.author === S.profile ? " mine" : "") }, avatar(c.author, "sm"), h("div", { class: "bub" }, h("b", null, PROF[c.author].name), h("time", null, ago(c.at)), h("p", null, c.body)))),
+        h("div", { class: "cbox" }, inp, h("button", { class: "btn dark", "aria-label": "Enviar", onclick: send }, svg("send"))));
+    }));
 }
 
 /* ---------- búsqueda ---------- */
@@ -912,13 +975,15 @@ function aiContext() {
     `Pregunta: ${PROF[me].name}.`, `Plataformas que tienen en España: ${S.plats.join(", ")}.`];
   for (const p of PROFILES) {
     lines.push(`\n${p.name}${p.id === me ? " (quien pregunta)" : ""}:`,
-      `- Quiere ver: ${L(S.data.lists.filter(x => x.owner === p.id), 40)}`,
+      `- Su lista: ${L(S.data.lists.filter(x => x.owner === p.id), 40)}`,
       `- Ya ha visto: ${L(S.data.seen.filter(x => x.owner === p.id), 60)}`,
       `- Ha descartado: ${L(S.data.nopes.filter(x => x.owner === p.id), 40)}`);
   }
-  const all = S.data.lists.filter(x => x.owner === "comun").slice(0, 30);
-  lines.push("\nLista de todos:" + (all.length ? "" : " vacía"));
-  for (const x of all) { const cm = commentsOf(x.key).slice(-4).map(c => `${PROF[c.author].name}: "${c.body.slice(0, 140)}"`).join(" | "); lines.push(`- ${x.item.title}${cm ? " · comentarios: " + cm : ""}`); }
+  for (const l of SHARED.filter(l => l.members.includes(me))) {
+    const items = visLists().filter(x => x.owner === l.id).slice(0, 30);
+    lines.push(`\nLista «${l.name}» (la ven ${l.members.map(u => PROF[u].name).join(", ")}):` + (items.length ? "" : " vacía"));
+    for (const x of items) { const cm = commentsOf(x.key, l.id).slice(-4).map(c => `${PROF[c.author].name}: "${c.body.slice(0, 140)}"`).join(" | "); lines.push(`- ${x.item.title}${cm ? " · comentarios: " + cm : ""}`); }
+  }
   if (S.trends) { lines.push(`\nLo más visto en España (${S.trends.label}):`); for (const p of ownedTrendPlats()) lines.push(`- ${p}: ${[...trendItems(p, "tv").slice(0, 4), ...trendItems(p, "movie").slice(0, 3)].map(i => i.title).join(", ")}`); }
   return lines.join("\n");
 }
@@ -1014,58 +1079,48 @@ function confetti(n = 140) {
 
 /* ---------- noche de peli ---------- */
 function openNight() {
-  let who = new Set(PROFILES.map(p => p.id)), type = "all", spinning = false;
+  const lists = myLists();
+  let lid = S.nightList && lists.some(l => l.id === S.nightList) ? S.nightList : (lists.find(l => l.id === "os3") || lists[lists.length - 1]).id;
+  let type = "all", spinning = false;
   const body = h("div", { class: "settings" });
   const paint = () => {
-    const sel = [...who];
-    const seenAny = k => sel.some(u => seenBy(k).includes(u));
-    const pool = new Map();
-    for (const x of S.data.lists) {
-      if (x.owner !== "comun" && !sel.includes(x.owner)) continue;
-      if (seenAny(x.key)) continue;
-      if (type !== "all" && x.item.type !== type) continue;
-      const c = pool.get(x.key) || { it: { ...x.item, key: x.key }, wants: new Set(), all: false };
-      if (x.owner === "comun") c.all = true; else c.wants.add(x.owner);
-      pool.set(x.key, c);
-    }
-    const ranked = [...pool.values()].map(c => ({ ...c, score: c.wants.size * 2 + (c.all ? 1 : 0) + commentsOf(c.it.key).length * .2 }))
-      .filter(c => c.wants.size || c.all).sort((a, b) => b.score - a.score);
-    const perfect = ranked.filter(c => sel.every(u => c.wants.has(u)));
+    const L = lists.find(l => l.id === lid); S.nightList = lid;
+    const mem = L.members;
+    const pool = visLists().filter(x => x.owner === lid && !mem.some(u => seenBy(x.key).includes(u)) && (type === "all" || x.item.type === type))
+      .map(x => ({ it: { ...x.item, key: x.key }, wants: wantedBy(x.key).filter(u => mem.includes(u)).length, cm: commentsOf(x.key, lid).length }))
+      .sort((a, b) => (b.wants - a.wants) || (b.cm - a.cm));
     fill(body,
-      h("div", { class: "chat-head" }, emo("🍿"), h("div", null, h("h2", null, "Noche de peli"), h("p", { class: "note" }, "¿Quién la va a ver?"))),
-      h("div", { class: "night-who" }, PROFILES.map(p => h("button", { "aria-pressed": who.has(p.id) ? "true" : "false", onclick: () => { if (who.has(p.id) && who.size > 1) who.delete(p.id); else who.add(p.id); paint(); } }, avatar(p.id, "sm"), p.id === S.profile ? "Yo" : p.name))),
+      h("div", { class: "chat-head" }, emo("🍿"), h("div", null, h("h2", null, "Noche de peli"), h("p", { class: "note" }, "¿De qué lista elegimos?"))),
+      h("div", { class: "list-picker" }, lists.map(l => h("button", { class: "lp" + (l.id === lid ? " on" : ""), style: `--lc:${l.c}`, onclick: () => { lid = l.id; paint(); } }, h("span", { class: "lp-emo" }, emo(l.emo)), h("b", null, l.short), h("span", { class: "stack" }, l.members.map(u => avatar(u, "xs")))))),
       h("div", { class: "chips wrap", style: "justify-content:center" }, [["all", "Lo que sea"], ["movie", "Peli"], ["tv", "Serie"]].map(([k, l]) => h("button", { class: "chip", "aria-pressed": type === k ? "true" : "false", onclick: () => { type = k; paint(); } }, l))),
-      ranked.length ? h("div", { class: "wheel", id: "wheel" }, h("div", { class: "reels", "aria-hidden": "true" }, h("i"), h("i")), h("span", { class: "lcd" }, "¿NO OS DECIDÍS?"), h("p", { class: "note" }, `La ruleta elige entre ${ranked.length} cinta${ranked.length > 1 ? "s" : ""} de vuestras listas`),
-        h("button", { class: "btn sun", onclick: () => spin(ranked) }, "⏩ ¡Girar la ruleta!")) : null,
-      perfect.length ? h("div", { class: "sec" }, h("h2", null, sel.length > 1 ? "Os apetece a todos" : "Te apetece"), h("small", null, "")) : null,
-      perfect.length ? h("div", { class: "grid" }, perfect.slice(0, 9).map(c => tile(c.it, "💯 Match"))) : null,
-      ranked.filter(c => !perfect.includes(c)).length ? h("div", { class: "sec" }, h("h2", null, "También os puede encajar"), h("small", null, "")) : null,
-      h("div", { class: "grid" }, ranked.filter(c => !perfect.includes(c)).slice(0, 12).map(c => tile(c.it, c.wants.size ? `Le apetece a ${[...c.wants].map(u => u === S.profile ? "ti" : PROF[u].name).join(" y ")}` : "En la lista de todos"))),
-      !ranked.length ? empty("Aún no hay nada en común", "Guardad cosas en Descubrir con 😍 o 📣 y aquí veréis lo que os apetece a la vez.", h("button", { class: "btn sun", onclick: () => { closeSheet(); go("discover"); } }, "Ir a Descubrir"), "🫣") : null);
+      pool.length ? h("div", { class: "wheel", id: "wheel" }, h("div", { class: "reels", "aria-hidden": "true" }, h("i"), h("i")), h("span", { class: "lcd" }, "¿NO OS DECIDÍS?"), h("p", { class: "note" }, `La ruleta elige entre ${pool.length} cinta${pool.length > 1 ? "s" : ""} de «${L.short}» que nadie ha visto`),
+        h("button", { class: "btn sun", onclick: () => spin(pool, L) }, "⏩ ¡Girar la ruleta!"))
+        : empty(`No hay nada pendiente en «${L.short}»`, "Guardad cintas en esta lista desde Descubrir y aquí podréis elegir o tirar de ruleta.", h("button", { class: "btn sun", onclick: () => { closeSheet(); go("discover"); } }, "Ir a Descubrir"), "🫣"),
+      pool.length ? h("div", { class: "sec" }, h("h2", null, "Lo que hay"), h("small", null, mem.length > 1 ? "Primero lo que más os apetece" : "")) : null,
+      pool.length ? h("div", { class: "grid" }, pool.slice(0, 12).map(c => tile(c.it, mem.length > 1 && c.wants === mem.length ? "💯 Os apetece a todos" : c.wants ? `❤️ ${c.wants} de ${mem.length}` : undefined))) : null);
   };
-  const spin = (ranked) => {
+  const spin = (pool, L) => {
     if (spinning) return; spinning = true;
     const w = $("wheel"); if (!w) return;
-    const weighted = ranked.flatMap(c => Array(1 + c.wants.size).fill(c));
+    const weighted = pool.flatMap(c => Array(1 + c.wants).fill(c));
     const final = weighted[Math.floor(Math.random() * weighted.length)];
     let i = 0, delay = 60;
-    const slot = h("div", { style: "width:150px" });
-    w.replaceChildren(h("div", { class: "reels spin", "aria-hidden": "true" }, h("i"), h("i")), h("span", { class: "lcd" }, "⏩ BUSCANDO CINTA…"), slot);
+    const slot = h("div", { style: "width:140px" });
+    fill(w, h("div", { class: "reels spin", "aria-hidden": "true" }, h("i"), h("i")), h("span", { class: "lcd" }, "⏩ BUSCANDO CINTA…"), slot);
     const tick = () => {
-      const c = i < 14 ? ranked[i % ranked.length] : final;
-      slot.replaceChildren(posterEl(c.it, false)); i++;
-      if (i <= 14) { delay *= 1.15; setTimeout(tick, delay); }
-      else {
-        spinning = false; confetti(90);
-        const d = new Date();
-        w.replaceChildren(h("div", { class: "ticket" },
-            h("div", null, "VIDEOCLUB ¿QUÉ VEMOS?"), h("div", null, `${d.toLocaleDateString("es-ES")}  ${d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}`), h("hr"),
-            h("div", null, "ESTA NOCHE TOCA:"), h("div", { class: "ttl" }, final.it.title), h("div", null, [typeLabel(final.it.type).toUpperCase(), final.it.year].filter(Boolean).join(" · ")), h("hr"),
-            h("div", null, `SOCIOS: ${[...who].map(u => PROF[u].name.toUpperCase()).join(", ")}`), h("div", null, "PALOMITAS ....... OBLIGATORIAS"), h("div", null, "DEVOLVER REBOBINADA")),
-          h("div", { style: "display:flex;gap:8px;flex-wrap:wrap;justify-content:center" },
-            h("button", { class: "btn sun", onclick: () => openItem(final.it) }, "Ver ficha"),
-            h("button", { class: "btn", onclick: () => spin(ranked) }, "Otra vez")));
-      }
+      const c = i < 14 ? pool[i % pool.length] : final;
+      fill(slot, posterEl(c.it, false)); i++;
+      if (i <= 14) { delay *= 1.15; setTimeout(tick, delay); return; }
+      spinning = false; confetti(90);
+      const d = new Date();
+      fill(w, h("div", { class: "ticket" },
+          h("div", null, "VIDEOCLUB ¿QUÉ VEMOS?"), h("div", null, `${d.toLocaleDateString("es-ES")}  ${d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}`), h("hr"),
+          h("div", null, "ESTA NOCHE TOCA:"), h("div", { class: "ttl" }, final.it.title), h("div", null, [typeLabel(final.it.type).toUpperCase(), final.it.year].filter(Boolean).join(" · ")), h("hr"),
+          h("div", null, `LISTA: ${L.short.toUpperCase()}`), h("div", null, `SOCIOS: ${L.members.map(u => PROF[u].name.toUpperCase()).join(", ")}`), h("div", null, "PALOMITAS ....... OBLIGATORIAS"), h("div", null, "DEVOLVER REBOBINADA")),
+        slot,
+        h("div", { style: "display:flex;gap:8px;flex-wrap:wrap;justify-content:center" },
+          h("button", { class: "btn sun", onclick: () => openItem(final.it) }, "Ver ficha"),
+          h("button", { class: "btn", onclick: () => spin(pool, L) }, "Otra vez")));
     };
     tick();
   };
@@ -1078,17 +1133,15 @@ let NEWS = [];
 async function computeNews() {
   const me = S.profile, since = store.get(lastSeenKey(), new Date(Date.now() - 7 * 864e5).toISOString());
   const items = [];
-  for (const c of S.data.comments) if (c.author !== me) items.push({ at: c.at, it: { ...c.item, key: c.key }, e: "💬", txt: `${PROF[c.author].name} ha comentado en ${c.item.title}: «${c.body.slice(0, 80)}»` });
-  for (const x of S.data.lists) if (x.owner === "comun" && x.by !== me) items.push({ at: x.at, it: { ...x.item, key: x.key }, e: "📣", txt: `${PROF[x.by].name} propone ver ${x.item.title}` });
-  const allKeys = new Set(S.data.lists.filter(x => x.owner === "comun").map(x => x.key));
-  for (const x of S.data.lists) if (x.owner !== "comun" && x.owner !== me && inList(me, x.key)) items.push({ at: x.at, it: { ...x.item, key: x.key }, e: "💘", txt: `A ${PROF[x.owner].name} también le apetece ${x.item.title}` });
-  for (const x of S.data.seen) if (x.owner !== me && x.rating && allKeys.has(x.key)) items.push({ at: x.at, it: { ...x.item, key: x.key }, e: FACES[x.rating - 1][0], txt: `${PROF[x.owner].name} ha visto ${x.item.title}: ${FACES[x.rating - 1][1].toLowerCase()}` });
-  // nuevas temporadas de series que os interesan
+  for (const c of S.data.comments) if (c.author !== me && canRead(me, c.list || "os3")) items.push({ at: c.at, it: { ...c.item, key: c.key }, e: "💬", txt: `${PROF[c.author].name} en ${listEmo(c.list || "os3")} ${PERSONAL.includes(c.list) ? listName(c.list) : LIST[c.list || "os3"].short}: «${c.body.slice(0, 80)}» (${c.item.title})` });
+  for (const x of visLists()) if (!PERSONAL.includes(x.owner) && x.by !== me) items.push({ at: x.at, it: { ...x.item, key: x.key }, e: LIST[x.owner].emo, txt: `${PROF[x.by].name} ha guardado ${x.item.title} en ${LIST[x.owner].short}` });
+  for (const x of S.data.lists) if (PERSONAL.includes(x.owner) && x.owner !== me && inList(me, x.key)) items.push({ at: x.at, it: { ...x.item, key: x.key }, e: "💘", txt: `A ${PROF[x.owner].name} también le apetece ${x.item.title}` });
+  const shared = new Set(visLists().filter(x => !PERSONAL.includes(x.owner)).map(x => x.key));
+  for (const x of S.data.seen) if (x.owner !== me && x.rating && shared.has(x.key)) items.push({ at: x.at, it: { ...x.item, key: x.key }, e: FACES[x.rating - 1][0], txt: `${PROF[x.owner].name} ha visto ${x.item.title}: ${FACES[x.rating - 1][1].toLowerCase()}` });
   if (TMDB) {
     const tv = new Map();
-    for (const x of [...S.data.lists, ...S.data.seen]) if (x.item.type === "tv" && x.item.id && (x.owner === me || x.owner === "comun" || S.data.seen.some(s => s.owner === me && s.key === x.key))) tv.set(x.key, x.item);
-    const list = [...tv.values()].slice(0, 25);
-    await Promise.all(list.map(async t => {
+    for (const x of [...visLists(), ...S.data.seen.filter(s => s.owner === me)]) if (x.item.type === "tv" && x.item.id) tv.set(x.key, x.item);
+    await Promise.all([...tv.values()].slice(0, 25).map(async t => {
       try {
         const d = await limit(() => tmdb(`/tv/${t.id}`, {}, 24));
         const nx = d.next_episode_to_air, ls = d.last_episode_to_air, today = Date.now();
@@ -1120,20 +1173,20 @@ function demoCard(title, cls) {
 const TOUR = [
   { osd: "▶ PLAY", vis: () => h("div", { style: "display:flex;flex-direction:column;align-items:center;gap:14px" }, h("span", { class: "sign-box sign", style: "font-size:22px" }, "VIDEOCLUB"), h("span", { class: "emo pulse", style: "font-size:56px" }, "📼")),
     t: () => `¡Hola, ${PROF[S.profile].name}!`, p: "Esto es vuestro videoclub: aquí decidís qué ver Oswaldo, Ana y Ángela. Te lo enseño todo en un minuto." },
-  { osd: "▶ DESLIZA", vis: () => h("div", { style: "position:relative;width:100%;height:100%;display:grid;place-items:center" }, h("div", { class: "demo-swipe" }, demoCard("Tu próxima peli")), h("div", { class: "demo-hint" }, h("span", null, "← DEVOLVER"), h("span", null, "ME LA LLEVO →"))),
-    t: () => "Desliza las cintas", list: [["❤️", "A la derecha: te apetece y va a tu estante."], ["✖️", "A la izquierda: paso, no te la vuelvo a enseñar."], ["🧠", "Con cada cinta aprendo lo que te gusta y afino las siguientes."]] },
-  { osd: "⏏ ARRIBA", vis: () => h("div", { style: "display:flex;flex-direction:column;align-items:center;gap:10px" }, h("div", { class: "demo-up" }, demoCard("Para los tres")), h("span", { class: "sign", style: "color:var(--vio);font-size:15px;background:#fff;padding:4px 10px;border-radius:6px" }, "¡A TODOS!")),
-    t: () => "Hacia arriba: ¡a todos!", list: [["📣", "Se la propones a los tres y aparece en «Todos»."], ["🎉", "Si a los tres os apetece la misma, hay match y confeti."]] },
-  { osd: "⏸ BOTONES", vis: () => h("div", { class: "demo-btns" }, h("span", { class: "act" }, emo("⏪"), "Atrás"), h("span", { class: "act seen" }, emo("👀"), "Vista"), h("span", { class: "act yes" }, emo("❤️"), "Llevo")),
+  { osd: "▶ DESLIZA", vis: () => h("div", { style: "position:relative;width:100%;height:100%;display:grid;place-items:center" }, h("div", { class: "demo-swipe" }, demoCard("Tu próxima peli")), h("div", { class: "demo-hint" }, h("span", null, "← DEVOLVER"), h("span", null, "GUARDAR →"))),
+    t: () => "Desliza las cintas", list: [["❤️", "A la derecha: la guardas. Se abre una ventanita para elegir la lista y dejar un comentario."], ["✖️", "A la izquierda: paso, no te la vuelvo a enseñar."], ["🧠", "Con cada cinta aprendo lo que te gusta y afino las siguientes."]] },
+  { osd: "📼 LISTAS", vis: () => h("div", { class: "list-picker", style: "padding:0 14px;pointer-events:none" }, myLists().map(l => h("span", { class: "lp on", style: `--lc:${l.c}` }, h("span", { class: "lp-emo" }, emo(l.emo)), h("b", null, l.short), h("span", { class: "stack" }, l.members.map(u => avatar(u, "xs")))))),
+    t: () => "Tus listas", list: () => myLists().map(l => [l.emo, l.personal ? "Mi lista: la tuya." : `${l.name}: la veis ${l.members.length === 3 ? "los tres" : l.members.length === 1 ? "solo tú" : l.members.map(u => u === S.profile ? "tú" : PROF[u].name).join(" y ")}.`]) },
+  { osd: "⏸ BOTONES", vis: () => h("div", { class: "demo-btns" }, h("span", { class: "act" }, emo("⏪"), "Atrás"), h("span", { class: "act seen" }, emo("👀"), "Vista"), h("span", { class: "act yes" }, emo("❤️"), "Guardar")),
     t: () => "La botonera", list: [["⏪", "Atrás: deshace la última cinta."], ["👀", "Vista: ya la has visto. Le pones nota de 😖 a 🤩."], ["ℹ️", "El botón redondo de la cinta abre la contraportada: sinopsis, tráiler y dónde verla."]] },
   { osd: "🔍 BUSCAR", vis: () => h("div", { style: "display:flex;flex-direction:column;gap:10px;align-items:center;padding:0 16px" }, h("div", { class: "searchbar", style: "pointer-events:none" }, "🔍 lesbianas, navidad, atracos…"), h("div", { class: "chips wrap", style: "justify-content:center" }, ["⚡ Miniseries", "⏱️ < 2 h", "🇪🇸 Españolas", "🧸 Con niños"].map(x => h("span", { class: "chip" }, x)))),
     t: () => "Busca y filtra", list: [["🔍", "Busca por título o por tema, aunque la palabra no esté en el título."], ["🎛️", "Filtra las cintas: miniseries, menos de 2 h, españolas, con niños o una sola plataforma."]] },
   { osd: "🍿 SESIÓN", vis: () => h("div", { style: "display:flex;gap:16px;align-items:center" }, h("span", { class: "emo", style: "font-size:56px" }, "🤖"), h("div", { class: "reels spin" }, h("i"), h("i")), h("span", { class: "emo", style: "font-size:56px" }, "🍿")),
-    t: () => "El dependiente y la noche de peli", list: [["🤖", "El dependiente: pídele lo que os apetece con tus palabras y te recomienda."], ["🍿", "Noche de peli: elige quién la ve, mira lo que os apetece a todos o deja que decida la ruleta."]] },
+    t: () => "El dependiente y la noche de peli", list: [["🤖", "El dependiente: pídele lo que os apetece con tus palabras y te recomienda."], ["🍿", "Noche de peli: elige una lista, mira lo que os apetece a todos o deja que decida la ruleta."]] },
   { osd: "🏆 TOP 10", vis: () => h("div", { class: "demo-row" }, h("span", { class: "bignum", style: "font-size:70px;padding-bottom:20px" }, "1"), demoCard("Lo más visto"), h("span", { class: "bignum", style: "font-size:70px;padding-bottom:20px" }, "2"), demoCard("Semana")),
     t: () => "Lo más alquilado", p: "En «Top 10» tienes lo más visto esta semana en España, plataforma a plataforma. Se actualiza cada lunes." },
-  { osd: "📚 ESTANTES", vis: () => h("div", { class: "demo-row" }, demoCard("Por ver"), demoCard("Vista 🤩"), demoCard("De Ana")),
-    t: () => "Tu estante y el de todos", list: [["📚", "Mi estante: lo que quieres ver y lo que ya viste, con tu nota. También puedes cotillear el de los demás."], ["💬", "Todos: lo que proponéis ver juntos. Entra en una cinta para comentar o reaccionar."]] },
+  { osd: "💬 COMENTAR", vis: () => h("div", { class: "demo-row" }, demoCard("Por ver"), demoCard("Vista 🤩"), demoCard("💬 ¿Hoy?")),
+    t: () => "Comentar es facilísimo", list: [["📚", "En «Listas» tocas una lista y ves sus cintas, por ver y vistas, con las notas de cada uno."], ["💬", "Debajo de cada cinta están los comentarios y una casilla para escribir el tuyo."], ["🎉", "Si a todos os apetece la misma, hay match y se añade sola a la lista del grupo."]] },
   { osd: "🔔 AVISOS", vis: () => h("div", { style: "display:flex;flex-direction:column;gap:8px;padding:0 18px;width:100%" }, ["💬 Ana ha comentado: «¿El viernes?»", "💘 A Oswaldo también le apetece", "🆕 ¡Nueva temporada!"].map(x => h("div", { class: "fitem", style: "grid-template-columns:1fr;pointer-events:none;padding:8px 12px" }, h("p", null, x)))),
     t: () => "La campana", p: "Arriba a la derecha te aviso de comentarios, propuestas, coincidencias y nuevas temporadas de vuestras series." },
   { osd: "⏏ FIN", vis: () => h("div", { style: "display:flex;flex-direction:column;align-items:center;gap:10px" }, h("span", { class: "emo", style: "font-size:56px" }, "📲"), h("span", { class: "sign", style: "color:var(--sun);font-size:18px" }, "¡A VER PELIS!")),
@@ -1142,7 +1195,7 @@ const TOUR = [
 function openTour() {
   let i = 0;
   const box = $("tour");
-  const close = () => { box.hidden = true; box.replaceChildren(); store.set("qv_tour_" + S.profile, 1); document.removeEventListener("keydown", onKey); };
+  const close = () => { box.hidden = true; box.replaceChildren(); store.set("qv_tour_" + S.profile, 2); document.removeEventListener("keydown", onKey); };
   const go2 = n => { i = Math.max(0, Math.min(TOUR.length - 1, n)); paint(); };
   const onKey = e => { if (e.key === "ArrowRight") go2(i + 1); else if (e.key === "ArrowLeft") go2(i - 1); else if (e.key === "Escape") close(); };
   const paint = () => {
@@ -1150,7 +1203,7 @@ function openTour() {
     fill(box, h("div", { class: "tour-card" },
       h("div", { class: "tour-tv" }, h("span", { class: "osd" }, sl.osd), h("span", { class: "osd osd-r" }, `CH ${String(i + 1).padStart(2, "0")}`), sl.vis()),
       h("div", { class: "tour-body" }, h("h2", null, sl.t()), sl.p ? h("p", null, sl.p) : null,
-        sl.list ? h("ul", null, sl.list.map(([e, t]) => h("li", null, emo(e), h("span", null, t)))) : null),
+        sl.list ? h("ul", null, (typeof sl.list === "function" ? sl.list() : sl.list).map(([e, t]) => h("li", null, emo(e), h("span", null, t)))) : null),
       h("div", { class: "tour-nav" },
         i === 0 ? h("button", { class: "tour-skip", onclick: close }, "Saltar") : h("button", { class: "tour-skip", onclick: () => go2(i - 1) }, "← Atrás"),
         h("div", { class: "tour-dots", "aria-label": `Paso ${i + 1} de ${TOUR.length}` }, TOUR.map((_, k) => h("i", { class: k === i ? "on" : "" }))),
@@ -1213,7 +1266,7 @@ async function enter(id) {
   $("login").hidden = true; $("app").hidden = false;
   $("meBtn").replaceChildren(avatar(id, "sm"));
   go("discover");
-  if (!store.get("qv_tour_" + id, 0)) openTour();
+  if (store.get("qv_tour_" + id, 0) < 2) openTour();
   await refresh(true);
   buildDeck(true);
 }
@@ -1232,7 +1285,7 @@ async function boot() {
   document.addEventListener("keydown", e => {
     if (e.key === "Escape" && !$("sheet").hidden) closeSheet();
     if (S.view === "discover" && $("sheet").hidden && !$("app").hidden && !/INPUT|TEXTAREA/.test((document.activeElement || {}).tagName || "")) {
-      if (e.key === "ArrowRight") swipeTop("yes"); else if (e.key === "ArrowLeft") swipeTop("no"); else if (e.key === "ArrowUp") swipeTop("all");
+      if (e.key === "ArrowRight") swipeTop("yes"); else if (e.key === "ArrowLeft") swipeTop("no");
     }
   });
   const day = new Date().toISOString().slice(0, 10);
