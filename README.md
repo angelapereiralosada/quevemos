@@ -1,39 +1,30 @@
 # ¿Qué vemos?
 
-App web para el móvil para decidir qué ver entre Oswaldo, Ana y Ángela. Incluye:
+App web para el móvil para que Oswaldo, Ana y Ángela decidan qué ver.
 
-- una lista personal por persona,
-- una lista común con votos («me apetece») y comentarios,
-- un asistente que propone títulos según el plan,
-- lo más visto de la semana en España,
-- carátulas y dónde ver cada título.
+- **Descubrir:** carátulas para deslizar. A la derecha, «Me apetece»; a la izquierda, «Paso»; hacia arriba, «A todos». La app aprende los gustos de cada uno a partir de lo que guarda, ve o descarta, y mezcla títulos parecidos a lo que os gustó, lo que les apetece a los demás y el top de la semana. Cuando a los tres os apetece lo mismo, hay *match* y se añade sola a «Todos».
+- **Pregúntale a la IA:** un chat con Claude que conoce vuestras listas y comentarios.
+- **Top:** lo más visto esta semana en España en cada plataforma.
+- **Mi lista** y **Todos**. En «Todos» están las propuestas para ver juntos, con comentarios.
 
-## Puesta en marcha (unos 10 minutos)
+## Puesta en marcha
 
-### 1. Supabase (listas y comentarios compartidos)
-1. Entra en https://supabase.com y crea una cuenta gratuita.
-2. Pulsa **New project**. El nombre puede ser `quevemos` y la región **West EU**. Apunta la contraseña que te pide; no la necesitarás en la app.
-3. Cuando termine de crearse, ve a **SQL Editor → New query**.
-4. Pega todo el contenido de `supabase.sql`. Cambia `1234` por vuestro PIN de 4 cifras y pulsa **Run**.
-5. Ve a **Project Settings → API** y copia:
-   - **Project URL**, que termina en `.supabase.co`,
-   - la clave **anon public**.
+### 1. Supabase: listas y comentarios compartidos
+1. Crea una cuenta en https://supabase.com y pulsa **New project**. Ponle de nombre `quevemos` y elige la región **West EU (Ireland)**.
+2. Ve a **SQL Editor → New query** y pega todo `supabase.sql`. Cambia `1234` por vuestro PIN de 4 cifras y pulsa **Run**.
+3. Ve a **Project Settings → API** y copia la **Project URL** y la clave **anon public**. Si solo ves «Publishable key», copia esa.
 
-### 2. TMDB (carátulas y dónde verlo)
-1. Crea una cuenta gratuita en https://www.themoviedb.org/signup y confirma el correo.
-2. Ve a **Ajustes → API → Crear → Developer** y acepta las condiciones. En la web de la aplicación puedes poner la dirección de GitHub Pages.
-3. Copia la **Clave de la API**, que tiene 32 letras y números.
+### 2. Chat con IA (Claude)
+1. Crea una cuenta en https://console.anthropic.com. Añade saldo en **Billing**; con 5 € hay para muchísimas consultas. Después ve a **API Keys → Create Key** y copia la clave (empieza por `sk-ant-`).
+2. En Supabase ve a **Edge Functions → Secrets**, añade uno llamado `ANTHROPIC_API_KEY` y pega la clave como valor.
+3. Ve a **Edge Functions → Deploy a new function → Via Editor**. Ponle de nombre `recomendar`, pega el contenido de `supabase/functions/recomendar/index.ts` y pulsa **Deploy**.
+4. En los ajustes de la función, desactiva **Verify JWT** (el PIN ya protege el acceso) y guarda.
 
 ### 3. Configuración
-Rellena `config.js` con los tres valores. La clave anon de Supabase puede ser pública: las tablas están cerradas y todo pasa por funciones que exigen el PIN.
+Rellena `config.js` con la Project URL y la clave anon. La clave de TMDB ya está puesta.
 
-### 4. En el móvil
-Abre el enlace e instálala:
-- **iPhone:** Compartir → «Añadir a pantalla de inicio».
-- **Android:** menú ⋮ → «Instalar aplicación».
-
-## Actualizar lo más visto
-`data/trends.json` guarda el top de cada plataforma. Una tarea programada de Claude lo actualiza cada lunes. El apartado «Recién estrenadas» y las propuestas del asistente salen en directo de TMDB.
+## Lo más visto
+`data/trends.json` guarda el top semanal de cada plataforma en España y se actualiza cada lunes.
 
 ## Cambiar el PIN
 En Supabase → SQL Editor ejecuta:
