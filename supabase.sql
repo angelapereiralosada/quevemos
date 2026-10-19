@@ -30,6 +30,8 @@ create table if not exists seen_items (
   created_at timestamptz not null default now(),
   primary key (owner, item_key)
 );
+alter table seen_items add column if not exists rating int check (rating between 1 and 5);
+
 -- Lo que cada uno ha descartado al deslizar (sirve para aprender sus gustos)
 create table if not exists nope_items (
   owner text not null check (owner in ('oswaldo','ana','angela')),
@@ -76,7 +78,7 @@ begin
   perform qv_check(p_pin);
   return jsonb_build_object(
     'lists', coalesce((select jsonb_agg(jsonb_build_object('owner',owner,'key',item_key,'item',item,'by',added_by,'at',created_at) order by created_at desc) from list_items), '[]'::jsonb),
-    'seen', coalesce((select jsonb_agg(jsonb_build_object('owner',owner,'key',item_key,'item',item,'at',created_at) order by created_at desc) from seen_items), '[]'::jsonb),
+    'seen', coalesce((select jsonb_agg(jsonb_build_object('owner',owner,'key',item_key,'item',item,'at',created_at,'rating',rating) order by created_at desc) from seen_items), '[]'::jsonb),
     'nopes', coalesce((select jsonb_agg(jsonb_build_object('owner',owner,'key',item_key,'item',item)) from nope_items), '[]'::jsonb),
     'comments', coalesce((select jsonb_agg(jsonb_build_object('id',id,'key',item_key,'item',item,'author',author,'body',body,'at',created_at) order by created_at) from comments), '[]'::jsonb)
   );
@@ -112,6 +114,16 @@ begin
   return true;
 end $$;
 
+create or replace function qv_rate(p_pin text, p_owner text, p_key text, p_item jsonb, p_rating int) returns void
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  perform qv_check(p_pin);
+  insert into seen_items (owner, item_key, item, rating) values (p_owner, p_key, p_item, p_rating)
+  on conflict (owner, item_key) do update set rating = excluded.rating;
+  delete from list_items where owner = p_owner and item_key = p_key;
+  delete from nope_items where owner = p_owner and item_key = p_key;
+end $$;
+
 create or replace function qv_nope(p_pin text, p_owner text, p_key text, p_item jsonb) returns void
 language plpgsql security definer set search_path = public, extensions as $$
 begin
@@ -145,6 +157,6 @@ revoke all on function qv_check(text) from public, anon, authenticated;
 grant execute on function
   qv_login(text), qv_state(text),
   qv_list_add(text,text,text,jsonb,text), qv_list_remove(text,text,text),
-  qv_seen_toggle(text,text,text,jsonb), qv_nope(text,text,text,jsonb), qv_unnope(text,text,text),
+  qv_seen_toggle(text,text,text,jsonb), qv_rate(text,text,text,jsonb,int), qv_nope(text,text,text,jsonb), qv_unnope(text,text,text),
   qv_comment_add(text,text,jsonb,text,text), qv_comment_delete(text,bigint,text)
 to anon, authenticated;

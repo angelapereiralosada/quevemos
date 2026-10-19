@@ -74,11 +74,14 @@ const P = {
   send: "M3 20.5 21 12 3 3.5l.01 6.6L15 12 3.01 13.9z",
   play: "M8 5v14l11-7z",
 };
+// Inserta hijos ignorando los huecos (null/false)
+const fill = (el, ...k) => el.replaceChildren(...k.flat(3).filter(x => x != null && x !== false));
 function svg(name) { const s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", P[name] || name); s.append(p); return s; }
 const hash = s => { let x = 0; for (const c of String(s)) x = (x * 31 + c.charCodeAt(0)) | 0; return Math.abs(x); };
 const PH = [["#2a2c33", "#111216"], ["#ff5436", "#8a1d0f"], ["#4a6bff", "#1b2a7a"], ["#16a39a", "#0b4b47"], ["#f5b21b", "#8a5a00"], ["#7a4dff", "#2c1a6b"]];
 function ago(iso) {
   const d = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (!isFinite(d)) return "";
   if (d < 60) return "ahora";
   if (d < 3600) return `hace ${Math.floor(d / 60)} min`;
   if (d < 86400) return `hace ${Math.floor(d / 3600)} h`;
@@ -99,7 +102,8 @@ const S = {
   plats: store.get("qv_plats", DEFAULT_PLATS),
   data: { lists: [], seen: [], nopes: [], comments: [] },
   view: "discover",
-  deck: [], deckType: "all", deckBusy: false, deckRound: 0, swiped: new Set(), history: [],
+  f: { type: "all", plat: null, short: false, mini: false, es: false, kids: false },
+  deck: [], deckBusy: false, deckRound: 0, swiped: new Set(), history: [],
   topPlat: null, mineOf: null, mineTab: "todo", allTab: "todo",
   trends: null, chat: [], openKey: null, inflight: 0,
 };
@@ -140,6 +144,14 @@ const M = {
     }
     return REMOTE ? rpc("qv_seen_toggle", { p_pin: S.pin, p_owner: me, p_key: it.key, p_item: slim(it) }) : null;
   },
+  rate(it, rating) {
+    const d = S.data, me = S.profile;
+    const ex = d.seen.find(x => x.owner === me && x.key === it.key);
+    if (ex) ex.rating = rating; else d.seen.unshift({ owner: me, key: it.key, item: slim(it), at: now(), rating });
+    d.lists = d.lists.filter(x => !(x.owner === me && x.key === it.key));
+    d.nopes = d.nopes.filter(x => !(x.owner === me && x.key === it.key));
+    return REMOTE ? rpc("qv_rate", { p_pin: S.pin, p_owner: me, p_key: it.key, p_item: slim(it), p_rating: rating }) : null;
+  },
   nope(it) {
     if (!S.data.nopes.some(x => x.owner === S.profile && x.key === it.key)) S.data.nopes.push({ owner: S.profile, key: it.key, item: slim(it) });
     return REMOTE ? rpc("qv_nope", { p_pin: S.pin, p_owner: S.profile, p_key: it.key, p_item: slim(it) }) : null;
@@ -170,13 +182,13 @@ async function act(name, ...args) {
   } finally { S.inflight--; if (!S.inflight) refresh(true); }
 }
 async function refresh(silent) {
-  if (!REMOTE) { S.data = Object.assign({ lists: [], seen: [], nopes: [], comments: [] }, store.get("qv_localdb3", {})); paintBadge(); if (!silent) rerender(); return; }
+  if (!REMOTE) { S.data = Object.assign({ lists: [], seen: [], nopes: [], comments: [] }, store.get("qv_localdb3", {})); paintBadge(); computeNews(); if (!silent) rerender(); return; }
   if (S.inflight) return;
   try {
     const d = await rpc("qv_state", { p_pin: S.pin });
     if (S.inflight) return;
     S.data = { lists: d.lists || [], seen: d.seen || [], nopes: d.nopes || [], comments: d.comments || [] };
-    paintBadge();
+    paintBadge(); computeNews();
     rerender(silent);
   } catch (e) {
     if (e.code === "28000") { logout(true); return; }
@@ -233,7 +245,7 @@ async function resolve(it, alt) {
     } catch (e) { return it; }
   }
   const b = RES[rk];
-  if (b) Object.assign(it, { id: b.id, poster: b.poster, backdrop: b.backdrop, vote: b.vote, g: b.g, otitle: b.otitle, year: it.year || b.year, overview: it.overview || b.overview, key: b.key });
+  if (b) Object.assign(it, { id: b.id, poster: b.poster, backdrop: b.backdrop, vote: b.vote, g: b.g, lang: b.lang, otitle: b.otitle, year: it.year || b.year, overview: it.overview || b.overview, key: b.key });
   return it;
 }
 let PROV = store.get("qv_prov3", null);
@@ -274,7 +286,7 @@ function tasteOf(user) {
   const add = (g, v) => { for (const id of g || []) { w[id] = (w[id] || 0) + v; for (const e of GEQ[id] || []) w[e] = (w[e] || 0) + v * .6; } };
   S.data.lists.filter(x => x.owner === user).forEach(x => add(x.item.g, 2));
   S.data.lists.filter(x => x.owner === "comun" && x.by === user).forEach(x => add(x.item.g, 1));
-  S.data.seen.filter(x => x.owner === user).forEach(x => add(x.item.g, 1));
+  S.data.seen.filter(x => x.owner === user).forEach(x => add(x.item.g, x.rating ? (x.rating - 3) * 1.3 + (x.rating >= 4 ? 1 : 0) : 1));
   S.data.nopes.filter(x => x.owner === user).forEach(x => add(x.item.g, -1.2));
   const n = S.data.lists.filter(x => x.owner === user).length + S.data.seen.filter(x => x.owner === user).length + S.data.nopes.filter(x => x.owner === user).length;
   return { w, n };
@@ -302,46 +314,53 @@ async function buildDeck(reset) {
 async function fillDeck() {
   const me = S.profile, taste = tasteOf(me), round = S.deckRound++;
   const known = new Set([...S.data.lists.filter(x => x.owner === me).map(x => x.key), ...S.data.seen.filter(x => x.owner === me).map(x => x.key), ...S.data.nopes.filter(x => x.owner === me).map(x => x.key), ...S.swiped, ...S.deck.map(c => c.it.key)]);
-  const types = S.deckType === "all" ? ["tv", "movie"] : [S.deckType];
+  const F = S.f, strict = F.short || F.mini;
+  const types = F.mini ? ["tv"] : F.type === "all" ? ["tv", "movie"] : [F.type];
+  const KIDS = [10751, 16, 10762];
   const cands = new Map();
   const add = (it, why, boost, verified) => {
     if (!it || !it.title) return; it.key = it.key || keyOf(it);
-    if (known.has(it.key) || (S.deckType !== "all" && it.type !== S.deckType)) return;
+    if (known.has(it.key) || !types.includes(it.type)) return;
     const c = cands.get(it.key);
     if (c) { c.boost += boost * .5; if (boost > c.mainBoost) { c.why = why; c.mainBoost = boost; } c.verified = c.verified || verified; return; }
     cands.set(it.key, { it, why, boost, mainBoost: boost, verified });
   };
   const jobs = [];
-  const ids = providerIds(S.plats).join("|");
+  const ids = providerIds(F.plat ? [F.plat] : S.plats).join("|");
 
   // 1) Lo que les apetece a los demás
-  for (const o of others()) for (const x of S.data.lists.filter(l => l.owner === o)) {
+  if (!strict) for (const o of others()) for (const x of S.data.lists.filter(l => l.owner === o)) {
     const it = { ...x.item, key: x.key };
     const both = wantedBy(x.key).filter(u => u !== me);
     add(it, both.length > 1 ? "A los dos les apetece: ¿hacéis match?" : `A ${PROF[o].name} le apetece`, 2.2 * both.length, false);
   }
-  S.data.lists.filter(x => x.owner === "comun").forEach(x => add({ ...x.item, key: x.key }, "Está en la lista de todos", 1.6, false));
+  if (!strict) S.data.lists.filter(x => x.owner === "comun").forEach(x => add({ ...x.item, key: x.key }, "Está en la lista de todos", 1.6, false));
 
   if (TMDB && ids) {
     // 2) Parecidas a lo que te gustó
-    const liked = shuffle([...S.data.lists.filter(x => x.owner === me), ...S.data.seen.filter(x => x.owner === me)].filter(x => x.item.id)).slice(0, 3);
-    for (const x of liked) jobs.push(limit(() => tmdb(`/${x.item.type}/${x.item.id}/recommendations`, { page: 1 + (round % 2) }, 48)).then(r =>
+    const liked = shuffle([...S.data.lists.filter(x => x.owner === me), ...S.data.seen.filter(x => x.owner === me && (!x.rating || x.rating >= 4))].filter(x => x.item.id)).slice(0, 3);
+    if (!strict) for (const x of liked) jobs.push(limit(() => tmdb(`/${x.item.type}/${x.item.id}/recommendations`, { page: 1 + (round % 2) }, 48)).then(r =>
       r.results.filter(z => z.media_type === "movie" || z.media_type === "tv").slice(0, 10).forEach(z => add(fromTmdb(z), `Porque te gustó ${x.item.title}`, 1.8, false))).catch(() => {}));
     // 3) Catálogo real de vuestras plataformas, orientado a tus géneros
     for (const type of types) {
-      const tg = taste.n >= 3 ? topGenres(taste, type, 2) : [];
-      const base = { watch_region: "ES", with_watch_providers: ids, with_watch_monetization_types: "flatrate|free|ads", "vote_count.gte": type === "movie" ? 300 : 150 };
+      const tg = F.kids ? [] : taste.n >= 3 ? topGenres(taste, type, 2) : [];
+      const loose = F.es || F.kids || F.mini || F.plat;
+      const base = { watch_region: "ES", with_watch_providers: ids, with_watch_monetization_types: "flatrate|free|ads", "vote_count.gte": loose ? 40 : type === "movie" ? 300 : 150 };
       if (type === "tv") base.without_genres = "10763,10767" + (taste.w[10764] > 0 ? "" : ",10764");
+      if (F.kids) { base.with_genres = type === "movie" ? "10751|16" : "10762|10751|16"; base.without_genres = (base.without_genres ? base.without_genres + "," : "") + "27,53,80"; }
+      if (F.es) base.with_original_language = "es";
+      if (F.short) base["with_runtime.lte"] = type === "movie" ? 120 : 35;
+      if (F.mini && type === "tv") base.with_type = "2";
       const pg = 1 + ((round + hash(me)) % 4);
-      jobs.push(tmdb(`/discover/${type}`, { ...base, sort_by: "popularity.desc", page: pg, with_genres: tg.join("|") || undefined }, 12).then(r =>
+      jobs.push(tmdb(`/discover/${type}`, { ...base, sort_by: "popularity.desc", page: loose ? 1 + (round % 3) : pg, with_genres: base.with_genres || tg.join("|") || undefined }, 12).then(r =>
         r.results.forEach(z => { const it = fromTmdb(z, type); const a = affinity(it.g, taste); const g = it.g.find(id => tg.includes(id));
           add(it, g && a > .15 ? `Te van las de ${GENRE[g]}` : "Lo más visto en tus plataformas", .6, true); })).catch(() => {}));
-      jobs.push(tmdb(`/discover/${type}`, { ...base, sort_by: "vote_average.desc", "vote_count.gte": type === "movie" ? 1500 : 600, page: 1 + ((round * 3 + hash(me)) % 6), with_genres: tg.slice(0, 1).join("|") || undefined }, 24).then(r =>
+      jobs.push(tmdb(`/discover/${type}`, { ...base, sort_by: "vote_average.desc", "vote_count.gte": loose ? 150 : type === "movie" ? 1500 : 600, page: 1 + ((round * 3 + hash(me)) % (loose ? 2 : 6)), with_genres: base.with_genres || tg.slice(0, 1).join("|") || undefined }, 24).then(r =>
         r.results.forEach(z => add(fromTmdb(z, type), "Joya muy bien valorada", .8, true))).catch(() => {}));
     }
   }
   // 4) Top de la semana
-  if (S.trends) for (const p of ownedTrendPlats()) {
+  if (S.trends && !strict) for (const p of ownedTrendPlats().filter(p => !F.plat || p === F.plat)) {
     for (const kind of ["tv", "movie"]) trendItems(p, kind).slice(0, 4).forEach(it => add(it, it.trend.n ? `Nº ${it.trend.n} en ${p === "Otras" ? "su plataforma" : p} esta semana` : `Novedad en ${p}`, 1.2 - (it.trend.n || 5) * .1, true));
   }
   await Promise.all(jobs);
@@ -350,7 +369,8 @@ async function fillDeck() {
   // resolver lo que no viene de TMDB y comprobar disponibilidad de lo no verificado
   await Promise.all(list.map(c => resolve(c.it)));
   const re = new Map(); for (const c of list) { c.it.key = keyOf(c.it); if (!known.has(c.it.key) && !re.has(c.it.key)) re.set(c.it.key, c); }
-  list = [...re.values()].filter(c => !c.it.g || !c.it.g.includes(10763));
+  list = [...re.values()].filter(c => !c.it.g || !c.it.g.includes(10763))
+    .filter(c => (!F.es || c.it.lang === "es") && (!F.kids || (c.it.g || []).some(g => KIDS.includes(g))) && types.includes(c.it.type));
   for (const c of list) c.score = (c.it.vote || 6.6) * .45 + affinity(c.it.g, taste) * 2.2 + c.boost + Math.random() * 1.1 - (c.it.votes != null && c.it.votes < 50 ? 1 : 0);
   list.sort((a, b) => b.score - a.score);
   const picked = [];
@@ -359,6 +379,7 @@ async function fillDeck() {
     if (!c.verified && TMDB && c.it.id) {
       const pv = await providersOf(c.it);
       if (pv && !pv.own.length && c.mainBoost < 2) continue;
+      if (F.plat && pv && !pv.own.some(p => p.plat === F.plat)) continue;
     }
     picked.push(c);
   }
@@ -387,7 +408,10 @@ function tile(it, sub, rank) {
   return h("button", { class: "tile", onclick: () => openItem(it) }, posterEl(it), h("span", { class: "t" }, it.title),
     sub !== null ? h("span", { class: "s" }, sub !== undefined ? sub : [typeLabel(it.type), it.year].filter(Boolean).join(" · ")) : null);
 }
-const empty = (title, text, btn) => h("div", { class: "empty" }, h("div", { class: "mark", "aria-hidden": "true" }, h("i"), h("i"), h("i")), h("b", null, title), h("p", null, text), btn || null);
+const emo = (e, cls) => h("span", { class: "emo" + (cls ? " " + cls : ""), "aria-hidden": "true" }, e);
+const empty = (title, text, btn, e) => h("div", { class: "empty" }, emo(e || "🍿"), h("b", null, title), h("p", null, text), btn || null);
+const starsTxt = n => "★".repeat(n) + "☆".repeat(5 - n);
+const ratingOf = (user, key) => { const x = S.data.seen.find(s => s.owner === user && s.key === key); return x ? x.rating || null : null; };
 
 /* ---------- navegación ---------- */
 function rerender(silent) {
@@ -398,7 +422,7 @@ function rerender(silent) {
   if (S.openKey && !$("sheet").hidden && $("dSocial")) paintSocial();
 }
 function go(view) {
-  S.view = view;
+  S.view = view; document.body.dataset.view = view;
   for (const v of ["discover", "top", "mine", "all"]) $("v-" + v).hidden = v !== view;
   document.querySelectorAll(".tabbar button").forEach(b => { if (b.dataset.v === view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   rerender();
@@ -412,31 +436,47 @@ function paintBadge() {
 /* ---------- Descubrir ---------- */
 function paintDiscover() {
   const v = $("v-discover"); v.replaceChildren();
-  v.append(h("button", { class: "ask", onclick: openChat }, h("span", { class: "spark" }, svg("spark")),
-    h("span", null, h("b", null, "Pregúntale a la IA"), h("span", null, "«Algo de risa para esta noche, nada largo»"))));
+  v.append(h("div", { class: "duo" },
+    h("button", { class: "ask", onclick: openChat }, emo("🤖"), h("b", null, "Pregúntale a la IA"), h("span", null, "«Algo de risa, nada largo»")),
+    h("button", { class: "ask night", onclick: openNight }, emo("🍿"), h("b", null, "Noche de peli"), h("span", null, "Lo que os apetece a todos y ruleta"))));
   v.append(h("button", { class: "searchbar", onclick: () => openSearch() }, svg("M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.8 4.8-1.4 1.4-4.8-4.8A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"), "Busca un título o un tema: lesbianas, navidad…"));
-  v.append(h("div", { class: "chips" }, [["all", "Todo"], ["tv", "Series"], ["movie", "Películas"]].map(([k, l]) =>
-    h("button", { class: "chip", "aria-pressed": S.deckType === k ? "true" : "false", onclick: () => { if (S.deckType === k) return; S.deckType = k; paintDiscover(); buildDeck(true); } }, l))));
+  const F = S.f;
+  const set = (patch) => { Object.assign(S.f, patch); paintDiscover(); buildDeck(true); };
+  const chip = (label, on, fn, e) => h("button", { class: "chip", "aria-pressed": on ? "true" : "false", onclick: fn }, e ? emo(e) : null, label);
+  v.append(h("div", { class: "chips" },
+    chip("Todo", F.type === "all" && !F.mini, () => set({ type: "all", mini: false })),
+    chip("Series", F.type === "tv" && !F.mini, () => set({ type: "tv", mini: false }), "📺"),
+    chip("Pelis", F.type === "movie", () => set({ type: "movie", mini: false }), "🎬"),
+    chip("Miniseries", F.mini, () => set({ mini: !F.mini, type: F.mini ? F.type : "tv" }), "⚡"),
+    chip("Menos de 2 h", F.short, () => set({ short: !F.short }), "⏱️"),
+    chip("Españolas", F.es, () => set({ es: !F.es }), "🇪🇸"),
+    chip("Con niños", F.kids, () => set({ kids: !F.kids }), "🧸"),
+    ...S.plats.map(p => h("button", { class: "chip", "aria-pressed": F.plat === p ? "true" : "false", onclick: () => set({ plat: F.plat === p ? null : p }) },
+      PROV && PROV.logos[p] ? h("img", { src: IMG + "w92" + PROV.logos[p], alt: "" }) : h("span", { class: "dot", style: `background:${PCOL[p]}` }), p))));
+  const A = (cls, e, label, fn, id) => h("button", { class: "act " + cls, "aria-label": label, onclick: fn, id }, h("span", { class: "b" }, emo(e)), label);
   v.append(h("div", { class: "deck-wrap" },
     h("div", { class: "deck", id: "deck" }),
     h("div", { class: "actions" },
-      h("button", { class: "act md seen", "aria-label": "Deshacer", onclick: undo, id: "undoBtn" }, svg("undo")),
-      h("button", { class: "act lg no", "aria-label": "No me apetece", onclick: () => swipeTop("no") }, svg("x")),
-      h("button", { class: "act md seen", "aria-label": "Ya la vi", onclick: () => swipeTop("seen") }, svg("eye")),
-      h("button", { class: "act md all", "aria-label": "Proponer a todos", onclick: () => swipeTop("all") }, svg("group")),
-      h("button", { class: "act lg yes", "aria-label": "Me apetece", onclick: () => swipeTop("yes") }, svg("heart"))),
-    h("div", { class: "act-labels", "aria-hidden": "true" }, h("span", { class: "md" }, "Atrás"), h("span", { class: "lg" }, "Paso"), h("span", { class: "md" }, "Vista"), h("span", { class: "md" }, "A todos"), h("span", { class: "lg" }, "Me apetece"))));
-  v.append(h("p", { class: "foot" }, "Desliza a la derecha lo que te apetezca y a la izquierda lo que no. Cuanto más uses, mejor te conoce."));
+      A("sm", "↩️", "Atrás", undo, "undoBtn"),
+      A("lg no", "😴", "Paso", () => swipeTop("no")),
+      A("md seen", "👀", "Ya la vi", () => swipeTop("seen")),
+      A("md all", "📣", "A todos", () => swipeTop("all")),
+      A("lg yes", "😍", "Me apetece", () => swipeTop("yes")))));
+  v.append(h("p", { class: "foot" }, "Desliza a la derecha 😍, a la izquierda 😴 o hacia arriba 📣. Cuanto más uses, mejor te conoce."));
   paintDeck();
   if (S.deck.length < 4 && !S.deckBusy) buildDeck(false);
 }
 function paintDeck() {
   const d = $("deck"); if (!d) return;
   d.replaceChildren();
-  const u = $("undoBtn"); if (u) u.disabled = !S.history.length, u.style.opacity = S.history.length ? 1 : .4;
+  const u = $("undoBtn"); if (u) u.disabled = !S.history.length;
   if (!S.deck.length) {
-    d.append(S.deckBusy ? h("div", { class: "deck-empty skel" }, h("b", null, "Buscando para ti…"))
-      : h("div", { class: "deck-empty" }, h("b", null, "No quedan propuestas"), h("p", { class: "note" }, TMDB ? "Prueba con más plataformas en tu perfil o cambia entre series y películas." : "Falta la clave de TMDB para buscar en el catálogo."), h("button", { class: "btn dark", onclick: () => buildDeck(true) }, "Buscar más")));
+    const anyF = S.f.plat || S.f.short || S.f.mini || S.f.es || S.f.kids;
+    d.append(S.deckBusy ? h("div", { class: "deck-empty skel" }, emo("🔎"), h("b", null, "Buscando para ti…"))
+      : h("div", { class: "deck-empty" }, emo("🫠"), h("b", null, "No quedan propuestas"),
+        h("p", { class: "note" }, !TMDB ? "Falta la clave de TMDB para buscar en el catálogo." : anyF ? "Con estos filtros no encuentro más. Quita alguno." : "Prueba a añadir plataformas en tu perfil."),
+        anyF ? h("button", { class: "btn sun", onclick: () => { S.f = { type: "all", plat: null, short: false, mini: false, es: false, kids: false }; paintDiscover(); buildDeck(true); } }, "Quitar filtros")
+          : h("button", { class: "btn dark", onclick: () => buildDeck(true) }, "Buscar más")));
     return;
   }
   const show = S.deck.slice(0, 3).reverse();
@@ -448,16 +488,19 @@ function paintDeck() {
   });
   if (S.deck.length < 6 && !S.deckBusy) buildDeck(false);
 }
+const STICK = ["", "pop", "mint", "sky", "grape", "white"];
 function cardEl(c, depth) {
   const it = c.it;
   const provBox = h("span", { class: "provs-mini" });
   const meta = h("div", { class: "card-meta" }, it.vote ? h("span", { class: "rate" }, svg("star"), Number(it.vote).toFixed(1)) : null, h("span", null, [typeLabel(it.type), it.year].filter(Boolean).join(" · ")), provBox);
-  const el = h("div", { class: "card" + (depth === 1 ? " behind" : depth === 2 ? " behind2" : ""), "data-key": it.key },
+  const sc = STICK[hash(c.why || it.title) % STICK.length];
+  const el = h("div", { class: "card" + (depth === 1 ? " behind" : depth === 2 ? " behind2" : " enter"), "data-key": it.key },
     posterEl(it, false),
-    h("span", { class: "stamp yes" }, "Me apetece"), h("span", { class: "stamp no" }, "Paso"), h("span", { class: "stamp all" }, "A todos"),
+    c.why && depth === 0 ? h("span", { class: "sticker why-sticker " + sc }, c.why) : null,
+    h("span", { class: "sticker stamp yes mint" }, emo("😍"), "¡Me apetece!"), h("span", { class: "sticker stamp no pop" }, emo("😴"), "Paso"), h("span", { class: "sticker stamp all sky" }, emo("📣"), "¡A todos!"),
     depth === 0 ? h("button", { class: "card-tap", "aria-label": "Ver ficha", onclick: e => { e.stopPropagation(); openItem(it); } }, svg("info")) : null,
-    h("div", { class: "card-info" }, c.why ? h("span", { class: "why" }, c.why) : null, h("h3", null, it.title), meta));
-  if (depth === 0) providersOf(it).then(pv => { if (pv && pv.own.length) provBox.replaceChildren(...pv.own.slice(0, 3).map(p => p.logo ? h("img", { src: IMG + "w92" + p.logo, alt: p.name, title: p.name }) : null)); });
+    h("div", { class: "card-info" }, h("h3", null, it.title), meta));
+  if (depth === 0) providersOf(it).then(pv => { if (pv && pv.own.length) fill(provBox, ...pv.own.slice(0, 3).map(p => p.logo ? h("img", { src: IMG + "w92" + p.logo, alt: p.name, title: p.name }) : null)); });
   if (depth <= 1 && it.poster) { const pre = new Image(); pre.src = IMG + "w500" + it.poster; }
   return el;
 }
@@ -500,10 +543,10 @@ function decide(kind) {
     const w = wantedBy(it.key);
     if (PROFILES.every(p => w.includes(p.id))) {
       if (!inList("comun", it.key)) act("listAdd", "comun", it);
-      toast(`¡Match! A los tres os apetece ${it.title}`, "match");
-    } else if (kind === "yes" && w.length === 2) toast(`¡A ${PROF[w.find(u => u !== S.profile)].name} también le apetece!`, "match");
+      toast(`🎉 ¡Match! A los tres os apetece ${it.title}`, "match"); confetti();
+    } else if (kind === "yes" && w.length === 2) { toast(`💘 ¡A ${PROF[w.find(u => u !== S.profile)].name} también le apetece!`, "match"); confetti(60); }
   } else if (kind === "no") act("nope", it);
-  else if (kind === "seen") { if (!isSeen(it.key)) act("seenToggle", it); toast("Marcada como vista"); }
+  else if (kind === "seen") { if (!isSeen(it.key)) act("rate", it, null); openRate(it); }
   paintDeck();
 }
 function undo() {
@@ -536,8 +579,8 @@ function renderTop() {
   const top = series[0] || movies[0];
   if (top) {
     const bg = h("div", { class: "feature-bg" });
-    v.append(h("button", { class: "feature", onclick: () => openItem(top) }, bg, h("div", { class: "feature-in" },
-      h("span", { class: "feature-tag" }, d.ranked ? `Nº 1 en ${S.topPlat === "Otras" ? "su plataforma" : S.topPlat}` : "Novedad"), h("b", null, top.title), top.overview ? h("span", { class: "feature-syn" }, top.overview) : null)));
+    v.append(h("button", { class: "feature", onclick: () => openItem(top) }, bg, h("span", { class: "sticker" }, emo("🔥"), d.ranked ? `Nº 1 en ${S.topPlat === "Otras" ? "su plataforma" : S.topPlat}` : "Novedad"), h("div", { class: "feature-in" },
+      h("b", null, top.title), top.overview ? h("span", { class: "feature-syn" }, top.overview) : null)));
     resolve(top).then(() => { const img = top.backdrop || top.poster; if (img) bg.style.backgroundImage = `url(${IMG}w780${img})`; });
   }
   for (const [items, lab] of [[series, "Series"], [movies, "Películas"]]) {
@@ -562,14 +605,15 @@ function renderMine() {
   const arr = S.mineTab === "todo" ? todo : done;
   if (!arr.length) {
     v.append(S.mineTab === "todo"
-      ? empty(mine ? "Tu lista está vacía" : `${PROF[who].name} aún no ha guardado nada`, mine ? "En Descubrir, desliza a la derecha lo que te apetezca y aparecerá aquí." : "Cuando guarde algo, lo verás aquí.", mine ? h("button", { class: "btn accent", onclick: () => go("discover") }, "Ir a Descubrir") : null)
-      : empty("Nada visto todavía", "Marca «Vista» en lo que ya hayas visto. Así no te lo vuelvo a proponer y aprendo lo que te gusta."));
+      ? empty(mine ? "Tu lista está vacía" : `${PROF[who].name} aún no ha guardado nada`, mine ? "En Descubrir, desliza a la derecha lo que te apetezca y aparecerá aquí." : "Cuando guarde algo, lo verás aquí.", mine ? h("button", { class: "btn sun", onclick: () => go("discover") }, "Ir a Descubrir") : null, "🗒️")
+      : empty("Nada visto todavía", "Marca 👀 en lo que ya hayas visto y ponle nota. Así no te lo vuelvo a proponer y aprendo lo que te gusta.", null, "👀"));
     return;
   }
   v.append(h("div", { class: "grid" }, arr.map(x => {
     const it = { ...x.item, key: x.key };
     const others2 = wantedBy(x.key).filter(u => u !== who);
-    return tile(it, others2.length ? `También ${others2.map(u => PROF[u].name).join(" y ")}` : undefined);
+    if (S.mineTab === "done") return tile(it, x.rating ? `${FACES[x.rating - 1][0]} ${FACES[x.rating - 1][1]}` : "Sin nota");
+    return tile(it, others2.length ? `💘 También ${others2.map(u => PROF[u].name).join(" y ")}` : undefined);
   })));
 }
 
@@ -586,8 +630,8 @@ function renderAll() {
   let arr = S.allTab === "todo" ? todo : done;
   if (!arr.length) {
     v.append(S.allTab === "todo"
-      ? empty("Nada propuesto todavía", "En Descubrir, pulsa el botón azul de «A todos» o desliza una carátula hacia arriba. También se añade sola cuando a los tres os apetece lo mismo.", h("button", { class: "btn blue", onclick: () => go("discover") }, "Ir a Descubrir"))
-      : empty("Aún no habéis visto ninguna juntos", "Cuando los tres marquéis una como vista, aparecerá aquí."));
+      ? empty("Nada propuesto todavía", "En Descubrir, pulsa 📣 o desliza una carátula hacia arriba. También se añade sola cuando a los tres os apetece lo mismo.", h("button", { class: "btn blue", onclick: () => go("discover") }, "Ir a Descubrir"), "📣")
+      : empty("Aún no habéis visto ninguna juntos", "Cuando los tres marquéis una como vista, aparecerá aquí con vuestras notas.", null, "🎬"));
     return;
   }
   const lastAt = k => { const c = commentsOf(k); return c.length ? c[c.length - 1].at : ""; };
@@ -599,9 +643,9 @@ function renderAll() {
         h("h3", null, it.title),
         h("div", { class: "meta" }, [typeLabel(it.type), it.year, PROF[x.by] ? `propuesta por ${PROF[x.by].name}` : ""].filter(Boolean).join(" · ")),
         h("div", { class: "who-wants" },
-          w.length ? [h("span", { class: "stack" }, w.map(u => avatar(u, "xs"))), w.length === 3 ? "¡Match de los tres!" : "Le apetece"] : "Nadie la ha marcado aún",
+          w.length ? [h("span", { class: "stack" }, w.map(u => avatar(u, "xs"))), w.length === 3 ? "💯 ¡Match de los tres!" : "Le apetece"] : "Nadie la ha marcado aún",
           h("span", { class: "ccount" }, svg("chat"), cm.length),
-          sb.length ? h("span", { class: "ccount" }, svg("eye"), sb.length) : null),
+          sb.length ? h("span", { class: "ccount" }, sb.map(u => ratingOf(u, x.key) ? emo(FACES[ratingOf(u, x.key) - 1][0]) : emo("👀"))) : null),
         last ? h("div", { class: "bubble-last" }, h("b", null, PROF[last.author].name + ": "), last.body) : null));
   })));
 }
@@ -666,19 +710,20 @@ function paintSocial() {
   input.value = draft;
   input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(140, input.scrollHeight) + "px"; });
   const send = () => { const t = input.value.trim(); if (!t) return; input.value = ""; if (!all) act("listAdd", "comun", it); act("commentAdd", it, t); paintSocial(); };
-  box.replaceChildren(
+  fill(box,
     h("div", { class: "dacts" },
-      h("button", { class: "btn" + (mine ? " on-yes" : ""), onclick: () => { act(mine ? "listRemove" : "listAdd", S.profile, mine ? k : it); toast(mine ? "Quitada de tu lista" : "Guardada en tu lista"); paintSocial(); } }, svg(mine ? "check" : "heart"), mine ? "En mi lista" : "Me apetece"),
-      h("button", { class: "btn" + (all ? " on-blue" : ""), onclick: () => { act(all ? "listRemove" : "listAdd", "comun", all ? k : it); toast(all ? "Quitada de Todos" : "Propuesta a todos"); paintSocial(); } }, svg(all ? "check" : "group"), all ? "En Todos" : "A todos"),
-      h("button", { class: "btn" + (seen ? " on-dark" : ""), onclick: () => { act("seenToggle", it); toast(seen ? "Desmarcada" : "Marcada como vista"); paintSocial(); } }, svg(seen ? "check" : "eye"), seen ? "Vista" : "Ya la vi")),
+      h("button", { class: "btn" + (mine ? " on-yes" : ""), onclick: () => { act(mine ? "listRemove" : "listAdd", S.profile, mine ? k : it); toast(mine ? "Quitada de tu lista" : "Guardada en tu lista"); paintSocial(); } }, emo(mine ? "✅" : "😍"), mine ? "En mi lista" : "Me apetece"),
+      h("button", { class: "btn" + (all ? " on-blue" : ""), onclick: () => { act(all ? "listRemove" : "listAdd", "comun", all ? k : it); toast(all ? "Quitada de Todos" : "Propuesta a todos"); paintSocial(); } }, emo(all ? "✅" : "📣"), all ? "En Todos" : "A todos"),
+      h("button", { class: "btn" + (seen ? " on-yes" : ""), onclick: () => { if (seen) { act("seenToggle", it); toast("Desmarcada"); paintSocial(); } else { act("rate", it, null); openRate(it, true); } } }, emo(seen ? (ratingOf(S.profile, k) ? FACES[ratingOf(S.profile, k) - 1][0] : "✅") : "👀"), seen ? "Vista" : "Ya la vi")),
     (w.length || sb.length) ? h("div", { class: "box" },
       w.length ? h("div", { class: "wants" }, h("span", { class: "stack" }, w.map(u => avatar(u, "sm"))), w.length === 3 ? "¡A los tres os apetece!" : `Le apetece a ${w.map(u => u === S.profile ? "ti" : PROF[u].name).join(" y ")}`) : null,
-      sb.length ? h("div", { class: "wants" }, svg("eye"), `Ya la ha visto ${sb.map(u => u === S.profile ? "tú" : PROF[u].name).join(", ")}`) : null) : null,
+      sb.length ? sb.map(u => h("div", { class: "wants" }, avatar(u, "sm"), `${u === S.profile ? "Tú la viste" : PROF[u].name + " la vio"}`, ratingOf(u, k) ? h("span", null, emo(FACES[ratingOf(u, k) - 1][0]), " ", FACES[ratingOf(u, k) - 1][1]) : null)) : null) : null,
     h("div", { class: "box" }, h("h4", null, cms.length ? `Comentarios · ${cms.length}` : "Comentarios"),
       cms.length ? cms.map(c => h("div", { class: "cmt" + (c.author === S.profile ? " mine" : "") }, avatar(c.author, "sm"),
         h("div", { class: "bub" }, h("b", null, PROF[c.author].name), h("time", null, ago(c.at)), h("p", null, c.body),
           c.author === S.profile && !String(c.id).startsWith("tmp") ? h("button", { class: "del", onclick: () => { act("commentDelete", c.id); paintSocial(); } }, "Borrar") : null)))
         : h("p", { class: "note" }, all ? "Nadie ha comentado aún. ¿Qué os parece?" : "Al comentar, se propone a todos automáticamente."),
+      h("div", { class: "quick-reacts" }, ["🔥 ¡Me apunto!", "😍 Tiene pintaza", "🥱 Paso", "🍿 ¿Esta noche?"].map(q => h("button", { onclick: () => { input.value = q; send(); } }, q))),
       h("div", { class: "cbox" }, input, h("button", { class: "btn blue", "aria-label": "Enviar", onclick: send }, svg("send")))));
   box.querySelectorAll(".wants svg").forEach(s => s.style.cssText = "width:20px;height:20px;color:var(--muted)");
   if (focus) input.focus();
@@ -912,7 +957,7 @@ function openChat() {
       paint();
     } catch (e) { Object.assign(pending, { typing: false, text: "Sin conexión. Prueba otra vez." }); paint(); }
   };
-  body.append(h("div", { class: "chat-head" }, h("span", { class: "spark" }, svg("spark")), h("div", null, h("h2", null, "Pregúntale a la IA"), h("p", { class: "note" }, "Conoce lo que habéis visto y lo que os apetece"))), list, form);
+  body.append(h("div", { class: "chat-head" }, emo("🤖"), h("div", null, h("h2", null, "Pregúntale a la IA"), h("p", { class: "note" }, "Conoce lo que habéis visto y lo que os apetece"))), list, form);
   openSheet(body);
   paint();
 }
@@ -924,6 +969,134 @@ function pickEl(p) {
       h("div", { class: "w" }, p.why),
       own.length ? h("div", { class: "pp" }, own.slice(0, 3).map(x => x.logo ? h("img", { src: IMG + "w92" + x.logo, alt: x.name, title: x.name }) : null))
         : p.prov ? h("div", { class: "m" }, "No está en vuestras plataformas ahora") : null));
+}
+
+/* ---------- puntuar ---------- */
+const FACES = [["😖", "Horrible"], ["😕", "Floja"], ["😐", "Normal"], ["🙂", "Buena"], ["🤩", "¡Top!"]];
+function openRate(it, back) {
+  const cur0 = ratingOf(S.profile, it.key);
+  const row = h("div", { class: "rate-row" }, FACES.map(([e, l], i) => h("button", { "aria-pressed": cur0 === i + 1 ? "true" : "false", onclick: () => {
+    act("rate", it, i + 1); toast(`${e} Apuntado: ${l.toLowerCase()}`); if (back) openItem(it); else closeSheet(); } }, emo(e), l)));
+  openSheet(h("div", { class: "settings", style: "text-align:center;align-items:center" },
+    h("span", { class: "sticker mint" }, emo("👀"), "Vista"),
+    h("h2", null, `¿Qué tal ${it.title}?`),
+    h("p", { class: "note" }, "Tu nota ayuda a que las propuestas acierten más y los demás la verán."),
+    row,
+    h("button", { class: "btn", onclick: () => back ? openItem(it) : closeSheet() }, "Ahora no")));
+}
+
+/* ---------- confeti ---------- */
+function confetti(n = 140) {
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = $("confetti"); if (!cv || !cv.getContext) return;
+  const ctx = cv.getContext("2d"), W = cv.width = innerWidth, H = cv.height = innerHeight;
+  cv.hidden = false;
+  const cols = ["#ffd23f", "#ff5a5f", "#3ddc97", "#4361ee", "#9b5de5", "#1a1033"];
+  const ps = Array.from({ length: n }, () => ({ x: W / 2 + (Math.random() - .5) * 80, y: H * .45, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4, s: 6 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: cols[Math.floor(Math.random() * cols.length)] }));
+  let t = 0;
+  const step = () => {
+    ctx.clearRect(0, 0, W, H); t++;
+    for (const p of ps) { p.vy += .35; p.x += p.vx; p.y += p.vy; p.r += p.vr; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 3, p.s, p.s * .66); ctx.restore(); }
+    if (t < 110) requestAnimationFrame(step); else { ctx.clearRect(0, 0, W, H); cv.hidden = true; }
+  };
+  requestAnimationFrame(step);
+}
+
+/* ---------- noche de peli ---------- */
+function openNight() {
+  let who = new Set(PROFILES.map(p => p.id)), type = "all", spinning = false;
+  const body = h("div", { class: "settings" });
+  const paint = () => {
+    const sel = [...who];
+    const seenAny = k => sel.some(u => seenBy(k).includes(u));
+    const pool = new Map();
+    for (const x of S.data.lists) {
+      if (x.owner !== "comun" && !sel.includes(x.owner)) continue;
+      if (seenAny(x.key)) continue;
+      if (type !== "all" && x.item.type !== type) continue;
+      const c = pool.get(x.key) || { it: { ...x.item, key: x.key }, wants: new Set(), all: false };
+      if (x.owner === "comun") c.all = true; else c.wants.add(x.owner);
+      pool.set(x.key, c);
+    }
+    const ranked = [...pool.values()].map(c => ({ ...c, score: c.wants.size * 2 + (c.all ? 1 : 0) + commentsOf(c.it.key).length * .2 }))
+      .filter(c => c.wants.size || c.all).sort((a, b) => b.score - a.score);
+    const perfect = ranked.filter(c => sel.every(u => c.wants.has(u)));
+    fill(body,
+      h("div", { class: "chat-head" }, emo("🍿"), h("div", null, h("h2", null, "Noche de peli"), h("p", { class: "note" }, "¿Quién la va a ver?"))),
+      h("div", { class: "night-who" }, PROFILES.map(p => h("button", { "aria-pressed": who.has(p.id) ? "true" : "false", onclick: () => { if (who.has(p.id) && who.size > 1) who.delete(p.id); else who.add(p.id); paint(); } }, avatar(p.id, "sm"), p.id === S.profile ? "Yo" : p.name))),
+      h("div", { class: "chips wrap", style: "justify-content:center" }, [["all", "Lo que sea"], ["movie", "Peli"], ["tv", "Serie"]].map(([k, l]) => h("button", { class: "chip", "aria-pressed": type === k ? "true" : "false", onclick: () => { type = k; paint(); } }, l))),
+      ranked.length ? h("div", { class: "wheel", id: "wheel" }, emo("🎰", ""), h("b", null, "¿No os decidís?"), h("p", { class: "note" }, `La ruleta elige entre ${ranked.length} título${ranked.length > 1 ? "s" : ""} de vuestras listas`),
+        h("button", { class: "btn sun", onclick: () => spin(ranked) }, "¡Girar la ruleta!")) : null,
+      perfect.length ? h("div", { class: "sec" }, h("h2", null, sel.length > 1 ? "Os apetece a todos" : "Te apetece"), h("small", null, "")) : null,
+      perfect.length ? h("div", { class: "grid" }, perfect.slice(0, 9).map(c => tile(c.it, "💯 Match"))) : null,
+      ranked.filter(c => !perfect.includes(c)).length ? h("div", { class: "sec" }, h("h2", null, "También os puede encajar"), h("small", null, "")) : null,
+      h("div", { class: "grid" }, ranked.filter(c => !perfect.includes(c)).slice(0, 12).map(c => tile(c.it, c.wants.size ? `Le apetece a ${[...c.wants].map(u => u === S.profile ? "ti" : PROF[u].name).join(" y ")}` : "En la lista de todos"))),
+      !ranked.length ? empty("Aún no hay nada en común", "Guardad cosas en Descubrir con 😍 o 📣 y aquí veréis lo que os apetece a la vez.", h("button", { class: "btn sun", onclick: () => { closeSheet(); go("discover"); } }, "Ir a Descubrir"), "🫣") : null);
+  };
+  const spin = (ranked) => {
+    if (spinning) return; spinning = true;
+    const w = $("wheel"); if (!w) return;
+    const weighted = ranked.flatMap(c => Array(1 + c.wants.size).fill(c));
+    const final = weighted[Math.floor(Math.random() * weighted.length)];
+    let i = 0, delay = 60;
+    const slot = h("div", { style: "width:150px" });
+    w.replaceChildren(h("b", null, "Girando…"), slot);
+    const tick = () => {
+      const c = i < 14 ? ranked[i % ranked.length] : final;
+      slot.replaceChildren(posterEl(c.it, false)); i++;
+      if (i <= 14) { delay *= 1.15; setTimeout(tick, delay); }
+      else {
+        spinning = false; confetti(90);
+        w.replaceChildren(h("span", { class: "sticker" }, emo("🎉"), "¡Esta noche toca!"), slot, h("b", null, final.it.title),
+          h("div", { style: "display:flex;gap:8px;flex-wrap:wrap;justify-content:center" },
+            h("button", { class: "btn sun", onclick: () => openItem(final.it) }, "Ver ficha"),
+            h("button", { class: "btn", onclick: () => spin(ranked) }, "Otra vez")));
+      }
+    };
+    tick();
+  };
+  openSheet(body); paint();
+}
+
+/* ---------- avisos ---------- */
+const lastSeenKey = () => "qv_lastseen_" + S.profile;
+let NEWS = [];
+async function computeNews() {
+  const me = S.profile, since = store.get(lastSeenKey(), new Date(Date.now() - 7 * 864e5).toISOString());
+  const items = [];
+  for (const c of S.data.comments) if (c.author !== me) items.push({ at: c.at, it: { ...c.item, key: c.key }, e: "💬", txt: `${PROF[c.author].name} ha comentado en ${c.item.title}: «${c.body.slice(0, 80)}»` });
+  for (const x of S.data.lists) if (x.owner === "comun" && x.by !== me) items.push({ at: x.at, it: { ...x.item, key: x.key }, e: "📣", txt: `${PROF[x.by].name} propone ver ${x.item.title}` });
+  const allKeys = new Set(S.data.lists.filter(x => x.owner === "comun").map(x => x.key));
+  for (const x of S.data.lists) if (x.owner !== "comun" && x.owner !== me && inList(me, x.key)) items.push({ at: x.at, it: { ...x.item, key: x.key }, e: "💘", txt: `A ${PROF[x.owner].name} también le apetece ${x.item.title}` });
+  for (const x of S.data.seen) if (x.owner !== me && x.rating && allKeys.has(x.key)) items.push({ at: x.at, it: { ...x.item, key: x.key }, e: FACES[x.rating - 1][0], txt: `${PROF[x.owner].name} ha visto ${x.item.title}: ${FACES[x.rating - 1][1].toLowerCase()}` });
+  // nuevas temporadas de series que os interesan
+  if (TMDB) {
+    const tv = new Map();
+    for (const x of [...S.data.lists, ...S.data.seen]) if (x.item.type === "tv" && x.item.id && (x.owner === me || x.owner === "comun" || S.data.seen.some(s => s.owner === me && s.key === x.key))) tv.set(x.key, x.item);
+    const list = [...tv.values()].slice(0, 25);
+    await Promise.all(list.map(async t => {
+      try {
+        const d = await limit(() => tmdb(`/tv/${t.id}`, {}, 24));
+        const nx = d.next_episode_to_air, ls = d.last_episode_to_air, today = Date.now();
+        if (nx && nx.episode_number === 1 && new Date(nx.air_date) - today < 21 * 864e5) items.push({ at: new Date(Math.min(today, new Date(nx.air_date).getTime() - 864e5 * 14)).toISOString(), it: { ...t, key: `tv:${t.id}` }, e: "🔜", txt: `La temporada ${nx.season_number} de ${t.title} se estrena el ${new Date(nx.air_date).toLocaleDateString("es-ES", { day: "numeric", month: "long" })}` });
+        else if (ls && ls.episode_number === 1 && today - new Date(ls.air_date) < 30 * 864e5) items.push({ at: new Date(ls.air_date).toISOString(), it: { ...t, key: `tv:${t.id}` }, e: "🆕", txt: `¡Ya está la temporada ${ls.season_number} de ${t.title}!` });
+      } catch (e) {}
+    }));
+  }
+  items.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  NEWS = items.slice(0, 40).map(n => ({ ...n, fresh: String(n.at) > since }));
+  const nNew = NEWS.filter(n => n.fresh).length;
+  const b = $("bellN"); if (b) { b.hidden = !nNew; b.textContent = nNew > 9 ? "9+" : nNew; }
+}
+function openNews() {
+  const body = h("div", { class: "settings" }, h("div", { class: "chat-head" }, emo("🔔"), h("div", null, h("h2", null, "Novedades"), h("p", { class: "note" }, "Comentarios, propuestas, matches y nuevas temporadas"))),
+    NEWS.length ? h("div", { class: "feed" }, NEWS.map(n => h("button", { class: "fitem" + (n.fresh ? " new" : ""), onclick: () => openItem(n.it) }, posterEl(n.it, false),
+      h("div", null, h("p", null, emo(n.e), " ", n.txt), h("small", null, ago(n.at))))))
+      : empty("Todo tranquilo", "Aquí verás cuando alguien comente, proponga algo o salga una nueva temporada de vuestras series.", null, "😌"));
+  openSheet(body);
+  store.set(lastSeenKey(), new Date().toISOString());
+  NEWS.forEach(n => n.fresh = false);
+  const b = $("bellN"); if (b) b.hidden = true;
 }
 
 /* ---------- ajustes ---------- */
@@ -986,7 +1159,7 @@ function logout(forgetPin) {
 async function boot() {
   buildKeypad();
   document.querySelectorAll(".tabbar button").forEach(b => b.addEventListener("click", () => go(b.dataset.v)));
-  $("meBtn").onclick = openSettings; $("searchBtn").onclick = openSearch;
+  $("meBtn").onclick = openSettings; $("searchBtn").onclick = () => openSearch(); $("bellBtn").onclick = openNews;
   $("sheetClose").onclick = closeSheet; $("scrim").onclick = closeSheet;
   document.addEventListener("keydown", e => {
     if (e.key === "Escape" && !$("sheet").hidden) closeSheet();
