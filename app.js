@@ -540,7 +540,7 @@ function renderTop() {
       h("span", { class: "feature-tag" }, d.ranked ? `Nº 1 en ${S.topPlat === "Otras" ? "su plataforma" : S.topPlat}` : "Novedad"), h("b", null, top.title), top.overview ? h("span", { class: "feature-syn" }, top.overview) : null)));
     resolve(top).then(() => { const img = top.backdrop || top.poster; if (img) bg.style.backgroundImage = `url(${IMG}w780${img})`; });
   }
-  for (const [items, lab] of [[series[0] === top ? series.slice(1) : series, "Series"], [movies[0] === top ? movies.slice(1) : movies, "Películas"]]) {
+  for (const [items, lab] of [[series, "Series"], [movies, "Películas"]]) {
     if (!items.length) continue;
     v.append(h("div", { class: "sec" }, h("h2", null, lab), h("small", null, d.ranked ? "Top 10" : "Destacadas")));
     v.append(h("div", { class: "rail" }, items.map(it => tile(it, undefined, d.ranked ? it.trend.n : null))));
