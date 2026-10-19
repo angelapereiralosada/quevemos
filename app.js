@@ -414,6 +414,7 @@ function paintDiscover() {
   const v = $("v-discover"); v.replaceChildren();
   v.append(h("button", { class: "ask", onclick: openChat }, h("span", { class: "spark" }, svg("spark")),
     h("span", null, h("b", null, "Pregúntale a la IA"), h("span", null, "«Algo de risa para esta noche, nada largo»"))));
+  v.append(h("button", { class: "searchbar", onclick: () => openSearch() }, svg("M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.8 4.8-1.4 1.4-4.8-4.8A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"), "Busca un título o un tema: lesbianas, navidad…"));
   v.append(h("div", { class: "chips" }, [["all", "Todo"], ["tv", "Series"], ["movie", "Películas"]].map(([k, l]) =>
     h("button", { class: "chip", "aria-pressed": S.deckType === k ? "true" : "false", onclick: () => { if (S.deckType === k) return; S.deckType = k; paintDiscover(); buildDeck(true); } }, l))));
   v.append(h("div", { class: "deck-wrap" },
@@ -684,22 +685,169 @@ function paintSocial() {
 }
 
 /* ---------- búsqueda ---------- */
-function openSearch() {
-  const inp = h("input", { class: "field", type: "search", placeholder: "Busca una peli o serie", enterkeyhint: "search", autocomplete: "off" });
-  const res = h("div", { class: "grid" });
-  let t;
-  const run = async () => {
-    const q = inp.value.trim(); if (q.length < 2) { res.replaceChildren(); return; }
-    if (!TMDB) { res.replaceChildren(h("p", { class: "note" }, "Falta la clave de TMDB para buscar.")); return; }
+/* ---------- búsqueda por título y por tema ---------- */
+// Temas en español → etiquetas (keywords) de TMDB, que están en inglés
+const THEMES = [
+  [["lesbiana", "lesbianas", "lesbico", "safic", "safica", "saficas", "saficos"], ["lesbian", "lesbian relationship"]],
+  [["gay", "gays", "homosexual", "homosexuales"], ["gay", "gay relationship"]],
+  [["lgtb", "lgbt", "lgtbi", "lgbtq", "lgtbiq", "queer"], ["lgbt", "queer"]],
+  [["trans", "transexual", "transgenero"], ["transgender"]],
+  [["bisexual"], ["bisexuality"]],
+  [["navidad", "navideña", "navideñas", "navideno", "navidenas", "navidenos"], ["christmas"]],
+  [["halloween"], ["halloween"]],
+  [["zombi", "zombis", "zombie", "zombies"], ["zombie"]],
+  [["vampiro", "vampiros"], ["vampire"]],
+  [["hombre lobo", "hombres lobo"], ["werewolf"]],
+  [["bruja", "brujas", "brujeria"], ["witch"]],
+  [["fantasma", "fantasmas", "casa encantada"], ["ghost", "haunted house"]],
+  [["posesion", "posesiones", "exorcismo"], ["possession", "exorcism"]],
+  [["viajes en el tiempo", "viaje en el tiempo", "viajar en el tiempo"], ["time travel"]],
+  [["hechos reales", "historia real", "basada en hechos", "basado en hechos", "caso real", "verídica", "veridica"], ["based on true story"]],
+  [["true crime", "crimen real", "crimenes reales"], ["true crime"]],
+  [["asesino en serie", "asesinos en serie"], ["serial killer"]],
+  [["atraco", "atracos", "robo", "robos", "golpe"], ["heist"]],
+  [["espia", "espias", "espionaje"], ["spy", "espionage"]],
+  [["mafia", "mafiosos"], ["mafia"]],
+  [["narco", "narcos", "narcotrafico", "cartel"], ["drug cartel", "drug trafficking"]],
+  [["carcel", "prision", "presos"], ["prison"]],
+  [["secta", "sectas"], ["cult"]],
+  [["detective", "detectives"], ["detective"]],
+  [["psicopata", "psicopatas"], ["psychopath"]],
+  [["juicio", "juicios", "abogado", "abogados", "tribunal"], ["courtroom", "lawyer"]],
+  [["medicos", "medico", "hospital", "hospitales"], ["hospital", "doctor"]],
+  [["policia", "policias", "policiaca", "policiacas"], ["police"]],
+  [["distopia", "distopica", "distopicas", "distopico"], ["dystopia"]],
+  [["apocalipsis", "postapocaliptica", "postapocaliptico", "fin del mundo"], ["post-apocalyptic future", "apocalypse"]],
+  [["extraterrestre", "extraterrestres", "alien", "aliens", "ovni"], ["alien"]],
+  [["espacio", "espacial", "astronauta", "astronautas"], ["space", "astronaut"]],
+  [["inteligencia artificial", "robots", "robot"], ["artificial intelligence (a.i.)", "robot"]],
+  [["superheroe", "superheroes"], ["superhero"]],
+  [["dinosaurio", "dinosaurios"], ["dinosaur"]],
+  [["tiburon", "tiburones"], ["shark"]],
+  [["supervivencia", "sobrevivir"], ["survival"]],
+  [["venganza"], ["revenge"]],
+  [["isla", "isla desierta"], ["island", "deserted island"]],
+  [["segunda guerra mundial"], ["world war ii"]],
+  [["primera guerra mundial"], ["world war i"]],
+  [["guerra civil"], ["spanish civil war"]],
+  [["nazi", "nazis", "holocausto"], ["nazi", "holocaust"]],
+  [["guerra", "guerras", "belica", "belicas"], ["war"]],
+  [["cocina", "cocinero", "chef", "comida"], ["chef", "cooking"]],
+  [["musical", "musicales"], ["musical"]],
+  [["baile", "bailar", "danza"], ["dance"]],
+  [["futbol"], ["football (soccer)"]],
+  [["boxeo"], ["boxing"]],
+  [["deporte", "deportes", "deportiva", "deportivas"], ["sports"]],
+  [["perro", "perros"], ["dog"]],
+  [["gato", "gatos"], ["cat"]],
+  [["caballo", "caballos"], ["horse"]],
+  [["adolescente", "adolescentes", "instituto"], ["high school", "coming of age"]],
+  [["universidad", "universitarios"], ["college"]],
+  [["madurar", "hacerse mayor", "coming of age"], ["coming of age"]],
+  [["primer amor"], ["first love"]],
+  [["amor de verano", "verano"], ["summer"]],
+  [["boda", "bodas"], ["wedding"]],
+  [["divorcio"], ["divorce"]],
+  [["embarazo", "embarazada"], ["pregnancy"]],
+  [["maternidad", "madre e hija", "madres"], ["mother daughter relationship", "motherhood"]],
+  [["padre e hijo", "paternidad"], ["father son relationship"]],
+  [["hermanas", "hermanos"], ["sister sister relationship", "brother brother relationship"]],
+  [["amistad", "amigas", "amigos"], ["friendship"]],
+  [["familia disfuncional"], ["dysfunctional family"]],
+  [["feminismo", "feminista", "feministas"], ["feminism"]],
+  [["racismo"], ["racism"]],
+  [["inmigracion", "inmigrantes", "migrantes"], ["immigration"]],
+  [["enfermedad", "cancer"], ["cancer", "illness"]],
+  [["salud mental", "depresion", "ansiedad"], ["mental illness", "depression"]],
+  [["viaje por carretera", "road movie"], ["road trip"]],
+  [["viajes", "viajar"], ["travel"]],
+  [["videojuego", "videojuegos"], ["video game"]],
+  [["arte", "pintor", "pintora", "pintura"], ["painter", "art"]],
+  [["moda"], ["fashion"]],
+  [["periodismo", "periodista", "periodistas"], ["journalism"]],
+  [["politica", "politicos", "elecciones"], ["politics", "election"]],
+  [["religion", "monjas", "iglesia"], ["religion", "nun"]],
+  [["galicia", "gallega", "gallego"], ["galicia"]],
+  [["madrid"], ["madrid, spain"]],
+  [["barcelona"], ["barcelona, spain"]],
+  [["japon", "japonesa"], ["japan"]],
+  [["corea", "coreana", "coreanas"], ["south korea"]],
+  [["nueva york"], ["new york city"]],
+  [["paris"], ["paris, france"]],
+  [["epoca victoriana", "victoriana"], ["victorian era"]],
+  [["medieval", "edad media"], ["middle ages"]],
+  [["vikingos", "vikingo"], ["vikings (norsemen)"]],
+  [["romanos", "antigua roma"], ["ancient rome"]],
+];
+const STOP = new Set(["de", "del", "la", "las", "el", "los", "un", "una", "unas", "unos", "con", "sin", "sobre", "que", "y", "o", "en", "para", "trama", "tema", "temas", "peli", "pelis", "pelicula", "peliculas", "serie", "series", "documental", "documentales", "algo", "alguna", "algun", "quiero", "busco", "ver", "historia", "historias", "buena", "buenas", "buen", "buenos"]);
+function themeTerms(q) {
+  const n = " " + norm(q) + " ", terms = new Set(), hits = [];
+  for (const [es, en] of THEMES) if (es.some(w => n.includes(" " + norm(w) + " "))) { en.forEach(t => terms.add(t)); hits.push(es[0]); }
+  const rest = norm(q).split(" ").filter(w => w.length > 2 && !STOP.has(w) && !/^(comedi|drama|terror|miedo|romant|romance|accion|animac|documental|thriller|suspense|intriga|fantasia|familiar)/.test(w) && !THEMES.some(([es]) => es.some(x => norm(x).split(" ").includes(w))));
+  if (!terms.size && rest.length) terms.add(rest.join(" "));
+  return { terms: [...terms], hits };
+}
+const GWORDS = [[/comedi/, { movie: 35, tv: 35 }], [/\bdrama|dramon/, { movie: 18, tv: 18 }], [/terror|miedo/, { movie: 27, tv: 9648 }], [/romant|romance/, { movie: 10749, tv: 18 }],
+  [/accion/, { movie: 28, tv: 10759 }], [/animacion|animada|dibujos|anime/, { movie: 16, tv: 16 }], [/documental/, { movie: 99, tv: 99 }], [/thriller|suspense|intriga/, { movie: 53, tv: 80 }],
+  [/ciencia ficcion|scifi/, { movie: 878, tv: 10765 }], [/fantasia/, { movie: 14, tv: 10765 }], [/familiar|para ninos/, { movie: 10751, tv: 10751 }]];
+async function themeSearch(q, type, onlyMine) {
+  const { terms } = themeTerms(q);
+  if (!terms.length) return [];
+  const nq = norm(q), gw = GWORDS.filter(([re]) => re.test(nq)).map(([, g]) => g);
+  const kwIds = new Set();
+  await Promise.all(terms.map(async t => {
     try {
-      const r = await tmdb("/search/multi", { query: q }, 6);
-      const items = r.results.filter(x => (x.media_type === "movie" || x.media_type === "tv") && (x.poster_path || x.vote_count > 20)).slice(0, 18).map(x => fromTmdb(x));
-      res.replaceChildren(...(items.length ? items.map(it => tile(it)) : [h("p", { class: "note" }, "No encuentro nada con ese nombre.")]));
-    } catch (e) { res.replaceChildren(h("p", { class: "note" }, "Sin conexión.")); }
+      const r = await tmdb("/search/keyword", { query: t, language: undefined }, 168);
+      const nt = norm(t);
+      const good = r.results.filter(k => norm(k.name) === nt).concat(r.results.filter(k => norm(k.name).startsWith(nt + " ") || norm(k.name).endsWith(" " + nt))).slice(0, 3);
+      (good.length ? good : r.results.slice(0, 1)).forEach(k => kwIds.add(k.id));
+    } catch (e) {}
+  }));
+  if (!kwIds.size) return [];
+  const types = type === "all" ? ["movie", "tv"] : [type];
+  const ids = onlyMine ? providerIds(S.plats).join("|") : "";
+  const lists = await Promise.all(types.map(t => tmdb(`/discover/${t}`, {
+    with_keywords: [...kwIds].join("|"), with_genres: gw.map(g => g[t]).join(",") || undefined, sort_by: "popularity.desc", "vote_count.gte": 15,
+    watch_region: ids ? "ES" : undefined, with_watch_providers: ids || undefined, with_watch_monetization_types: ids ? "flatrate|free|ads" : undefined,
+  }, 24).then(r => r.results.map(z => fromTmdb(z, t))).catch(() => [])));
+  const out = []; for (let i = 0; i < 20; i++) for (const l of lists) if (l[i]) out.push(l[i]);
+  return out.slice(0, 24);
+}
+function openSearch(initial) {
+  const inp = h("input", { class: "field", type: "search", placeholder: "Un título o un tema: «lesbianas», «navidad»…", enterkeyhint: "search", autocomplete: "off" });
+  if (initial) inp.value = initial;
+  let type = "all", onlyMine = true, t, seq = 0;
+  const typeChips = h("div", { class: "chips wrap" });
+  const paintChips = () => typeChips.replaceChildren(
+    ...[["all", "Todo"], ["movie", "Películas"], ["tv", "Series"]].map(([k, l]) => h("button", { class: "chip", "aria-pressed": type === k ? "true" : "false", onclick: () => { type = k; paintChips(); run(); } }, l)),
+    h("button", { class: "chip", "aria-pressed": onlyMine ? "true" : "false", onclick: () => { onlyMine = !onlyMine; paintChips(); run(); } }, "Solo nuestras plataformas"));
+  paintChips();
+  const res = h("div", { style: "display:flex;flex-direction:column;gap:14px" });
+  const sugs = h("div", { class: "chips wrap" }, ["Lesbianas", "Navidad", "Hechos reales", "Atracos", "Viajes en el tiempo", "Zombis", "Galicia", "Coming of age"].map(x => h("button", { class: "chip", onclick: () => { inp.value = x; run(); } }, x)));
+  const run = async () => {
+    const q = inp.value.trim(), my = ++seq;
+    sugs.hidden = q.length >= 2;
+    if (q.length < 2) { res.replaceChildren(); return; }
+    if (!TMDB) { res.replaceChildren(h("p", { class: "note" }, "Falta la clave de TMDB para buscar.")); return; }
+    res.replaceChildren(h("div", { class: "grid" }, Array.from({ length: 6 }, () => h("div", { class: "tile" }, h("div", { class: "poster skel" })))));
+    const { hits } = themeTerms(q);
+    const [themed, byTitle] = await Promise.all([
+      themeSearch(q, type, onlyMine),
+      tmdb("/search/multi", { query: q }, 6).then(r => r.results.filter(x => (x.media_type === "movie" || x.media_type === "tv") && (type === "all" || x.media_type === type) && (x.poster_path || x.vote_count > 20)).slice(0, 12).map(x => fromTmdb(x))).catch(() => []),
+    ]);
+    if (my !== seq) return;
+    const seenK = new Set(themed.map(x => x.key));
+    const titles = byTitle.filter(x => !seenK.has(x.key));
+    const blocks = [];
+    if (themed.length) blocks.push(h("div", { class: "sec" }, h("h2", null, `Sobre «${q}»`), h("small", null, onlyMine ? "En vuestras plataformas" : "En cualquier plataforma")), h("div", { class: "grid" }, themed.map(it => tile(it))));
+    else if (hits.length) blocks.push(h("p", { class: "note" }, onlyMine ? `No encuentro títulos sobre «${q}» en vuestras plataformas. Desmarca «Solo nuestras plataformas» para ver todos.` : `No encuentro títulos sobre «${q}».`));
+    if (titles.length) blocks.push(h("div", { class: "sec" }, h("h2", null, "Por título"), h("small", null, "")), h("div", { class: "grid" }, titles.map(it => tile(it))));
+    if (!blocks.length) blocks.push(h("p", { class: "note" }, "No encuentro nada. Prueba con otra palabra o con el título."));
+    res.replaceChildren(...blocks);
   };
-  inp.addEventListener("input", () => { clearTimeout(t); t = setTimeout(run, 350); });
-  openSheet(h("div", { class: "settings" }, h("h2", null, "Buscar"), inp, res));
-  setTimeout(() => inp.focus(), 60);
+  inp.addEventListener("input", () => { clearTimeout(t); t = setTimeout(run, 400); });
+  openSheet(h("div", { class: "settings" }, h("h2", null, "Buscar"), inp, typeChips, sugs, res));
+  if (initial) run(); else setTimeout(() => inp.focus(), 60);
 }
 
 /* ---------- chat con IA ---------- */
