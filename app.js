@@ -802,6 +802,25 @@ function paintSocial() {
     }));
 }
 
+/* ---------- IA (función de Supabase con Gemini o Claude) ---------- */
+async function aiCall(messages) {
+  if (!REMOTE || S.aiOff) return null;
+  try {
+    const base = CFG.supabaseUrl.replace(/\/+$/, "");
+    const headers = { apikey: CFG.supabaseAnonKey, "Content-Type": "application/json" };
+    if (CFG.supabaseAnonKey.startsWith("eyJ")) headers.Authorization = "Bearer " + CFG.supabaseAnonKey;
+    const r = await fetch(`${base}/functions/v1/recomendar`, { method: "POST", headers, body: JSON.stringify({ pin: S.pin, messages, context: aiContext() }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { if (r.status === 404 || d.error === "nokey") S.aiOff = true; return null; }
+    return d;
+  } catch (e) { S.aiOff = true; return null; }
+}
+async function aiPicks(d) {
+  const picks = ((d && d.picks) || []).map(p => ({ title: String(p.title || ""), alt: p.original_title, year: p.year ? String(p.year) : "", type: p.type === "tv" ? "tv" : "movie", why: String(p.why || "") })).filter(p => p.title);
+  await Promise.all(picks.map(async p => { await resolve(p, p.alt); p.key = keyOf(p); await providersOf(p); }));
+  return picks;
+}
+
 /* ---------- búsqueda ---------- */
 /* ---------- búsqueda por título y por tema ---------- */
 // Temas en español → etiquetas (keywords) de TMDB, que están en inglés
@@ -961,7 +980,85 @@ const THEMES = [
   [["superviviente", "naufrago"], ["survival"]],
 ];
 const STOP = new Set(["de", "del", "la", "las", "el", "los", "un", "una", "unas", "unos", "con", "sin", "sobre", "que", "y", "o", "en", "para", "trama", "tema", "temas", "peli", "pelis", "pelicula", "peliculas", "serie", "series", "documental", "documentales", "algo", "alguna", "algun", "quiero", "busco", "ver", "historia", "historias", "buena", "buenas", "buen", "buenos"]);
+/* ---------- sinónimos y palabras parecidas ---------- */
+const SYN = [
+  ["asesinato", "asesino", "asesina", "homicidio", "matar", "mata", "muerte", "muerto", "crimen", "criminal", "cadaver", "matanza"],
+  ["miedo", "terror", "susto", "escalofrio", "horror", "aterrador", "espeluznante", "tenebroso"],
+  ["risa", "reir", "comedia", "gracioso", "divertido", "humor", "comico", "carcajada", "chistes"],
+  ["amor", "romance", "romantico", "enamorado", "enamorarse", "beso", "flechazo"],
+  ["robo", "atraco", "ladron", "asalto", "botin", "golpe"],
+  ["policia", "detective", "inspector", "investigacion", "investigador", "comisaria", "agente"],
+  ["secuestro", "secuestrado", "rapto", "rehen", "desaparecido", "desaparicion"],
+  ["venganza", "vengar", "revancha", "ajuste de cuentas"],
+  ["guerra", "batalla", "soldado", "ejercito", "militar", "combate", "frente"],
+  ["familia", "padre", "madre", "hijo", "hija", "hermano", "hermana", "abuelo", "abuela"],
+  ["amigo", "amiga", "amistad", "colegas", "pandilla"],
+  ["colegio", "instituto", "escuela", "adolescente", "juvenil", "estudiante", "universidad"],
+  ["fantasma", "espiritu", "aparicion", "casa encantada", "espectro", "encantada"],
+  ["demonio", "diablo", "posesion", "exorcismo", "satanico", "poseido"],
+  ["extraterrestre", "alien", "ovni", "marciano", "invasion"],
+  ["espacio", "astronauta", "nave espacial", "galaxia", "planeta", "cohete"],
+  ["futuro", "futurista", "distopia", "robot", "androide", "inteligencia artificial"],
+  ["magia", "mago", "bruja", "hechizo", "hechicero", "brujeria"],
+  ["dragon", "fantasia", "reino", "elfo", "espada", "caballero"],
+  ["mar", "oceano", "barco", "marinero", "isla", "naufragio", "pirata"],
+  ["dinero", "millonario", "rico", "fortuna", "herencia", "lujo"],
+  ["droga", "narco", "cartel", "narcotrafico", "cocaina", "traficante", "contrabando"],
+  ["carcel", "prision", "preso", "recluso", "fuga", "presidiario"],
+  ["juicio", "tribunal", "abogado", "abogada", "fiscal", "juez", "acusado"],
+  ["hospital", "medico", "medica", "doctor", "enfermera", "cirujano", "urgencias"],
+  ["deporte", "futbol", "baloncesto", "boxeo", "atleta", "entrenador", "partido"],
+  ["musica", "cantante", "banda", "concierto", "musico", "rock"],
+  ["cocina", "chef", "cocinero", "restaurante", "comida", "receta"],
+  ["viaje", "viajar", "aventura", "expedicion", "carretera"],
+  ["navidad", "navideno", "papa noel", "reyes magos", "nochebuena"],
+  ["boda", "casarse", "matrimonio", "novia", "novio", "prometida"],
+  ["infidelidad", "infiel", "amante", "engano", "cuernos", "traicion"],
+  ["espia", "espionaje", "agente secreto", "inteligencia"],
+  ["zombi", "zombie", "muertos vivientes", "infectados", "apocalipsis"],
+  ["vampiro", "vampiros", "chupasangre"],
+  ["pueblo", "aldea", "rural", "campo", "granja"],
+  ["triste", "llorar", "drama", "emotivo", "conmovedor", "lagrimas"],
+  ["perro", "perros", "mascota", "cachorro"],
+  ["superheroe", "heroe", "superpoderes", "poderes", "mutante"],
+  ["realeza", "rey", "reina", "principe", "princesa", "corona", "monarquia"],
+  ["mafia", "mafioso", "gangster", "clan", "crimen organizado"],
+  ["psicopata", "asesino en serie", "perturbado", "sociopata"],
+  ["lesbiana", "lesbianas", "safica", "safico", "dos mujeres"],
+  ["gay", "homosexual", "dos hombres"],
+  ["estafa", "estafador", "timo", "fraude", "enganar"],
+  ["accidente", "tragedia", "catastrofe", "desastre"],
+  ["virus", "pandemia", "epidemia", "contagio", "plaga"],
+];
+const SYN_IDX = new Map();
+SYN.forEach((g, i) => g.forEach(w => SYN_IDX.set(norm(w), i)));
+function lev(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 9;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+// Para cada palabra de la búsqueda devuelve su grupo de sinónimos (o la palabra sola), tolerando erratas
+function synGroups(text) {
+  let nt = " " + norm(text) + " ";
+  const groups = [];
+  // primero las expresiones de varias palabras («dos mujeres», «casa encantada»…)
+  for (const [k, i] of SYN_IDX) if (k.includes(" ") && nt.includes(" " + k + " ")) { groups.push([...new Set(SYN[i].map(norm))]); nt = nt.replace(" " + k + " ", " "); }
+  const words = nt.trim().split(" ").filter(w => w.length > 2 && !STOP.has(w));
+  for (const w of words) {
+    let gi = SYN_IDX.has(w) ? SYN_IDX.get(w) : -1;
+    if (gi < 0) for (const [k, i] of SYN_IDX) { if (k.length > 3 && (w.startsWith(k) || k.startsWith(w) && w.length > 4 || (w.length >= 6 && k.length >= 6 && w.slice(0, 6) === k.slice(0, 6)))) { gi = i; break; } }
+    if (gi < 0 && w.length >= 7) { let best = 9; for (const [k, i] of SYN_IDX) { const dd = lev(w, k); if (dd < best && dd <= (w.length >= 10 ? 2 : 1)) { best = dd; gi = i; } } }
+    groups.push(gi >= 0 ? [...new Set([w, ...SYN[gi].map(norm)])] : [w]);
+  }
+  return groups;
+}
+const expandText = text => synGroups(text).flat().join(" ");
+const stemOf = w => w.split(" ").length > 1 ? w : w.slice(0, Math.max(5, w.length - 4));
+
 function themeTerms(q) {
+  q = q + " " + expandText(q);
   const n = " " + norm(q) + " ", terms = new Set(), hits = [];
   for (const [es, en] of THEMES) if (es.some(w => n.includes(" " + norm(w) + " "))) { en.forEach(t => terms.add(t)); hits.push(es[0]); }
   const rest = norm(q).split(" ").filter(w => w.length > 2 && !STOP.has(w) && !/^(comedi|drama|terror|miedo|romant|romance|accion|animac|documental|thriller|suspense|intriga|fantasia|familiar)/.test(w) && !THEMES.some(([es]) => es.some(x => norm(x).split(" ").includes(w))));
@@ -973,9 +1070,9 @@ const GWORDS = [[/comedi/, { movie: 35, tv: 35 }], [/\bdrama|dramon/, { movie: 1
   [/ciencia ficcion|scifi/, { movie: 878, tv: 10765 }], [/fantasia/, { movie: 14, tv: 10765 }], [/familiar|para ninos/, { movie: 10751, tv: 10751 }]];
 // Lee las sinopsis (en español) de lo más visto de vuestras plataformas y busca las palabras
 async function synopsisScan(q, type, onlyMine) {
-  const words = norm(q).split(" ").filter(w => w.length > 3 && !STOP.has(w));
-  if (!words.length || !TMDB) return [];
-  const stems = words.map(w => w.slice(0, Math.max(5, w.length - 4)));
+  const groups = synGroups(q).filter(g => g.length > 1 || g[0].length > 3);
+  if (!groups.length || !TMDB) return [];
+  const stems = groups.map(g => g.map(stemOf));
   const ids = onlyMine ? providerIds(S.plats).join("|") : "";
   const types = type === "all" ? ["movie", "tv"] : [type];
   const lists = await Promise.all(types.flatMap(t => [1, 2, 3, 4, 5, 6].map(pg => limit(() => tmdb(`/discover/${t}`, {
@@ -986,13 +1083,13 @@ async function synopsisScan(q, type, onlyMine) {
   return lists.flat().filter(it => {
     if (seen.has(it.key)) return false; seen.add(it.key);
     const txt = " " + norm((it.overview || "") + " " + it.title) + " ";
-    return stems.every(st => txt.includes(" " + st) || txt.includes(st));
+    return stems.every(alts => alts.some(st => txt.includes(st)));
   }).map(it => ({ ...it, inSyn: true }));
 }
 async function themeSearch(q, type, onlyMine) {
   const { terms } = themeTerms(q);
   if (!terms.length) return [];
-  const nq = norm(q), gw = GWORDS.filter(([re]) => re.test(nq)).map(([, g]) => g);
+  const nq = norm(q) + " " + expandText(q), gw = GWORDS.filter(([re]) => re.test(nq)).map(([, g]) => g);
   if (!gw.length) for (const [re, g] of MOOD_G) if (re.test(nq)) { gw.push({ movie: g.movie[0], tv: g.tv[0] }); break; }
   const kwIds = new Set();
   await Promise.all(terms.map(async t => {
@@ -1031,6 +1128,14 @@ function openSearch(initial) {
     if (!TMDB) { res.replaceChildren(h("p", { class: "note" }, "Falta la clave de TMDB para buscar.")); return; }
     res.replaceChildren(h("div", { class: "grid" }, Array.from({ length: 6 }, () => h("div", { class: "tile" }, h("div", { class: "poster skel" })))));
     const { hits } = themeTerms(q);
+    const aiBox = h("div", { class: "view" });
+    if (REMOTE && !S.aiOff && q.length >= 4) {
+      fill(aiBox, h("p", { class: "note" }, "🤖 Preguntando a la IA…"));
+      aiCall([{ role: "user", text: "BÚSQUEDA: " + q }]).then(aiPicks).then(ps => {
+        if (my !== seq) return;
+        fill(aiBox, ps.length ? [h("div", { class: "sec" }, h("h2", null, "🤖 Lo que entiende la IA"), h("small", null, "")), h("div", { class: "picks" }, ps.map(p => pickEl(p)))] : null);
+      }).catch(() => fill(aiBox, null));
+    }
     const [themed0, syn, byTitle] = await Promise.all([
       themeSearch(q, type, onlyMine),
       synopsisScan(q, type, onlyMine),
@@ -1047,7 +1152,7 @@ function openSearch(initial) {
     else if (hits.length) blocks.push(h("p", { class: "note" }, onlyMine ? `No encuentro títulos sobre «${q}» en vuestras plataformas. Desmarca «Solo nuestras plataformas» para ver todos.` : `No encuentro títulos sobre «${q}».`));
     if (titles.length) blocks.push(h("div", { class: "sec" }, h("h2", null, "Por título"), h("small", null, "")), h("div", { class: "grid" }, titles.map(it => tile(it))));
     if (!blocks.length) blocks.push(h("p", { class: "note" }, "No encuentro nada. Prueba con otra palabra o con el título."));
-    res.replaceChildren(...blocks);
+    res.replaceChildren(aiBox, ...blocks);
   };
   inp.addEventListener("input", () => { clearTimeout(t); t = setTimeout(run, 400); });
   openSheet(h("div", { class: "settings" }, h("h2", null, "Buscar"), inp, typeChips, sugs, res));
@@ -1103,7 +1208,8 @@ function parseAsk(text) {
   while ((m = NEG.exec(n))) { for (const [re, g] of MOOD_G) if (re.test(m[1])) q.avoid.push(g); n = n.replace(m[0], " "); }
   const lk = n.match(/(?:como|parecid[ao]s? a|tipo|estilo|al estilo de|rollo)\s+(.+?)(?:\s+(?:pero|y que|que sea|para)\b|$)/);
   if (lk && lk[1].trim().length > 1) { q.like = lk[1].trim(); n = n.replace(lk[0], " "); }
-  for (const [re, g, label] of MOOD_G) if (re.test(n)) { q.genres.push(g); q.labels.push(label); }
+  const nx = n + " " + expandText(n);
+  for (const [re, g, label] of MOOD_G) if (re.test(label === "familiar" ? n : nx)) { q.genres.push(g); q.labels.push(label); }
   if (/\b(peli|pelis|pelicula|peliculas|film)\b/.test(n) && !/\bseries?\b/.test(n)) q.types = ["movie"];
   else if (/\b(serie|series|temporadas?|miniserie|miniseries)\b/.test(n)) q.types = ["tv"];
   if (/miniserie|pocos capitulos|de un tiron|en un finde/.test(n)) { q.mini = true; q.types = ["tv"]; }

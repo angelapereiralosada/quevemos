@@ -14,11 +14,12 @@ App web para el móvil para que Oswaldo, Ana y Ángela decidan qué ver.
 2. Ve a **SQL Editor → New query** y pega todo `supabase.sql`. Cambia `1234` por vuestro PIN de 4 cifras y pulsa **Run**.
 3. Ve a **Project Settings → API** y copia la **Project URL** y la clave **anon public**. Si solo ves «Publishable key», copia esa.
 
-### 2. Chat con IA (Claude)
-1. Crea una cuenta en https://console.anthropic.com. Añade saldo en **Billing**; con 5 € hay para muchísimas consultas. Después ve a **API Keys → Create Key** y copia la clave (empieza por `sk-ant-`).
-2. En Supabase ve a **Edge Functions → Secrets**, añade uno llamado `ANTHROPIC_API_KEY` y pega la clave como valor.
-3. Ve a **Edge Functions → Deploy a new function → Via Editor**. Ponle de nombre `recomendar`, pega el contenido de `supabase/functions/recomendar/index.ts` y pulsa **Deploy**.
-4. En los ajustes de la función, desactiva **Verify JWT** (el PIN ya protege el acceso) y guarda.
+### 2. Inteligencia artificial (opcional, gratis con Gemini)
+Sin IA, el dependiente y el buscador ya entienden sinónimos, erratas y temas. Con IA entienden frases enteras.
+1. Entra en https://aistudio.google.com/apikey con una cuenta de Google y pulsa **Create API key**. No pide tarjeta.
+2. En Supabase ve a **Edge Functions → Secrets** y añade `GEMINI_API_KEY` con esa clave. Si prefieres Claude, de pago, usa `ANTHROPIC_API_KEY`.
+3. Ve a **Edge Functions → Deploy a new function → Via Editor**. Ponle de nombre `recomendar`, pega `supabase/functions/recomendar/index.ts` y pulsa **Deploy**.
+4. En los ajustes de la función, desactiva **Verify JWT** (el PIN ya protege el acceso).
 
 ### 3. Configuración
 Rellena `config.js` con la Project URL y la clave anon. La clave de TMDB ya está puesta.
