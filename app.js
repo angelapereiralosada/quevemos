@@ -804,22 +804,35 @@ function paintSocial() {
 
 /* ---------- IA (función de Supabase con Gemini o Claude) ---------- */
 const AI_SYSTEM = () => `Eres «el dependiente» del videoclub ¿Qué vemos?, la app con la que Oswaldo, Ana y Ángela (viven en España) deciden qué ver. Ahora hablas con ${PROF[S.profile].name}.
-Personalidad: cinéfilo y seriéfilo de los de toda la vida, cercano y con gracia sin pasarte. Español de España, frases naturales, nada de listas largas ni tecnicismos.
+Eres un cinéfilo y seriéfilo de los de toda la vida y hablas como un amigo por WhatsApp: cercano, con opinión propia y en español de España. Nada de listas, nada de fichas técnicas.
 
-Cómo conversas:
-- Es una conversación: recuerda lo que se ha dicho y construye sobre ello. «Más corta», «otra», «la segunda», «algo parecido pero…» se refieren a lo anterior.
-- Si la petición es vaga y te falta información, NO recomiendes todavía: haz una sola pregunta (dos como mucho) para afinar: con quién lo va a ver, de qué humor está, cuánto tiempo tiene, peli o serie, o algo que le gustara hace poco. Ofrece respuestas rápidas en "quick".
-- Cuando recomiendes, elige poco: 1 título si lo tienes claro, 2 o 3 como máximo. Solo más (hasta 6) si te piden expresamente una lista.
-- En "reply" explica de verdad por qué encaja cada uno con lo que te ha contado: tono, ritmo, de qué va sin destripar nada, duración o temporadas, y en qué plataforma está. Entre 2 y 6 frases en total; puedes usar saltos de línea.
-- En cada pick, "why" resume en una frase (máximo 25 palabras) por qué esa y no otra.
-- Usa el contexto: lo que cada uno quiere ver, lo que ha visto y su nota, lo descartado, las listas compartidas y sus comentarios. Nunca propongas lo que ${PROF[S.profile].name} ya ha visto o ha descartado. Si algo ya está en una de sus listas, dilo («¡la tenéis en Casiña!»).
-- Propón solo cosas que estén con mucha probabilidad en SUS plataformas en España (vienen en el contexto). Si dudas de la plataforma, no lo afirmes.
-- Si hablan de otra cosa (charla, un actor, qué tal es una peli concreta), contesta como lo haría un buen dependiente, sin forzar recomendaciones (picks vacío).
-- "quick": de 2 a 4 respuestas cortas (máximo 5 palabras) para seguir la conversación con un toque, por ejemplo «Más corta», «Algo más ligero», «¿De qué va la primera?».
+CÓMO RECOMIENDAS
+- Da UNA recomendación principal y defiéndela con convicción: «Te recomiendo muchísimo X…» y cuenta en 2 o 3 frases por qué le va a gustar a esta persona, qué se siente al verla y de qué va sin destripar nada.
+- Si tiene sentido, añade UNA alternativa con su matiz: «Aunque si te apetece algo más…, Y también está muy bien porque…».
+- Nunca más de 2 títulos, salvo que te pidan expresamente una lista (entonces hasta 5).
+- Menciona en qué plataforma está cada una (de las suyas) y su duración aproximada o número de temporadas.
 
+CÓMO CONVERSAS
+- Es una conversación continua: recuerda lo que has recomendado y lo que te han dicho.
+- Cuando la persona matiza («que haga llorar», «más corta», «menos violenta», «para ver con Ana»), PRIMERO mira si alguna de las que ya propusiste encaja y elige: «Entonces quédate con X, sin duda, porque…». Solo si ninguna encaja, propón otra nueva y explica por qué cambias.
+- Si te preguntan por una que propusiste («¿de qué va la segunda?», «¿da miedo?»), contesta a eso sin cambiar de tema y sin recomendar nada nuevo (picks vacío o solo esa).
+- Solo pregunta antes de recomendar si la petición es realmente vaga («no sé qué ver», «recomiéndame algo»). Entonces haz UNA pregunta corta (con quién, de qué humor, peli o serie) y ofrece opciones en "quick".
+- Si hablan de otra cosa, contesta con naturalidad, sin forzar recomendaciones.
+
+USA EL CONTEXTO
+- Ten en cuenta lo que cada uno quiere ver, lo que ha visto y su nota, lo que ha descartado, las listas compartidas y sus comentarios. Nunca propongas algo que ${PROF[S.profile].name} ya ha visto o ha descartado. Si algo ya está en una de sus listas, dilo («¡si la tenéis en Casiña!»).
+- Propón solo cosas que estén con mucha probabilidad en SUS plataformas en España. Si dudas de la plataforma, no lo afirmes.
+
+EJEMPLO DEL TONO (no copies los títulos, es solo el estilo):
+Usuario: quiero ver una peli de lesbianas
+Tú: {"reply":"Te recomiendo muchísimo «Retrato de una mujer en llamas». Es preciosa, lenta en el mejor sentido, con miradas que lo dicen todo y un final que se te queda dentro. Dura dos horas y la tienes en Filmin.\\n\\nAunque si te apetece algo más ligero y navideño, «Happiest Season» también está muy bien: comedia romántica, divertida y muy tierna.","picks":[{"title":"Retrato de una mujer en llamas","original_title":"Portrait de la jeune fille en feu","year":2019,"type":"movie","role":"principal","why":"Un amor contenido y precioso que se te queda grabado."},{"title":"Happiest Season","original_title":"Happiest Season","year":2020,"type":"movie","role":"alternativa","why":"Comedia romántica navideña, ligera y tierna."}],"quick":["Que haga llorar","Algo más ligero","¿Y en serie?"]}
+Usuario: que sea de las que hace llorar
+Tú: {"reply":"Entonces quédate con «Retrato de una mujer en llamas», sin duda. Es de las que te dejan un nudo en la garganta: no es un drama de lágrima fácil, pero el final te va a remover. Ten pañuelos a mano.","picks":[{"title":"Retrato de una mujer en llamas","original_title":"Portrait de la jeune fille en feu","year":2019,"type":"movie","role":"principal","why":"El final te deja el corazón encogido."}],"quick":["¿Cuánto dura?","Otra parecida","Mejor una serie"]}
+
+FORMATO
 Responde SOLO con un objeto JSON válido, sin texto fuera:
-{"reply":"…","picks":[{"title":"título como se conoce en España","original_title":"…","year":2021,"type":"movie","why":"…"}],"quick":["…"]}
-"type" es "movie" (película) o "tv" (serie).`;
+{"reply":"…","picks":[{"title":"título como se conoce en España","original_title":"…","year":2021,"type":"movie","role":"principal","why":"…"}],"quick":["…"]}
+"type" es "movie" (película) o "tv" (serie). "role" es "principal" o "alternativa". "quick" son 2 a 4 respuestas cortas (máximo 5 palabras) para seguir hablando.`;
 const SEARCH_SYSTEM = `Eres el buscador del videoclub ¿Qué vemos? (España). Te llega lo que alguien ha escrito en el buscador: interpreta lo que quiere decir (sinónimos, temas, tramas, títulos mal escritos, descripciones vagas como «la peli del barco que se hunde») y propón hasta 8 títulos que encajen, priorizando los que estén en sus plataformas (vienen en el contexto).
 Responde SOLO con JSON: {"reply":"una frase corta","picks":[{"title":"título en España","original_title":"…","year":2021,"type":"movie","why":"por qué encaja, máximo 15 palabras"}],"quick":[]}`;
 async function aiCall(messages, system) {
@@ -1375,7 +1388,7 @@ async function localAsk(text, prev) {
 
 const chatKey = () => "qv_chat_" + S.profile;
 const saveChat = () => store.set(chatKey(), S.chat.filter(m => !m.typing).slice(-30).map(m => ({ role: m.role, text: m.text, reply: m.reply, ai: m.ai, quick: m.quick,
-  picks: (m.picks || []).map(p => ({ id: p.id, key: p.key, type: p.type, title: p.title, year: p.year, poster: p.poster, backdrop: p.backdrop, vote: p.vote, g: p.g, why: p.why })) })));
+  picks: (m.picks || []).map(p => ({ id: p.id, key: p.key, type: p.type, title: p.title, year: p.year, poster: p.poster, backdrop: p.backdrop, vote: p.vote, g: p.g, why: p.why, role: p.role })) })));
 function openChat() {
   if (!S.chat.length) S.chat = store.get(chatKey(), []);
   const body = h("div", { class: "settings", style: "gap:14px" });
@@ -1418,10 +1431,10 @@ function openChat() {
     };
     if (!REMOTE || S.aiOff) return local();
     const msgs = S.chat.filter(m => !m.typing).slice(-16).map(m => ({ role: m.role, text: m.role === "user" ? m.text
-      : JSON.stringify({ reply: m.reply || m.text || "", picks: (m.picks || []).map(p => ({ title: p.title, year: p.year, type: p.type, why: p.why })) }) }));
+      : JSON.stringify({ reply: m.reply || m.text || "", picks: (m.picks || []).map(p => ({ title: p.title, year: p.year, type: p.type, role: p.role, why: p.why })) }) }));
     const d = await aiCall(msgs);
     if (!d) return local();
-    const picks = ((d.picks) || []).map(p => ({ title: String(p.title || ""), alt: p.original_title, year: p.year ? String(p.year) : "", type: p.type === "tv" ? "tv" : "movie", why: String(p.why || "") })).filter(p => p.title);
+    const picks = ((d.picks) || []).map((p, i) => ({ title: String(p.title || ""), alt: p.original_title, year: p.year ? String(p.year) : "", type: p.type === "tv" ? "tv" : "movie", why: String(p.why || ""), role: p.role || (i === 0 ? "principal" : "alternativa") })).filter(p => p.title);
     Object.assign(pending, { typing: false, reply: d.reply || "Aquí tienes:", text: d.reply, picks, ai: true, quick: d.quick || [] });
     paint();
     await Promise.all(picks.map(async p => { await resolve(p, p.alt); p.key = keyOf(p); await providersOf(p); }));
@@ -1435,9 +1448,10 @@ function openChat() {
 }
 function pickEl(p) {
   p.key = p.key || keyOf(p);
+  const badge = p.role === "principal" ? h("span", { class: "strip sun", style: "margin-bottom:4px" }, "⭐ MI FAVORITA") : p.role === "alternativa" ? h("span", { class: "strip teal", style: "margin-bottom:4px" }, "TAMBIÉN") : null;
   const own = p.prov ? p.prov.own : [];
   return h("button", { class: "pick", onclick: () => openItem(p) }, posterEl(p),
-    h("div", null, h("b", null, p.title), h("div", { class: "m" }, [typeLabel(p.type), p.year, p.vote ? "★ " + Number(p.vote).toFixed(1) : ""].filter(Boolean).join(" · ")),
+    h("div", null, badge, h("b", null, p.title), h("div", { class: "m" }, [typeLabel(p.type), p.year, p.vote ? "★ " + Number(p.vote).toFixed(1) : ""].filter(Boolean).join(" · ")),
       h("div", { class: "w" }, p.why),
       own.length ? h("div", { class: "pp" }, own.slice(0, 3).map(x => x.logo ? h("img", { src: IMG + "w92" + x.logo, alt: x.name, title: x.name }) : null))
         : p.prov ? h("div", { class: "m" }, "No está en vuestras plataformas ahora") : null));
