@@ -811,9 +811,14 @@ async function aiCall(messages) {
     if (CFG.supabaseAnonKey.startsWith("eyJ")) headers.Authorization = "Bearer " + CFG.supabaseAnonKey;
     const r = await fetch(`${base}/functions/v1/recomendar`, { method: "POST", headers, body: JSON.stringify({ pin: S.pin, messages, context: aiContext() }) });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) { if (r.status === 404 || d.error === "nokey") S.aiOff = true; return null; }
+    if (!r.ok) {
+      S.aiErr = r.status === 404 ? "no encuentro la función «recomendar» en Supabase" : d.error === "nokey" ? "falta el secreto GEMINI_API_KEY en Supabase" : d.error === "pin" ? "la función no puede comprobar el PIN" : d.error === "ai" ? "la IA ha dado un error: " + (d.detail || "") : r.status === 401 ? "Supabase pide autorización: desactiva «Verify JWT» en la función" : `error ${r.status} ${d.msg || d.message || d.error || ""}`;
+      if (r.status === 404 || r.status === 401 || d.error === "nokey") S.aiOff = true;
+      return null;
+    }
+    S.aiErr = null;
     return d;
-  } catch (e) { S.aiOff = true; return null; }
+  } catch (e) { S.aiErr = "no consigo conectar con la función (¿«Verify JWT» activado o función sin desplegar?)"; S.aiOff = true; return null; }
 }
 async function aiPicks(d) {
   const picks = ((d && d.picks) || []).map(p => ({ title: String(p.title || ""), alt: p.original_title, year: p.year ? String(p.year) : "", type: p.type === "tv" ? "tv" : "movie", why: String(p.why || "") })).filter(p => p.title);
@@ -1199,6 +1204,15 @@ const MOOD_G = [
   [/western|vaquero/, { movie: [37], tv: [37] }, "western"],
   [/reality/, { movie: [], tv: [10764] }, "reality"],
 ];
+const COUNTRIES = [
+  [/espanol|espanola|de aqui|nacional|de espana/, "ES", "españolas"], [/turc/, "TR", "turcas"], [/corean/, "KR", "coreanas"], [/japon/, "JP", "japonesas"],
+  [/frances|francia/, "FR", "francesas"], [/italian/, "IT", "italianas"], [/aleman/, "DE", "alemanas"], [/britanic|ingles|inglaterra|reino unido/, "GB", "británicas"],
+  [/nordic|escandinav/, "SE|DK|NO|IS|FI", "nórdicas"], [/danes/, "DK", "danesas"], [/suec/, "SE", "suecas"], [/norueg/, "NO", "noruegas"], [/islandes/, "IS", "islandesas"],
+  [/mexican/, "MX", "mexicanas"], [/argentin/, "AR", "argentinas"], [/colombian/, "CO", "colombianas"], [/chilen/, "CL", "chilenas"], [/brasilen|brasil/, "BR", "brasileñas"],
+  [/latinoameric/, "MX|AR|CO|CL|BR|PE|UY|VE", "latinoamericanas"], [/\bindia\b|\bindio\b|bollywood/, "IN", "indias"], [/chin[ao]s?\b/, "CN", "chinas"], [/tailandes/, "TH", "tailandesas"],
+  [/polac/, "PL", "polacas"], [/israel/, "IL", "israelíes"], [/american|estadounidense|hollywood/, "US", "americanas"], [/australian/, "AU", "australianas"], [/canadiense/, "CA", "canadienses"],
+  [/portugues/, "PT", "portuguesas"], [/belga/, "BE", "belgas"], [/holandes/, "NL", "holandesas"], [/irlandes/, "IE", "irlandesas"], [/rus[ao]s?\b/, "RU", "rusas"], [/egipci|arabe/, "EG|SA|AE|MA|LB", "árabes"],
+];
 function parseAsk(text) {
   let n = " " + norm(text) + " ";
   const full = n;
@@ -1214,8 +1228,10 @@ function parseAsk(text) {
   else if (/\b(serie|series|temporadas?|miniserie|miniseries)\b/.test(n)) q.types = ["tv"];
   if (/miniserie|pocos capitulos|de un tiron|en un finde/.test(n)) { q.mini = true; q.types = ["tv"]; }
   if (/corta|cortita|poco tiempo|rapida|hora y media|no muy larga|que no dure/.test(n)) q.short = true;
-  if (/espanol|espanola|de aqui|nacional|de espana/.test(n)) q.lang = "es";
-  else if (/corean/.test(n)) q.lang = "ko"; else if (/japon/.test(n)) q.lang = "ja"; else if (/frances/.test(n)) q.lang = "fr"; else if (/italian/.test(n)) q.lang = "it";
+  q.countries = []; q.countryNames = [];
+  for (const [re, cc, name] of COUNTRIES) if (re.test(n)) { q.countries.push(...cc.split("|")); q.countryNames.push(name); }
+  if (/en espanol|en castellano/.test(n)) q.lang = "es";
+  if (/\bcine\b/.test(n) && !/\bseries?\b/.test(n)) q.types = ["movie"];
   const dec = n.match(/de los (?:anos )?(\d0)\b/);
   if (dec) { const d = +dec[1]; const y = d >= 30 ? 1900 + d : 2000 + d; q.from = `${y}-01-01`; q.to = `${y + 9}-12-31`; }
   else if (/clasic|antigu/.test(n)) q.to = "2000-12-31";
@@ -1223,7 +1239,8 @@ function parseAsk(text) {
   if (/buena|buenisima|mejor|top|obra maestra|premiad|oscar|imprescindible/.test(n)) q.quality = true;
   for (const p of PLATFORMS) if (new RegExp("\\b" + norm(p.id).split(" ")[0]).test(full) || (p.id === "Prime Video" && /amazon|prime/.test(full)) || (p.id === "Mitele" && /mediaset|telecinco/.test(full))) { if (S.plats.includes(p.id)) q.plat = p.id; break; }
   const th = themeTerms(text); if (th.hits.length) { q.themes = th.terms; q.hits = th.hits; }
-  q.understood = !!(q.genres.length || q.like || q.themes.length || q.types.length === 1 || q.short || q.mini || q.lang || q.from || q.to || q.quality || q.plat || q.avoid.length);
+  q.understood = !!(q.genres.length || q.like || q.themes.length || q.types.length === 1 || q.short || q.mini || q.lang || q.from || q.to || q.quality || q.plat || q.avoid.length || q.countries.length);
+  q.vague = /recomienda|sorprend|lo que sea|cualquier|algo bueno|que me guste|que ver|no se que/.test(n);
   return q;
 }
 async function kwIdsFor(terms) {
@@ -1278,12 +1295,13 @@ async function localAsk(text, prev) {
       const p = {
         watch_region: "ES", with_watch_providers: ids, with_watch_monetization_types: "flatrate|free|ads",
         sort_by: q.quality ? "vote_average.desc" : "popularity.desc",
-        "vote_count.gte": q.quality ? (type === "movie" ? 800 : 300) : (q.lang || kws.length ? 20 : type === "movie" ? 150 : 60),
+        "vote_count.gte": q.quality ? (type === "movie" ? 800 : 300) : (q.lang || q.countries.length || kws.length ? 15 : type === "movie" ? 150 : 60),
         "vote_average.gte": q.quality ? 7.4 : 6.2, page: q.page,
         with_genres: g.length ? g.join(q.genres.length > 1 && opt.and ? "," : "|") : undefined,
         without_genres: without.join(",") || undefined,
         with_keywords: opt.kw && kws.length ? kws.join("|") : undefined,
         with_original_language: q.lang || undefined,
+        with_origin_country: q.countries.length ? q.countries.join("|") : undefined,
       };
       if (opt.short && q.short) p["with_runtime.lte"] = type === "movie" ? 110 : 35;
       if (q.mini && type === "tv") p.with_type = "2";
@@ -1319,7 +1337,7 @@ async function localAsk(text, prev) {
       picks.push({ ...it, why: parts.join(" · ") });
     }
   }
-  const what = [q.mini ? "miniseries" : q.types.length === 1 ? (q.types[0] === "tv" ? "series" : "pelis") : "pelis y series", q.labels.length ? "de " + q.labels.join(" y ") : "", q.hits.length ? "sobre " + q.hits.join(", ") : "", q.lang === "es" ? "españolas" : "", q.short ? "cortas" : "", q.quality ? "muy bien valoradas" : "", q.plat ? "en " + q.plat : ""].filter(Boolean).join(" ");
+  const what = [q.mini ? "miniseries" : q.types.length === 1 ? (q.types[0] === "tv" ? "series" : "pelis") : "pelis y series", q.labels.length ? "de " + q.labels.join(" y ") : "", q.hits.length ? "sobre " + q.hits.join(", ") : "", q.countryNames.length ? q.countryNames.join(" o ") : "", q.short ? "cortas" : "", q.quality ? "muy bien valoradas" : "", q.plat ? "en " + q.plat : ""].filter(Boolean).join(" ");
   if (!q.understood && !more) {
     const syn = (await synopsisScan(text, "all", true)).filter(it => !skip(it.key)).slice(0, 6);
     if (syn.length) {
@@ -1330,7 +1348,8 @@ async function localAsk(text, prev) {
   }
   let reply;
   if (!picks.length) reply = "No encuentro nada que encaje en vuestras plataformas. Prueba a pedírmelo de otra forma, por ejemplo «comedia corta», «serie española de misterio» o «algo como Dark».";
-  else if (!q.understood) reply = "No he pillado bien lo que buscas, así que te propongo según tus gustos. Prueba con «comedia corta», «thriller español» o «algo como Fariña».";
+  else if (!q.understood && !q.vague) { reply = `No he entendido «${text.trim()}». Prueba con algo como «comedia corta», «serie turca romántica», «terror de los 80» o «algo como Fariña».`; picks = []; }
+  else if (!q.understood) reply = "Te propongo según lo que te ha gustado hasta ahora:";
   else reply = `${relaxed}${more ? "Más " : "Aquí tienes "}${what}:`;
   return { reply, picks, q };
 }
@@ -1342,6 +1361,8 @@ function openChat() {
   const sendBtn = h("button", { class: "btn dark", "aria-label": "Enviar" }, svg("send"));
   const form = h("form", { class: "chat-in", onsubmit: e => { e.preventDefault(); ask(inp.value); inp.value = ""; } }, inp, sendBtn);
   const paint = () => {
+    const st = $("aiStatus");
+    if (st) st.textContent = !REMOTE ? "Modo sin IA" : S.aiErr ? "⚠️ Modo sin IA: " + S.aiErr : S.aiOff ? "Modo sin IA" : S.chat.some(m => m.ai) ? "🟢 IA conectada" : "";
     list.replaceChildren();
     if (!S.chat.length) {
       list.append(h("div", { class: "msg ai" }, `¡Buenas, ${PROF[S.profile].name}! Dime qué os apetece: el género, si peli o serie, si corta, de qué época, algo que os gustó («algo como Dark») o lo que no queréis («nada de terror»). Busco en vuestras plataformas.`));
@@ -1371,22 +1392,17 @@ function openChat() {
       paint();
     };
     if (!REMOTE || S.aiOff) return local();
-    try {
-      const base = CFG.supabaseUrl.replace(/\/+$/, "");
-      const headers = { apikey: CFG.supabaseAnonKey, "Content-Type": "application/json" };
-      if (CFG.supabaseAnonKey.startsWith("eyJ")) headers.Authorization = "Bearer " + CFG.supabaseAnonKey;
-      const msgs = S.chat.filter(m => !m.typing).slice(-10).map(m => ({ role: m.role, text: m.role === "user" ? m.text : (m.reply || m.text) + (m.picks ? " Propuse: " + m.picks.map(p => p.title).join(", ") : "") }));
-      const r = await fetch(`${base}/functions/v1/recomendar`, { method: "POST", headers, body: JSON.stringify({ pin: S.pin, messages: msgs, context: aiContext() }) });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) { if (r.status === 404 || d.error === "nokey") S.aiOff = true; return local(); }
-      const picks = (d.picks || []).map(p => ({ title: String(p.title || ""), alt: p.original_title, year: p.year ? String(p.year) : "", type: p.type === "tv" ? "tv" : "movie", why: String(p.why || "") })).filter(p => p.title);
-      Object.assign(pending, { typing: false, reply: d.reply || "Aquí tienes:", text: d.reply, picks });
-      paint();
-      await Promise.all(picks.map(async p => { await resolve(p, p.alt); await providersOf(p); }));
-      paint();
-    } catch (e) { S.aiOff = true; return local(); }
+    const msgs = S.chat.filter(m => !m.typing).slice(-10).map(m => ({ role: m.role, text: m.role === "user" ? m.text : (m.reply || m.text) + (m.picks ? " Propuse: " + m.picks.map(p => p.title).join(", ") : "") }));
+    const d = await aiCall(msgs);
+    if (!d) return local();
+    const picks = ((d.picks) || []).map(p => ({ title: String(p.title || ""), alt: p.original_title, year: p.year ? String(p.year) : "", type: p.type === "tv" ? "tv" : "movie", why: String(p.why || "") })).filter(p => p.title);
+    Object.assign(pending, { typing: false, reply: d.reply || "Aquí tienes:", text: d.reply, picks, ai: true });
+    paint();
+    await Promise.all(picks.map(async p => { await resolve(p, p.alt); p.key = keyOf(p); await providersOf(p); }));
+    paint();
   };
-  body.append(h("div", { class: "chat-head" }, emo("🤖"), h("div", null, h("h2", null, "El dependiente"), h("p", { class: "note" }, "Pídele lo que os apetece y busca en vuestras plataformas"))), list, form);
+  const status = h("p", { class: "note", id: "aiStatus" });
+  body.append(h("div", { class: "chat-head" }, emo("🤖"), h("div", null, h("h2", null, "El dependiente"), h("p", { class: "note" }, "Pídele lo que os apetece y busca en vuestras plataformas"), status)), list, form);
   openSheet(body);
   paint();
 }
