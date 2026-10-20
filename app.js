@@ -1362,7 +1362,7 @@ function openChat() {
   const form = h("form", { class: "chat-in", onsubmit: e => { e.preventDefault(); ask(inp.value); inp.value = ""; } }, inp, sendBtn);
   const paint = () => {
     const st = $("aiStatus");
-    if (st) st.textContent = !REMOTE ? "Modo sin IA" : S.aiErr ? "⚠️ Modo sin IA: " + S.aiErr : S.aiOff ? "Modo sin IA" : S.chat.some(m => m.ai) ? "🟢 IA conectada" : "";
+    if (st) st.textContent = !REMOTE ? "Modo sin IA" : S.aiErr ? "⚠️ Modo sin IA: " + S.aiErr : S.aiOff ? "Modo sin IA" : S.chat.some(m => m.ai) ? "🟢 IA conectada" : "La IA se comprueba con tu primer mensaje";
     list.replaceChildren();
     if (!S.chat.length) {
       list.append(h("div", { class: "msg ai" }, `¡Buenas, ${PROF[S.profile].name}! Dime qué os apetece: el género, si peli o serie, si corta, de qué época, algo que os gustó («algo como Dark») o lo que no queréis («nada de terror»). Busco en vuestras plataformas.`));
