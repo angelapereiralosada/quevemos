@@ -896,6 +896,69 @@ const THEMES = [
   [["medieval", "edad media"], ["middle ages"]],
   [["vikingos", "vikingo"], ["vikings (norsemen)"]],
   [["romanos", "antigua roma"], ["ancient rome"]],
+  [["asesinato", "asesinatos", "asesino", "asesina", "asesinos", "homicidio", "crimen", "crimenes"], ["murder"]],
+  [["secuestro", "secuestrada", "secuestrado", "rapto"], ["kidnapping"]],
+  [["venganza", "vengarse"], ["revenge"]],
+  [["infidelidad", "infiel", "amante", "cuernos"], ["infidelity", "adultery"]],
+  [["triangulo amoroso"], ["love triangle"]],
+  [["matrimonio", "casados"], ["marriage"]],
+  [["droga", "drogas", "cocaina", "adiccion"], ["drugs", "drug addiction"]],
+  [["corrupcion", "corrupto"], ["corruption"]],
+  [["conspiracion", "complot"], ["conspiracy"]],
+  [["estafa", "estafador", "timo", "fraude"], ["con artist", "fraud"]],
+  [["hacker", "hackers", "ciberataque"], ["hacker"]],
+  [["banco", "robo de banco"], ["bank robbery"]],
+  [["fuga", "escapar de la carcel", "evasion"], ["prison escape"]],
+  [["soldado", "soldados", "ejercito"], ["soldier"]],
+  [["rey", "reina", "monarquia", "realeza", "princesa", "principe"], ["royalty", "monarchy"]],
+  [["castillo"], ["castle"]],
+  [["pirata", "piratas"], ["pirate"]],
+  [["tesoro"], ["treasure"]],
+  [["barco", "naufragio", "mar"], ["ship", "shipwreck"]],
+  [["avion", "aviones", "piloto"], ["airplane", "pilot"]],
+  [["tren"], ["train"]],
+  [["carreras", "coches", "formula 1"], ["car race", "formula 1"]],
+  [["banda", "grupo de musica", "rock"], ["rock band"]],
+  [["cantante", "cantantes"], ["singer"]],
+  [["restaurante"], ["restaurant"]],
+  [["playa"], ["beach"]],
+  [["montana", "escalada"], ["mountain", "mountain climbing"]],
+  [["nieve", "invierno"], ["snow", "winter"]],
+  [["pueblo", "aldea", "rural"], ["small town", "village"]],
+  [["londres"], ["london, england"]],
+  [["mexico"], ["mexico"]],
+  [["demonio", "diablo", "satan"], ["demon", "devil"]],
+  [["monstruo", "monstruos", "criatura"], ["monster", "creature"]],
+  [["mutante", "mutantes"], ["mutant"]],
+  [["pandemia", "virus", "epidemia"], ["pandemic", "virus"]],
+  [["desastre", "catastrofe", "terremoto", "tsunami"], ["disaster", "natural disaster"]],
+  [["muerte", "duelo", "luto"], ["death", "grief"]],
+  [["psicologo", "terapia", "psiquiatra"], ["psychologist", "therapy"]],
+  [["amnesia", "memoria", "olvido"], ["amnesia", "memory loss"]],
+  [["bucle temporal", "dia de la marmota"], ["time loop"]],
+  [["multiverso", "universo paralelo", "universos paralelos"], ["multiverse", "parallel world"]],
+  [["realidad virtual"], ["virtual reality"]],
+  [["comic", "comics", "novela grafica"], ["based on comic"]],
+  [["novela", "libro", "basada en un libro"], ["based on novel or book"]],
+  [["biografia", "biopic", "vida de"], ["biography"]],
+  [["ajedrez"], ["chess"]],
+  [["matematicas", "ciencia", "cientifico", "cientifica"], ["scientist", "mathematics"]],
+  [["marte"], ["mars"]],
+  [["luna"], ["moon"]],
+  [["oceano", "submarino", "fondo del mar"], ["ocean", "submarine"]],
+  [["selva", "jungla"], ["jungle"]],
+  [["desierto"], ["desert"]],
+  [["esclavitud", "esclavos"], ["slavery"]],
+  [["pobreza", "pobre"], ["poverty"]],
+  [["millonario", "ricos", "riqueza", "dinero"], ["millionaire", "wealth"]],
+  [["herencia"], ["inheritance"]],
+  [["identidad", "doble vida", "suplantacion"], ["double life", "identity"]],
+  [["sueños", "suenos", "pesadilla", "pesadillas"], ["dream", "nightmare"]],
+  [["colegio", "escuela", "profesor", "profesora"], ["school", "teacher"]],
+  [["abogada", "fiscal"], ["lawyer", "prosecutor"]],
+  [["bomberos"], ["firefighter"]],
+  [["concurso", "competicion", "torneo"], ["competition", "tournament"]],
+  [["superviviente", "naufrago"], ["survival"]],
 ];
 const STOP = new Set(["de", "del", "la", "las", "el", "los", "un", "una", "unas", "unos", "con", "sin", "sobre", "que", "y", "o", "en", "para", "trama", "tema", "temas", "peli", "pelis", "pelicula", "peliculas", "serie", "series", "documental", "documentales", "algo", "alguna", "algun", "quiero", "busco", "ver", "historia", "historias", "buena", "buenas", "buen", "buenos"]);
 function themeTerms(q) {
@@ -908,10 +971,29 @@ function themeTerms(q) {
 const GWORDS = [[/comedi/, { movie: 35, tv: 35 }], [/\bdrama|dramon/, { movie: 18, tv: 18 }], [/terror|miedo/, { movie: 27, tv: 9648 }], [/romant|romance/, { movie: 10749, tv: 18 }],
   [/accion/, { movie: 28, tv: 10759 }], [/animacion|animada|dibujos|anime/, { movie: 16, tv: 16 }], [/documental/, { movie: 99, tv: 99 }], [/thriller|suspense|intriga/, { movie: 53, tv: 80 }],
   [/ciencia ficcion|scifi/, { movie: 878, tv: 10765 }], [/fantasia/, { movie: 14, tv: 10765 }], [/familiar|para ninos/, { movie: 10751, tv: 10751 }]];
+// Lee las sinopsis (en español) de lo más visto de vuestras plataformas y busca las palabras
+async function synopsisScan(q, type, onlyMine) {
+  const words = norm(q).split(" ").filter(w => w.length > 3 && !STOP.has(w));
+  if (!words.length || !TMDB) return [];
+  const stems = words.map(w => w.slice(0, Math.max(5, w.length - 4)));
+  const ids = onlyMine ? providerIds(S.plats).join("|") : "";
+  const types = type === "all" ? ["movie", "tv"] : [type];
+  const lists = await Promise.all(types.flatMap(t => [1, 2, 3, 4, 5, 6].map(pg => limit(() => tmdb(`/discover/${t}`, {
+    watch_region: ids ? "ES" : undefined, with_watch_providers: ids || undefined, with_watch_monetization_types: ids ? "flatrate|free|ads" : undefined,
+    sort_by: "popularity.desc", "vote_count.gte": 25, page: pg, without_genres: t === "tv" ? "10763,10767" : undefined,
+  }, 12)).then(r => r.results.map(z => fromTmdb(z, t))).catch(() => []))));
+  const seen = new Set();
+  return lists.flat().filter(it => {
+    if (seen.has(it.key)) return false; seen.add(it.key);
+    const txt = " " + norm((it.overview || "") + " " + it.title) + " ";
+    return stems.every(st => txt.includes(" " + st) || txt.includes(st));
+  }).map(it => ({ ...it, inSyn: true }));
+}
 async function themeSearch(q, type, onlyMine) {
   const { terms } = themeTerms(q);
   if (!terms.length) return [];
   const nq = norm(q), gw = GWORDS.filter(([re]) => re.test(nq)).map(([, g]) => g);
+  if (!gw.length) for (const [re, g] of MOOD_G) if (re.test(nq)) { gw.push({ movie: g.movie[0], tv: g.tv[0] }); break; }
   const kwIds = new Set();
   await Promise.all(terms.map(async t => {
     try {
@@ -949,15 +1031,19 @@ function openSearch(initial) {
     if (!TMDB) { res.replaceChildren(h("p", { class: "note" }, "Falta la clave de TMDB para buscar.")); return; }
     res.replaceChildren(h("div", { class: "grid" }, Array.from({ length: 6 }, () => h("div", { class: "tile" }, h("div", { class: "poster skel" })))));
     const { hits } = themeTerms(q);
-    const [themed, byTitle] = await Promise.all([
+    const [themed0, syn, byTitle] = await Promise.all([
       themeSearch(q, type, onlyMine),
+      synopsisScan(q, type, onlyMine),
       tmdb("/search/multi", { query: q }, 6).then(r => r.results.filter(x => (x.media_type === "movie" || x.media_type === "tv") && (type === "all" || x.media_type === type) && (x.poster_path || x.vote_count > 20)).slice(0, 12).map(x => fromTmdb(x))).catch(() => []),
     ]);
     if (my !== seq) return;
+    // primero lo que cumple las dos cosas (tema y sinopsis), luego el resto
+    const synK = new Set(syn.map(x => x.key)), themK = new Set(themed0.map(x => x.key));
+    const themed = [...themed0.filter(x => synK.has(x.key)), ...syn.filter(x => !themK.has(x.key)), ...themed0.filter(x => !synK.has(x.key))].slice(0, 30);
     const seenK = new Set(themed.map(x => x.key));
     const titles = byTitle.filter(x => !seenK.has(x.key));
     const blocks = [];
-    if (themed.length) blocks.push(h("div", { class: "sec" }, h("h2", null, `Sobre «${q}»`), h("small", null, onlyMine ? "En vuestras plataformas" : "En cualquier plataforma")), h("div", { class: "grid" }, themed.map(it => tile(it))));
+    if (themed.length) blocks.push(h("div", { class: "sec" }, h("h2", null, `Sobre «${q}»`), h("small", null, onlyMine ? "En vuestras plataformas" : "En cualquier plataforma")), h("div", { class: "grid" }, themed.map(it => tile(it, it.inSyn ? "📝 En la sinopsis" : undefined))));
     else if (hits.length) blocks.push(h("p", { class: "note" }, onlyMine ? `No encuentro títulos sobre «${q}» en vuestras plataformas. Desmarca «Solo nuestras plataformas» para ver todos.` : `No encuentro títulos sobre «${q}».`));
     if (titles.length) blocks.push(h("div", { class: "sec" }, h("h2", null, "Por título"), h("small", null, "")), h("div", { class: "grid" }, titles.map(it => tile(it))));
     if (!blocks.length) blocks.push(h("p", { class: "note" }, "No encuentro nada. Prueba con otra palabra o con el título."));
@@ -1128,6 +1214,14 @@ async function localAsk(text, prev) {
     }
   }
   const what = [q.mini ? "miniseries" : q.types.length === 1 ? (q.types[0] === "tv" ? "series" : "pelis") : "pelis y series", q.labels.length ? "de " + q.labels.join(" y ") : "", q.hits.length ? "sobre " + q.hits.join(", ") : "", q.lang === "es" ? "españolas" : "", q.short ? "cortas" : "", q.quality ? "muy bien valoradas" : "", q.plat ? "en " + q.plat : ""].filter(Boolean).join(" ");
+  if (!q.understood && !more) {
+    const syn = (await synopsisScan(text, "all", true)).filter(it => !skip(it.key)).slice(0, 6);
+    if (syn.length) {
+      picks = [];
+      for (const it of syn) { const pv = await providersOf(it); picks.push({ ...it, why: `Su sinopsis habla de «${text.trim()}»` + (pv && pv.own.length ? ` · en ${pv.own.map(p => p.plat).slice(0, 2).join(" y ")}` : "") }); }
+      return { reply: `He buscado «${text.trim()}» en las sinopsis de lo que hay en vuestras plataformas:`, picks, q };
+    }
+  }
   let reply;
   if (!picks.length) reply = "No encuentro nada que encaje en vuestras plataformas. Prueba a pedírmelo de otra forma, por ejemplo «comedia corta», «serie española de misterio» o «algo como Dark».";
   else if (!q.understood) reply = "No he pillado bien lo que buscas, así que te propongo según tus gustos. Prueba con «comedia corta», «thriller español» o «algo como Fariña».";
