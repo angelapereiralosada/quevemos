@@ -835,7 +835,7 @@ async function aiCall(messages, system) {
       if (r.status === 404 || r.status === 401 || d.error === "nokey") S.aiOff = true;
       return null;
     }
-    S.aiErr = null;
+    S.aiErr = Array.isArray(d.quick) ? null : "la función de Supabase es la versión antigua: vuelve a pegar el código nuevo y pulsa Deploy";
     return d;
   } catch (e) { S.aiErr = "no consigo conectar con la función (¿«Verify JWT» activado o función sin desplegar?)"; S.aiOff = true; return null; }
 }
@@ -1394,7 +1394,7 @@ function openChat() {
     for (const m of S.chat) {
       if (m.role === "user") list.append(h("div", { class: "msg me" }, m.text));
       else {
-        list.append(h("div", { class: "msg ai" + (m.typing ? " typing" : "") }, m.reply || m.text));
+        list.append(h("div", { class: "msg ai" + (m.typing ? " typing" : "") }, m.reply || m.text, m.typing ? null : h("span", { class: "msg-mode" }, m.ai ? "🤖 IA" : "📼 sin IA")));
         if (m.picks && m.picks.length) list.append(h("div", { class: "picks" }, m.picks.map(p => pickEl(p))));
         const lastOne = m === S.chat[S.chat.length - 1];
         if (lastOne && m.quick && m.quick.length) list.append(h("div", { class: "sugs" }, m.quick.map(q => h("button", { class: "chip", onclick: () => ask(q) }, q))));

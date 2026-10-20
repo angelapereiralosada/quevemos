@@ -439,3 +439,4 @@ main{max-width:560px;margin:0 auto;padding:4px max(16px,env(safe-area-inset-righ
 .save-list.on{background:var(--paper);box-shadow:inset 0 0 0 2px var(--lc)}
 .save-list.on .sl-check{background:var(--lc);border-color:var(--lc)}
 .msg{white-space:pre-wrap}
+.msg-mode{display:block;margin-top:6px;font-family:var(--lcd);font-size:14px;color:var(--muted);white-space:normal}
