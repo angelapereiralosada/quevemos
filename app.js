@@ -803,13 +803,32 @@ function paintSocial() {
 }
 
 /* ---------- IA (función de Supabase con Gemini o Claude) ---------- */
-async function aiCall(messages) {
+const AI_SYSTEM = () => `Eres «el dependiente» del videoclub ¿Qué vemos?, la app con la que Oswaldo, Ana y Ángela (viven en España) deciden qué ver. Ahora hablas con ${PROF[S.profile].name}.
+Personalidad: cinéfilo y seriéfilo de los de toda la vida, cercano y con gracia sin pasarte. Español de España, frases naturales, nada de listas largas ni tecnicismos.
+
+Cómo conversas:
+- Es una conversación: recuerda lo que se ha dicho y construye sobre ello. «Más corta», «otra», «la segunda», «algo parecido pero…» se refieren a lo anterior.
+- Si la petición es vaga y te falta información, NO recomiendes todavía: haz una sola pregunta (dos como mucho) para afinar: con quién lo va a ver, de qué humor está, cuánto tiempo tiene, peli o serie, o algo que le gustara hace poco. Ofrece respuestas rápidas en "quick".
+- Cuando recomiendes, elige poco: 1 título si lo tienes claro, 2 o 3 como máximo. Solo más (hasta 6) si te piden expresamente una lista.
+- En "reply" explica de verdad por qué encaja cada uno con lo que te ha contado: tono, ritmo, de qué va sin destripar nada, duración o temporadas, y en qué plataforma está. Entre 2 y 6 frases en total; puedes usar saltos de línea.
+- En cada pick, "why" resume en una frase (máximo 25 palabras) por qué esa y no otra.
+- Usa el contexto: lo que cada uno quiere ver, lo que ha visto y su nota, lo descartado, las listas compartidas y sus comentarios. Nunca propongas lo que ${PROF[S.profile].name} ya ha visto o ha descartado. Si algo ya está en una de sus listas, dilo («¡la tenéis en Casiña!»).
+- Propón solo cosas que estén con mucha probabilidad en SUS plataformas en España (vienen en el contexto). Si dudas de la plataforma, no lo afirmes.
+- Si hablan de otra cosa (charla, un actor, qué tal es una peli concreta), contesta como lo haría un buen dependiente, sin forzar recomendaciones (picks vacío).
+- "quick": de 2 a 4 respuestas cortas (máximo 5 palabras) para seguir la conversación con un toque, por ejemplo «Más corta», «Algo más ligero», «¿De qué va la primera?».
+
+Responde SOLO con un objeto JSON válido, sin texto fuera:
+{"reply":"…","picks":[{"title":"título como se conoce en España","original_title":"…","year":2021,"type":"movie","why":"…"}],"quick":["…"]}
+"type" es "movie" (película) o "tv" (serie).`;
+const SEARCH_SYSTEM = `Eres el buscador del videoclub ¿Qué vemos? (España). Te llega lo que alguien ha escrito en el buscador: interpreta lo que quiere decir (sinónimos, temas, tramas, títulos mal escritos, descripciones vagas como «la peli del barco que se hunde») y propón hasta 8 títulos que encajen, priorizando los que estén en sus plataformas (vienen en el contexto).
+Responde SOLO con JSON: {"reply":"una frase corta","picks":[{"title":"título en España","original_title":"…","year":2021,"type":"movie","why":"por qué encaja, máximo 15 palabras"}],"quick":[]}`;
+async function aiCall(messages, system) {
   if (!REMOTE || S.aiOff) return null;
   try {
     const base = CFG.supabaseUrl.replace(/\/+$/, "");
     const headers = { apikey: CFG.supabaseAnonKey, "Content-Type": "application/json" };
     if (CFG.supabaseAnonKey.startsWith("eyJ")) headers.Authorization = "Bearer " + CFG.supabaseAnonKey;
-    const r = await fetch(`${base}/functions/v1/recomendar`, { method: "POST", headers, body: JSON.stringify({ pin: S.pin, messages, context: aiContext() }) });
+    const r = await fetch(`${base}/functions/v1/recomendar`, { method: "POST", headers, body: JSON.stringify({ pin: S.pin, messages, context: aiContext(), system: system || AI_SYSTEM() }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) {
       S.aiErr = r.status === 404 ? "no encuentro la función «recomendar» en Supabase" : d.error === "nokey" ? "falta el secreto GEMINI_API_KEY en Supabase" : d.error === "pin" ? "la función no puede comprobar el PIN" : d.error === "ai" ? "la IA ha dado un error: " + (d.detail || "") : r.status === 401 ? "Supabase pide autorización: desactiva «Verify JWT» en la función" : `error ${r.status} ${d.msg || d.message || d.error || ""}`;
@@ -1136,7 +1155,7 @@ function openSearch(initial) {
     const aiBox = h("div", { class: "view" });
     if (REMOTE && !S.aiOff && q.length >= 4) {
       fill(aiBox, h("p", { class: "note" }, "🤖 Preguntando a la IA…"));
-      aiCall([{ role: "user", text: "BÚSQUEDA: " + q }]).then(aiPicks).then(ps => {
+      aiCall([{ role: "user", text: "BÚSQUEDA: " + q }], SEARCH_SYSTEM).then(aiPicks).then(ps => {
         if (my !== seq) return;
         fill(aiBox, ps.length ? [h("div", { class: "sec" }, h("h2", null, "🤖 Lo que entiende la IA"), h("small", null, "")), h("div", { class: "picks" }, ps.map(p => pickEl(p)))] : null);
       }).catch(() => fill(aiBox, null));
@@ -1354,7 +1373,11 @@ async function localAsk(text, prev) {
   return { reply, picks, q };
 }
 
+const chatKey = () => "qv_chat_" + S.profile;
+const saveChat = () => store.set(chatKey(), S.chat.filter(m => !m.typing).slice(-30).map(m => ({ role: m.role, text: m.text, reply: m.reply, ai: m.ai, quick: m.quick,
+  picks: (m.picks || []).map(p => ({ id: p.id, key: p.key, type: p.type, title: p.title, year: p.year, poster: p.poster, backdrop: p.backdrop, vote: p.vote, g: p.g, why: p.why })) })));
 function openChat() {
+  if (!S.chat.length) S.chat = store.get(chatKey(), []);
   const body = h("div", { class: "settings", style: "gap:14px" });
   const list = h("div", { class: "chat" });
   const inp = h("input", { class: "field", type: "text", placeholder: "¿Qué os apetece ver?", enterkeyhint: "send", autocomplete: "off" });
@@ -1365,15 +1388,17 @@ function openChat() {
     if (st) st.textContent = !REMOTE ? "Modo sin IA" : S.aiErr ? "⚠️ Modo sin IA: " + S.aiErr : S.aiOff ? "Modo sin IA" : S.chat.some(m => m.ai) ? "🟢 IA conectada" : "La IA se comprueba con tu primer mensaje";
     list.replaceChildren();
     if (!S.chat.length) {
-      list.append(h("div", { class: "msg ai" }, `¡Buenas, ${PROF[S.profile].name}! Dime qué os apetece: el género, si peli o serie, si corta, de qué época, algo que os gustó («algo como Dark») o lo que no queréis («nada de terror»). Busco en vuestras plataformas.`));
-      list.append(h("div", { class: "sugs" }, ["Una comedia corta para esta noche", "Serie española de misterio", "Algo como Fariña", "Peli de terror de los 80", "Miniserie, nada de dramas", "Las mejores pelis de Netflix"].map(s => h("button", { class: "chip", onclick: () => ask(s) }, s))));
+      list.append(h("div", { class: "msg ai" }, `¡Buenas, ${PROF[S.profile].name}! Cuéntame: ¿qué te apetece hoy? Puede ser algo concreto («una serie turca de amor») o algo tipo «quiero algo ligerito para desconectar». Si me falta algo, te pregunto.`));
+      list.append(h("div", { class: "sugs" }, ["No sé qué ver hoy", "Algo ligerito, sin pensar", "Una serie que enganche", "Algo como Fariña", "Peli para ver los tres"].map(s => h("button", { class: "chip", onclick: () => ask(s) }, s))));
     }
     for (const m of S.chat) {
       if (m.role === "user") list.append(h("div", { class: "msg me" }, m.text));
       else {
         list.append(h("div", { class: "msg ai" + (m.typing ? " typing" : "") }, m.reply || m.text));
         if (m.picks && m.picks.length) list.append(h("div", { class: "picks" }, m.picks.map(p => pickEl(p))));
-        if (m.q && m.picks && m.picks.length && m === S.chat[S.chat.length - 1]) list.append(h("div", { class: "sugs" }, h("button", { class: "chip", onclick: () => ask("otras") }, "🔄 Otras ideas")));
+        const lastOne = m === S.chat[S.chat.length - 1];
+        if (lastOne && m.quick && m.quick.length) list.append(h("div", { class: "sugs" }, m.quick.map(q => h("button", { class: "chip", onclick: () => ask(q) }, q))));
+        else if (lastOne && m.q && m.picks && m.picks.length) list.append(h("div", { class: "sugs" }, h("button", { class: "chip", onclick: () => ask("otras") }, "🔄 Otras ideas")));
       }
     }
     const lastEl = list.lastElementChild; if (lastEl) setTimeout(() => lastEl.scrollIntoView({ block: "end", behavior: "smooth" }), 30);
@@ -1389,20 +1414,22 @@ function openChat() {
         const r = await localAsk(text, prev);
         Object.assign(pending, { typing: false, reply: r.reply, text: r.reply, picks: r.picks, q: r.q });
       } catch (e) { Object.assign(pending, { typing: false, text: "Sin conexión. Prueba otra vez." }); }
-      paint();
+      saveChat(); paint();
     };
     if (!REMOTE || S.aiOff) return local();
-    const msgs = S.chat.filter(m => !m.typing).slice(-10).map(m => ({ role: m.role, text: m.role === "user" ? m.text : (m.reply || m.text) + (m.picks ? " Propuse: " + m.picks.map(p => p.title).join(", ") : "") }));
+    const msgs = S.chat.filter(m => !m.typing).slice(-16).map(m => ({ role: m.role, text: m.role === "user" ? m.text
+      : JSON.stringify({ reply: m.reply || m.text || "", picks: (m.picks || []).map(p => ({ title: p.title, year: p.year, type: p.type, why: p.why })) }) }));
     const d = await aiCall(msgs);
     if (!d) return local();
     const picks = ((d.picks) || []).map(p => ({ title: String(p.title || ""), alt: p.original_title, year: p.year ? String(p.year) : "", type: p.type === "tv" ? "tv" : "movie", why: String(p.why || "") })).filter(p => p.title);
-    Object.assign(pending, { typing: false, reply: d.reply || "Aquí tienes:", text: d.reply, picks, ai: true });
+    Object.assign(pending, { typing: false, reply: d.reply || "Aquí tienes:", text: d.reply, picks, ai: true, quick: d.quick || [] });
     paint();
     await Promise.all(picks.map(async p => { await resolve(p, p.alt); p.key = keyOf(p); await providersOf(p); }));
-    paint();
+    saveChat(); paint();
   };
   const status = h("p", { class: "note", id: "aiStatus" });
-  body.append(h("div", { class: "chat-head" }, emo("🤖"), h("div", null, h("h2", null, "El dependiente"), h("p", { class: "note" }, "Pídele lo que os apetece y busca en vuestras plataformas"), status)), list, form);
+  body.append(h("div", { class: "chat-head" }, emo("🤖"), h("div", null, h("h2", null, "El dependiente"), h("p", { class: "note" }, "Pídele lo que os apetece y busca en vuestras plataformas"), status),
+    h("button", { class: "mini-btn", style: "margin-left:auto", onclick: () => { S.chat = []; store.del(chatKey()); paint(); } }, "🗑️ Nueva")), list, form);
   openSheet(body);
   paint();
 }

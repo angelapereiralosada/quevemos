@@ -438,3 +438,4 @@ main{max-width:560px;margin:0 auto;padding:4px max(16px,env(safe-area-inset-righ
 .save-list .sl-check{width:28px;height:28px;border-radius:8px;border:2px solid #c9c9da;display:grid;place-items:center;font-weight:900;color:#fff}
 .save-list.on{background:var(--paper);box-shadow:inset 0 0 0 2px var(--lc)}
 .save-list.on .sl-check{background:var(--lc);border-color:var(--lc)}
+.msg{white-space:pre-wrap}
