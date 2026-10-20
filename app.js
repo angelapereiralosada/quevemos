@@ -987,6 +987,154 @@ function aiContext() {
   if (S.trends) { lines.push(`\nLo más visto en España (${S.trends.label}):`); for (const p of ownedTrendPlats()) lines.push(`- ${p}: ${[...trendItems(p, "tv").slice(0, 4), ...trendItems(p, "movie").slice(0, 3)].map(i => i.title).join(", ")}`); }
   return lines.join("\n");
 }
+/* ---------- el dependiente sin IA: entiende la petición y busca en TMDB ---------- */
+const MOOD_G = [
+  [/comedi|reir|risa|gracios|divertid|humor|carcajad/, { movie: [35], tv: [35] }, "comedia"],
+  [/terror|miedo|susto|halloween|zombi|fantasma|escalofr/, { movie: [27], tv: [9648, 10765] }, "terror"],
+  [/thriller|suspense|tension|intriga|en vilo/, { movie: [53], tv: [80, 9648] }, "suspense"],
+  [/polic|crimen|crimin|detective|asesin|narco|mafia/, { movie: [80], tv: [80] }, "crimen"],
+  [/misterio|enigma/, { movie: [9648], tv: [9648] }, "misterio"],
+  [/drama|llorar|emocion|conmov/, { movie: [18], tv: [18] }, "drama"],
+  [/romant|romance|amor|enamor/, { movie: [10749], tv: [18] }, "romántica"],
+  [/accion|tiros|peleas|adrenalina/, { movie: [28], tv: [10759] }, "acción"],
+  [/aventura/, { movie: [12], tv: [10759] }, "aventuras"],
+  [/ciencia ficcion|scifi|sci fi|futur|distopi/, { movie: [878], tv: [10765] }, "ciencia ficción"],
+  [/fantasia|magia|dragon/, { movie: [14], tv: [10765] }, "fantasía"],
+  [/animacion|animada|dibujos|anime/, { movie: [16], tv: [16] }, "animación"],
+  [/documental|docuserie/, { movie: [99], tv: [99] }, "documental"],
+  [/historic|de epoca|guerra/, { movie: [36, 10752], tv: [10768] }, "historia"],
+  [/musical/, { movie: [10402], tv: [] }, "musical"],
+  [/familia|ninos|peques|crios|infantil/, { movie: [10751], tv: [10751, 10762] }, "familiar"],
+  [/western|vaquero/, { movie: [37], tv: [37] }, "western"],
+  [/reality/, { movie: [], tv: [10764] }, "reality"],
+];
+function parseAsk(text) {
+  let n = " " + norm(text) + " ";
+  const full = n;
+  const q = { genres: [], labels: [], avoid: [], types: ["tv", "movie"], short: false, mini: false, lang: null, from: null, to: null, quality: false, recent: false, like: null, plat: null, themes: [], hits: [] };
+  const NEG = /\b(?:sin|nada de|que no sea|que no tenga|no quiero|no me apetece|odio|evitar|ni)\s+(.+?)(?=\s+(?:en|pero|y|que|para|de los|con)\s|[,.;!?]|\s*$)/g;
+  let m;
+  while ((m = NEG.exec(n))) { for (const [re, g] of MOOD_G) if (re.test(m[1])) q.avoid.push(g); n = n.replace(m[0], " "); }
+  const lk = n.match(/(?:como|parecid[ao]s? a|tipo|estilo|al estilo de|rollo)\s+(.+?)(?:\s+(?:pero|y que|que sea|para)\b|$)/);
+  if (lk && lk[1].trim().length > 1) { q.like = lk[1].trim(); n = n.replace(lk[0], " "); }
+  for (const [re, g, label] of MOOD_G) if (re.test(n)) { q.genres.push(g); q.labels.push(label); }
+  if (/\b(peli|pelis|pelicula|peliculas|film)\b/.test(n) && !/\bseries?\b/.test(n)) q.types = ["movie"];
+  else if (/\b(serie|series|temporadas?|miniserie|miniseries)\b/.test(n)) q.types = ["tv"];
+  if (/miniserie|pocos capitulos|de un tiron|en un finde/.test(n)) { q.mini = true; q.types = ["tv"]; }
+  if (/corta|cortita|poco tiempo|rapida|hora y media|no muy larga|que no dure/.test(n)) q.short = true;
+  if (/espanol|espanola|de aqui|nacional|de espana/.test(n)) q.lang = "es";
+  else if (/corean/.test(n)) q.lang = "ko"; else if (/japon/.test(n)) q.lang = "ja"; else if (/frances/.test(n)) q.lang = "fr"; else if (/italian/.test(n)) q.lang = "it";
+  const dec = n.match(/de los (?:anos )?(\d0)\b/);
+  if (dec) { const d = +dec[1]; const y = d >= 30 ? 1900 + d : 2000 + d; q.from = `${y}-01-01`; q.to = `${y + 9}-12-31`; }
+  else if (/clasic|antigu/.test(n)) q.to = "2000-12-31";
+  if (/nuev|reciente|estreno|de este ano|actual|ultimo/.test(n)) { q.recent = true; q.from = new Date(Date.now() - 2 * 365 * 864e5).toISOString().slice(0, 10); }
+  if (/buena|buenisima|mejor|top|obra maestra|premiad|oscar|imprescindible/.test(n)) q.quality = true;
+  for (const p of PLATFORMS) if (new RegExp("\\b" + norm(p.id).split(" ")[0]).test(full) || (p.id === "Prime Video" && /amazon|prime/.test(full)) || (p.id === "Mitele" && /mediaset|telecinco/.test(full))) { if (S.plats.includes(p.id)) q.plat = p.id; break; }
+  const th = themeTerms(text); if (th.hits.length) { q.themes = th.terms; q.hits = th.hits; }
+  q.understood = !!(q.genres.length || q.like || q.themes.length || q.types.length === 1 || q.short || q.mini || q.lang || q.from || q.to || q.quality || q.plat || q.avoid.length);
+  return q;
+}
+async function kwIdsFor(terms) {
+  const ids = new Set();
+  await Promise.all(terms.map(async t => {
+    try {
+      const r = await tmdb("/search/keyword", { query: t, language: undefined }, 168), nt = norm(t);
+      const good = r.results.filter(k => norm(k.name) === nt).concat(r.results.filter(k => norm(k.name).startsWith(nt + " "))).slice(0, 3);
+      (good.length ? good : r.results.slice(0, 1)).forEach(k => ids.add(k.id));
+    } catch (e) {}
+  }));
+  return [...ids];
+}
+async function localAsk(text, prev) {
+  const more = /^(otras?|mas|dame mas|ninguna|siguiente|otra cosa)\b/.test(norm(text)) && prev;
+  const q = more ? { ...prev.q, page: (prev.q.page || 1) + 1 } : { ...parseAsk(text), page: 1 };
+  const shown = new Set(S.chat.flatMap(m => (m.picks || []).map(p => p.key || keyOf(p))));
+  const me = S.profile, taste = tasteOf(me);
+  const skip = k => shown.has(k) || isSeen(k) || isNope(k);
+  if (!TMDB) return { reply: "Necesito la clave de TMDB para buscar en el catálogo.", picks: [], q };
+  const ids = providerIds(q.plat ? [q.plat] : S.plats).join("|");
+  let picks = [], relaxed = "";
+  // 1) «algo como X»
+  if (q.like) {
+    try {
+      const s = await tmdb("/search/multi", { query: q.like }, 24);
+      const base = s.results.find(x => x.media_type === "movie" || x.media_type === "tv");
+      if (base) {
+        const bt = base.title || base.name;
+        const [r1, r2] = await Promise.all([tmdb(`/${base.media_type}/${base.id}/recommendations`, { page: q.page }, 24).catch(() => ({ results: [] })), tmdb(`/${base.media_type}/${base.id}/similar`, { page: q.page }, 24).catch(() => ({ results: [] }))]);
+        const cands = [...r1.results, ...r2.results].filter(z => (z.media_type || base.media_type) && z.vote_count > 20).map(z => fromTmdb(z, z.media_type || base.media_type))
+          .filter((it, i, a) => a.findIndex(x => x.key === it.key) === i && q.types.includes(it.type) && !skip(it.key));
+        for (const it of cands.slice(0, 24)) {
+          if (picks.length >= 6) break;
+          const pv = await providersOf(it); if (!pv || !pv.own.length) continue;
+          picks.push({ ...it, why: `Parecida a ${bt} · en ${pv.own.map(p => p.plat).slice(0, 2).join(" y ")}` });
+        }
+        q.likeTitle = bt;
+      }
+    } catch (e) {}
+    if (picks.length >= 3) return { reply: `Si te gustó ${q.likeTitle}, estas van en la misma línea y están en vuestras plataformas:`, picks, q };
+  }
+  // 2) catálogo de vuestras plataformas con los filtros entendidos
+  const kws = q.themes.length ? await kwIdsFor(q.themes) : [];
+  const run = async (opt) => {
+    const out = [];
+    await Promise.all(q.types.map(async type => {
+      const g = opt.genres ? [...new Set(q.genres.flatMap(x => x[type]))] : [];
+      const without = [...new Set(q.avoid.flatMap(x => x[type]))].filter(x => !g.includes(x));
+      if (type === "tv") without.push(10763, 10767);
+      if (q.genres.length && opt.genres && !g.length) return; // p. ej. «musical» en series
+      const p = {
+        watch_region: "ES", with_watch_providers: ids, with_watch_monetization_types: "flatrate|free|ads",
+        sort_by: q.quality ? "vote_average.desc" : "popularity.desc",
+        "vote_count.gte": q.quality ? (type === "movie" ? 800 : 300) : (q.lang || kws.length ? 20 : type === "movie" ? 150 : 60),
+        "vote_average.gte": q.quality ? 7.4 : 6.2, page: q.page,
+        with_genres: g.length ? g.join(q.genres.length > 1 && opt.and ? "," : "|") : undefined,
+        without_genres: without.join(",") || undefined,
+        with_keywords: opt.kw && kws.length ? kws.join("|") : undefined,
+        with_original_language: q.lang || undefined,
+      };
+      if (opt.short && q.short) p["with_runtime.lte"] = type === "movie" ? 110 : 35;
+      if (q.mini && type === "tv") p.with_type = "2";
+      const dk = type === "movie" ? "primary_release_date" : "first_air_date";
+      if (q.from) p[dk + ".gte"] = q.from; if (q.to) p[dk + ".lte"] = q.to;
+      try { const r = await tmdb(`/discover/${type}`, p, 6); r.results.forEach((z, i) => out.push({ it: fromTmdb(z, type), rank: i })); } catch (e) {}
+    }));
+    return out;
+  };
+  if (ids) {
+    const tries = [{ genres: true, and: true, kw: true, short: true }, { genres: true, and: false, kw: true, short: true }, { genres: true, kw: false, short: true }, { genres: true, kw: false, short: false }, { genres: false, kw: false, short: false }];
+    let res = [];
+    for (let i = 0; i < tries.length; i++) {
+      const t = tries[i];
+      if (i === 0 && q.genres.length < 2 && !kws.length) continue;
+      if (!t.kw && kws.length && i > 0 && !relaxed) relaxed = "No había casi nada con ese tema exacto, así que he ampliado un poco. ";
+      if (!t.genres && q.genres.length) relaxed = "Con todos los filtros salía muy poco; te pongo lo más cercano. ";
+      res = (await run(t)).filter(x => !skip(x.it.key));
+      if (res.length >= 4) break;
+    }
+    for (const x of res) x.score = (20 - x.rank) * .12 + (x.it.vote || 6) * .35 + affinity(x.it.g, taste) * 1.5 + Math.random() * .8;
+    res.sort((a, b) => b.score - a.score);
+    for (const x of res.slice(0, 6)) {
+      const it = x.it, pv = await providersOf(it);
+      const own = pv && pv.own.length ? pv.own.map(p => p.plat).slice(0, 2).join(" y ") : null;
+      const gNames = (it.g || []).filter(id => q.genres.some(g => g[it.type].includes(id))).map(id => GENRE[id]).filter(Boolean);
+      const parts = [];
+      if (gNames.length) parts.push(gNames[0].charAt(0).toUpperCase() + gNames[0].slice(1));
+      if (q.hits.length) parts.push("va de " + q.hits[0]);
+      if (it.vote) parts.push("★ " + it.vote.toFixed(1));
+      if (affinity(it.g, taste) > .3) parts.push("encaja con tus gustos");
+      if (own) parts.push("en " + own);
+      picks.push({ ...it, why: parts.join(" · ") });
+    }
+  }
+  const what = [q.mini ? "miniseries" : q.types.length === 1 ? (q.types[0] === "tv" ? "series" : "pelis") : "pelis y series", q.labels.length ? "de " + q.labels.join(" y ") : "", q.hits.length ? "sobre " + q.hits.join(", ") : "", q.lang === "es" ? "españolas" : "", q.short ? "cortas" : "", q.quality ? "muy bien valoradas" : "", q.plat ? "en " + q.plat : ""].filter(Boolean).join(" ");
+  let reply;
+  if (!picks.length) reply = "No encuentro nada que encaje en vuestras plataformas. Prueba a pedírmelo de otra forma, por ejemplo «comedia corta», «serie española de misterio» o «algo como Dark».";
+  else if (!q.understood) reply = "No he pillado bien lo que buscas, así que te propongo según tus gustos. Prueba con «comedia corta», «thriller español» o «algo como Fariña».";
+  else reply = `${relaxed}${more ? "Más " : "Aquí tienes "}${what}:`;
+  return { reply, picks, q };
+}
+
 function openChat() {
   const body = h("div", { class: "settings", style: "gap:14px" });
   const list = h("div", { class: "chat" });
@@ -996,14 +1144,15 @@ function openChat() {
   const paint = () => {
     list.replaceChildren();
     if (!S.chat.length) {
-      list.append(h("div", { class: "msg ai" }, `Hola, ${PROF[S.profile].name}. Cuéntame qué os apetece, con quién lo vais a ver o algo que os gustó, y te propongo títulos de vuestras plataformas.`));
-      list.append(h("div", { class: "sugs" }, ["Algo para reírnos esta noche", "Una serie corta que enganche", "Peli para ver los tres", "Algo como Fariña", "Un thriller español"].map(s => h("button", { class: "chip", onclick: () => ask(s) }, s))));
+      list.append(h("div", { class: "msg ai" }, `¡Buenas, ${PROF[S.profile].name}! Dime qué os apetece: el género, si peli o serie, si corta, de qué época, algo que os gustó («algo como Dark») o lo que no queréis («nada de terror»). Busco en vuestras plataformas.`));
+      list.append(h("div", { class: "sugs" }, ["Una comedia corta para esta noche", "Serie española de misterio", "Algo como Fariña", "Peli de terror de los 80", "Miniserie, nada de dramas", "Las mejores pelis de Netflix"].map(s => h("button", { class: "chip", onclick: () => ask(s) }, s))));
     }
     for (const m of S.chat) {
       if (m.role === "user") list.append(h("div", { class: "msg me" }, m.text));
       else {
         list.append(h("div", { class: "msg ai" + (m.typing ? " typing" : "") }, m.reply || m.text));
         if (m.picks && m.picks.length) list.append(h("div", { class: "picks" }, m.picks.map(p => pickEl(p))));
+        if (m.q && m.picks && m.picks.length && m === S.chat[S.chat.length - 1]) list.append(h("div", { class: "sugs" }, h("button", { class: "chip", onclick: () => ask("otras") }, "🔄 Otras ideas")));
       }
     }
     const lastEl = list.lastElementChild; if (lastEl) setTimeout(() => lastEl.scrollIntoView({ block: "end", behavior: "smooth" }), 30);
@@ -1013,7 +1162,15 @@ function openChat() {
     S.chat.push({ role: "user", text });
     const pending = { role: "assistant", typing: true, text: "Pensando…" };
     S.chat.push(pending); paint();
-    if (!REMOTE) { Object.assign(pending, { typing: false, text: "La IA se activa cuando conectemos Supabase y la clave de Anthropic. De momento, usa Descubrir: desliza y aprende tus gustos." }); paint(); return; }
+    const local = async () => {
+      try {
+        const prev = [...S.chat].reverse().find(m => m.q);
+        const r = await localAsk(text, prev);
+        Object.assign(pending, { typing: false, reply: r.reply, text: r.reply, picks: r.picks, q: r.q });
+      } catch (e) { Object.assign(pending, { typing: false, text: "Sin conexión. Prueba otra vez." }); }
+      paint();
+    };
+    if (!REMOTE || S.aiOff) return local();
     try {
       const base = CFG.supabaseUrl.replace(/\/+$/, "");
       const headers = { apikey: CFG.supabaseAnonKey, "Content-Type": "application/json" };
@@ -1021,18 +1178,15 @@ function openChat() {
       const msgs = S.chat.filter(m => !m.typing).slice(-10).map(m => ({ role: m.role, text: m.role === "user" ? m.text : (m.reply || m.text) + (m.picks ? " Propuse: " + m.picks.map(p => p.title).join(", ") : "") }));
       const r = await fetch(`${base}/functions/v1/recomendar`, { method: "POST", headers, body: JSON.stringify({ pin: S.pin, messages: msgs, context: aiContext() }) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        const why = r.status === 404 ? "La función de IA aún no está creada en Supabase." : d.error === "nokey" ? "Falta guardar la clave de Anthropic en Supabase." : d.error === "pin" ? "El PIN no es correcto." : d.error === "claude" ? "Claude ha dado un error: " + (d.detail || "") : "No he podido contestar. Prueba otra vez.";
-        Object.assign(pending, { typing: false, text: why }); paint(); return;
-      }
+      if (!r.ok) { if (r.status === 404 || d.error === "nokey") S.aiOff = true; return local(); }
       const picks = (d.picks || []).map(p => ({ title: String(p.title || ""), alt: p.original_title, year: p.year ? String(p.year) : "", type: p.type === "tv" ? "tv" : "movie", why: String(p.why || "") })).filter(p => p.title);
       Object.assign(pending, { typing: false, reply: d.reply || "Aquí tienes:", text: d.reply, picks });
       paint();
       await Promise.all(picks.map(async p => { await resolve(p, p.alt); await providersOf(p); }));
       paint();
-    } catch (e) { Object.assign(pending, { typing: false, text: "Sin conexión. Prueba otra vez." }); paint(); }
+    } catch (e) { S.aiOff = true; return local(); }
   };
-  body.append(h("div", { class: "chat-head" }, emo("🤖"), h("div", null, h("h2", null, "Pregúntale a la IA"), h("p", { class: "note" }, "Conoce lo que habéis visto y lo que os apetece"))), list, form);
+  body.append(h("div", { class: "chat-head" }, emo("🤖"), h("div", null, h("h2", null, "El dependiente"), h("p", { class: "note" }, "Pídele lo que os apetece y busca en vuestras plataformas"))), list, form);
   openSheet(body);
   paint();
 }
