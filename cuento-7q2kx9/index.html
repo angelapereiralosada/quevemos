@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La tortuga y la ballena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Nunito:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#3B3340;--soft:#8A7F86;--cream:#FBF6EE;--rose:#E86A7A}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Fraunces',Georgia,serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.book{position:relative;width:min(980px,100vw);height:100%;margin:0 auto;display:flex;flex-direction:column}
+.stage{position:relative;flex:1;min-height:0}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .9s ease, transform .9s ease;transform:scale(1.02)}
+.scene.active{opacity:1;pointer-events:auto;transform:scale(1)}
+.art{position:relative;margin:clamp(10px,2.5vw,22px) clamp(10px,2.5vw,22px) 0;border-radius:24px;overflow:hidden;box-shadow:0 10px 30px -18px rgba(80,50,60,.45);aspect-ratio:16/10;max-height:64vh;align-self:center;width:calc(100% - 2*clamp(10px,2.5vw,22px))}
+.art svg{width:100%;height:100%;display:block}
+.txt{flex:1;display:flex;align-items:center;justify-content:center;padding:14px clamp(20px,6vw,70px) 8px;text-align:center;font-size:clamp(16px,2.3vw,21px);line-height:1.6;opacity:0;transform:translateY(12px);transition:opacity 1s ease .6s, transform 1s ease .6s}
+.active .txt{opacity:1;transform:none}
+.txt p{max-width:720px}
+.txt em{font-style:italic;color:#6E5A73}
+.txt strong{font-weight:600;color:#B5546A}
+.nav{display:flex;align-items:center;justify-content:center;gap:16px;padding:6px 0 max(14px,env(safe-area-inset-bottom))}
+.nav button{border:0;background:#fff;width:44px;height:44px;border-radius:50%;box-shadow:0 4px 14px -6px rgba(80,50,60,.4);font-size:20px;color:var(--ink);cursor:pointer;transition:transform .2s, opacity .3s}
+.nav button:active{transform:scale(.92)}
+.nav button:disabled{opacity:.25}
+.dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:60vw}
+.dots i{width:7px;height:7px;border-radius:50%;background:#E3D6CC;transition:all .4s}
+.dots i.on{background:var(--rose);width:18px;border-radius:4px}
+/* cover */
+.cover .txt{flex-direction:column;gap:6px}
+.cover h1{font-weight:600;font-size:clamp(30px,5.4vw,52px);line-height:1.1;letter-spacing:-.5px}
+.cover .sub{font-style:italic;color:var(--soft);font-size:clamp(15px,2vw,19px)}
+.cta{margin-top:12px;border:0;background:var(--rose);color:#fff;font-family:'Nunito',sans-serif;font-weight:700;font-size:16px;padding:12px 28px;border-radius:30px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(232,106,122,.8);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.05)}}
+.lst{max-width:680px;text-align:left}.lst h3{font-weight:600;font-size:1.05em;text-align:center;margin-bottom:8px;color:#B5546A}.lst h3 span{color:var(--soft);font-weight:400;font-size:.8em}
+.lst ul{list-style:none}.lst li{position:relative;padding-left:26px;margin:7px 0;font-size:.95em;line-height:1.45;opacity:0;transform:translateX(-12px);transition:opacity .8s ease, transform .8s ease}
+.lst li::before{content:'♥';position:absolute;left:0;top:0;color:var(--rose)}
+.active .lst li{opacity:1;transform:none}.active .lst li:nth-child(1){transition-delay:1.2s}.active .lst li:nth-child(2){transition-delay:2.4s}.active .lst li:nth-child(3){transition-delay:3.6s}
+.fin{font-family:'Fraunces';font-weight:600;font-size:clamp(22px,3vw,28px);display:block;margin-top:8px;color:#B5546A}
+.sign{display:block;margin-top:6px;font-style:italic;color:var(--soft)}
+
+/* ---------- SVG animation ---------- */
+.breathe,.blink,.flap,.flapfast,.wag,.wave,.spin,.glow,.sway,.twinkle,.pop,.crackL,.crackR,.grow,.lookup,.tear,.leaf{transform-box:fill-box}
+.bob{animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.breathe{transform-origin:50% 100%;animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.025,0.985)}}
+.blink{transform-origin:center;animation:blink 4.5s infinite}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.flap{transform-origin:85% 35%;animation:flap 1.8s ease-in-out infinite}
+@keyframes flap{0%,70%,100%{transform:rotate(0)}80%{transform:rotate(-28deg)}90%{transform:rotate(4deg)}}
+.flapfast{transform-origin:50% 100%;animation:flapf .5s ease-in-out infinite alternate}
+@keyframes flapf{to{transform:scaleY(-.6)}}
+.wag{transform-origin:100% 40%;animation:wag 2s ease-in-out infinite}
+@keyframes wag{50%{transform:rotate(9deg)}}
+.wave{transform-origin:5% 80%;animation:wavearm 1s ease-in-out infinite alternate}
+@keyframes wavearm{to{transform:rotate(-30deg)}}
+.tear{animation:tear 2.2s ease-in infinite}
+@keyframes tear{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(16px);opacity:0}}
+.spin{transform-origin:center;animation:spin 40s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.glow{transform-origin:center;animation:glow 4s ease-in-out infinite}
+@keyframes glow{50%{transform:scale(1.06)}}
+.drift{animation:drift var(--t,16s) ease-in-out infinite alternate}
+@keyframes drift{to{transform:translateX(60px)}}
+.sway{transform-origin:50% 100%;animation:sway var(--t,5s) ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+.float{animation:float var(--t,4s) ease-in-out infinite;animation-delay:var(--d,0s);opacity:0}
+@keyframes float{0%{transform:translateY(10px) scale(.6);opacity:0}20%{opacity:1}100%{transform:translateY(-70px) scale(1);opacity:0}}
+.rain{animation:rain .7s linear infinite;animation-delay:var(--d)}
+@keyframes rain{from{transform:translateY(-60px)}to{transform:translateY(540px)}}
+.snow{animation:snow var(--t,9s) linear infinite;animation-delay:var(--d)}
+@keyframes snow{from{transform:translate(0,-30px)}50%{transform:translate(18px,250px)}to{transform:translate(-6px,540px)}}
+.leaf{animation:leaf var(--t,8s) linear infinite;animation-delay:var(--d)}
+@keyframes leaf{from{transform:translate(0,-40px) rotate(0)}50%{transform:translate(-40px,250px) rotate(200deg)}to{transform:translate(20px,560px) rotate(400deg)}}
+.twinkle{transform-origin:center;animation:tw 2.5s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes tw{50%{opacity:.25;transform:scale(.7)}}
+.river{animation:river 6s linear infinite}
+@keyframes river{to{transform:translateX(-120px)}}
+.wind{stroke-dasharray:60 400;animation:wind var(--t,4s) linear infinite;animation-delay:var(--d)}
+@keyframes wind{from{stroke-dashoffset:460}to{stroke-dashoffset:0}}
+.fog{animation:fog var(--t,7s) ease-in-out infinite alternate}
+@keyframes fog{to{transform:translateX(26px)}}
+.note{animation:note 3s ease-out infinite;animation-delay:var(--d);opacity:0}
+@keyframes note{0%{opacity:0;transform:translate(0,0)}25%{opacity:1}100%{opacity:0;transform:translate(16px,-50px) rotate(15deg)}}
+.lightning{animation:flash 4s infinite}
+@keyframes flash{0%,88%,94%,100%{opacity:0}90%,96%{opacity:1}}
+.flashsky{animation:flashsky 4s infinite}
+@keyframes flashsky{0%,88%,94%,100%{opacity:0}90%,96%{opacity:.35}}
+.flyaway{animation:flyaway 7s ease-in-out infinite}
+@keyframes flyaway{0%{transform:translate(-120px,60px)}100%{transform:translate(260px,-120px)}}
+.flyby{animation:flyaway 9s linear infinite}
+/* entrance (only when scene is active) */
+.scene .pop{opacity:0}
+.scene.active .pop{animation:pop .9s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--d,0s);transform-origin:50% 100%}
+@keyframes pop{from{opacity:0;transform:translateY(24px) scale(.7)}to{opacity:1;transform:none}}
+.scene .fade{opacity:0}
+.scene.active .fade{animation:fadeIn 1.2s ease both;animation-delay:var(--d,0s)}
+@keyframes fadeIn{to{opacity:1}}
+.scene.active .crackL{animation:crackL 1s ease 1.4s both}
+.scene.active .crackR{animation:crackR 1s ease 1.4s both}
+@keyframes crackL{to{transform:translate(-5px,2px) rotate(-8deg)}}
+@keyframes crackR{to{transform:translate(5px,2px) rotate(8deg)}}
+.scene.active .tilt{transform-origin:50% 0%;animation:tilt 2.4s cubic-bezier(.3,1.5,.5,1) .8s both}
+@keyframes tilt{from{transform:rotate(0)}to{transform:rotate(-13deg)}}
+.scene.active .untilt{animation:untilt 2.4s cubic-bezier(.3,1.5,.5,1) .8s both}
+@keyframes untilt{to{transform:rotate(13deg)}}
+.scene.active .strike{stroke-dasharray:140;stroke-dashoffset:140;animation:strike .8s ease 1.6s forwards}
+@keyframes strike{to{stroke-dashoffset:0}}
+.scene.active .unroll{transform-origin:50% 0;transform-box:fill-box;animation:grow2 2.2s ease .5s both}
+@keyframes grow2{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.scene.active .grow{transform-origin:50% 100%;animation:grow 2s ease 1s both}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.scene.active .lookup{animation:lookup 2.5s ease 1.8s both}
+@keyframes lookup{to{transform:translateY(-4px) rotate(-6deg)}}
+.scene.active .farther{animation:farther 2.4s ease .6s both}
+@keyframes farther{from{transform:translate(-150px,60px)}to{transform:none}}
+.scene:not(.active) *{animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.scene .pop,.scene .fade,.float,.note{opacity:1}}
+@media (max-aspect-ratio:3/4){.art{aspect-ratio:16/11;max-height:52vh}.txt{font-size:17px;align-items:flex-start;padding-top:26px}}
+.bob.slow{animation-duration:3.6s}
+.paddle,.paddle2,.fluke,.spout,.tent,.wiggle,.shimmer{transform-box:fill-box}
+.paddle{transform-origin:10% 20%;animation:paddle 1.6s ease-in-out infinite}
+.paddle2{transform-origin:90% 30%;animation:paddle 1.6s ease-in-out infinite reverse}
+@keyframes paddle{50%{transform:rotate(-22deg)}}
+.fluke{transform-origin:100% 50%;animation:fluke 2.4s ease-in-out infinite}
+@keyframes fluke{50%{transform:rotate(-10deg) scaleY(1.06)}}
+.spout{animation:spout 2.6s ease-out infinite}
+@keyframes spout{0%{transform:scale(.2);opacity:0}30%{opacity:1}100%{transform:scale(1.2) translateY(-8px);opacity:0}}
+.tent{transform-origin:50% 0;animation:tent 1.8s ease-in-out infinite alternate}
+@keyframes tent{to{transform:rotate(9deg)}}
+.wiggle{transform-origin:center;animation:wiggle .6s ease-in-out infinite alternate}
+@keyframes wiggle{to{transform:rotate(14deg)}}
+.shimmer{animation:shimmer 6s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes shimmer{50%{opacity:.04}}
+.rise{animation:rise var(--t,8s) linear infinite;animation-delay:var(--d)}
+@keyframes rise{0%{transform:translate(0,0);opacity:0}10%{opacity:.9}50%{transform:translate(10px,-250px)}100%{transform:translate(-6px,-520px);opacity:0}}
+.swim{animation:swim var(--t,14s) linear infinite;animation-delay:var(--d)}
+@keyframes swim{from{transform:translateX(-80px)}to{transform:translateX(880px)}}
+.swimL{animation:swimL var(--t,14s) linear infinite;animation-delay:var(--d)}
+@keyframes swimL{from{transform:translateX(880px)}to{transform:translateX(-80px)}}
+.swimaway{animation:swimaway 6s ease-in infinite}
+@keyframes swimaway{0%{transform:translate(-60px,0);opacity:0}15%{opacity:1}100%{transform:translate(260px,-10px);opacity:0}}
+.scene.active .swimoff{animation:swimoff 4s ease-in 1s both}
+@keyframes swimoff{to{transform:translateX(320px)}}
+.scene.active .farther2{animation:farther2 3s ease .5s both}
+@keyframes farther2{from{transform:translateX(330px)}to{transform:none}}
+.faraway{opacity:.55}
+.jump{animation:jump 5s ease-in-out infinite}
+@keyframes jump{0%{transform:translate(-80px,40px) rotate(20deg);opacity:0}15%{opacity:1}50%{transform:translate(80px,-50px) rotate(-10deg)}100%{transform:translate(260px,30px) rotate(25deg);opacity:0}}
+.scene.active .unroll{transform-origin:50% 0;transform-box:fill-box;animation:grow2 2.2s ease .5s both}
+@keyframes grow2{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+</style>
+</head>
+<body>
+<div class="book">
+  <div class="stage" id="stage"></div>
+  <div class="nav">
+    <button id="prev" aria-label="Anterior">‹</button>
+    <div class="dots" id="dots"></div>
+    <button id="next" aria-label="Siguiente">›</button>
+  </div>
+</div>
+<script>
+// ---------- palette ----------
+const INK='#3B3340',PINK='#F4A6B4',RED='#E86A7A',OR='#F2A541';
+// tortuga (Ángela)
+const TS='#6FB38A',TSD='#4E8F6A',TSK='#B6DFA8',TBE='#F3E3B5';
+// ballena (Elena)
+const WB='#7FA3D9',WD='#5F82BD',WBE='#E4ECF8';
+let uid=0;
+const rnd=(()=>{let s=11;return()=>{s=(s*16807)%2147483647;return s/2147483647}})();
+
+function eyes(x,y,m){
+  if(m==='h')return `<path d="M${x-2.8} ${y+1} Q${x} ${y-3.2} ${x+2.8} ${y+1}" stroke="${INK}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+  if(m==='s')return `<path d="M${x-2.8} ${y-1} Q${x} ${y+2.2} ${x+2.8} ${y-1}" stroke="${INK}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+  if(m==='w')return `<g><circle cx="${x}" cy="${y}" r="3.6" fill="#fff" stroke="${INK}" stroke-width="1"/><circle cx="${x+.6}" cy="${y}" r="1.8" fill="${INK}"/></g>`;
+  return `<g class="blink"><circle cx="${x}" cy="${y}" r="2.8" fill="${INK}"/><circle cx="${x+.9}" cy="${y-.9}" r=".95" fill="#fff"/></g>`;
+}
+function tear(x,y){return `<path class="tear" d="M${x} ${y} c-3 4 -3 8 0 8 c3 0 3 -4 0 -8z" fill="#BFE6FF"/>`}
+
+// ---------- characters ----------
+function turtle({x,y,s=1.5,f=1,m='n',scarf=false,tuck=false,d=0,cls='pop',bob=true}){
+  const hex=[[-12,-6],[2,-9],[15,-5],[-4,1],[9,1],[-17,2],[20,2]].map(([a,b])=>`<ellipse cx="${a}" cy="${b}" rx="6" ry="4.5" fill="${TSD}" opacity=".55"/>`).join('');
+  const shell=`<ellipse cx="0" cy="7" rx="28" ry="7" fill="${TBE}"/><path d="M-29 7 C-27 -24 27 -24 29 7Z" fill="${TS}"/>${hex}<path d="M-29 7 Q0 12 29 7" stroke="${TSD}" stroke-width="2" fill="none"/>`;
+  if(tuck)return `<g transform="translate(${x} ${y}) scale(${f*s} ${s})"><g class="${cls}" style="--d:${d}s">${shell}
+    <ellipse cx="27" cy="2" rx="5" ry="6" fill="#2E4B3A"/><circle cx="26" cy="0" r="1.6" fill="#fff"/><circle cx="29" cy="1" r="1.6" fill="#fff"/></g></g>`;
+  return `<g transform="translate(${x} ${y}) scale(${f*s} ${s})"><g class="${cls}" style="--d:${d}s"><g class="${bob?'bob':''}">
+   <g class="paddle2"><ellipse cx="-24" cy="10" rx="10" ry="4" fill="${TSK}" transform="rotate(25 -24 10)"/></g>
+   <path d="M-29 4 L-37 7 L-29 9Z" fill="${TSK}"/>
+   ${shell}
+   <ellipse cx="25" cy="3" rx="9" ry="6.5" fill="${TSK}"/>
+   <circle cx="36" cy="-3" r="11.5" fill="${TSK}"/>
+   ${eyes(40,-6,m)}${m==='s'?tear(42,-2):''}
+   <circle cx="42" cy="1" r="2.8" fill="${PINK}" opacity=".85"/>
+   ${m==='h'?`<path d="M40 4 q3 3 6 0" stroke="${INK}" stroke-width="1.4" fill="none" stroke-linecap="round"/>`:''}
+   <g class="paddle"><ellipse cx="18" cy="13" rx="15" ry="5" fill="${TSK}" transform="rotate(28 18 13)"/></g>
+   ${scarf?`<ellipse cx="27" cy="6" rx="8" ry="4" fill="${RED}"/><path d="M22 8 L27 8 L24 21 L19 19z" fill="${RED}"/>`:''}
+  </g></g></g>`;
+}
+
+function whale({x,y,s=1.4,f=1,m='n',tears=false,back=false,spout=false,heartSpout=false,d=0,cls='pop'}){
+  const grooves=[0,1,2,3].map(i=>`<path d="M${-10+i*12} ${16+i*.5} Q${10+i*12} ${22} ${40+i*4} ${14+i*1.5}" stroke="#C9D6EC" stroke-width="1.6" fill="none"/>`).join('');
+  return `<g transform="translate(${x} ${y}) scale(${f*s} ${s})"><g class="${cls}" style="--d:${d}s"><g class="bob slow">
+   <g class="fluke"><path d="M-52 -6 Q-66 -6 -74 -2 L-74 4 Q-66 8 -52 10Z" fill="${WD}"/>
+     <ellipse cx="-82" cy="-9" rx="14" ry="6" fill="${WD}" transform="rotate(-35 -82 -9)"/><ellipse cx="-82" cy="10" rx="14" ry="6" fill="${WD}" transform="rotate(35 -82 10)"/></g>
+   <path d="M-58 2 C-58 -34 30 -42 58 -10 C66 0 62 20 40 26 C10 34 -40 30 -58 2Z" fill="${WB}"/>
+   <path d="M-40 18 C-10 32 30 32 56 8 C60 18 50 26 40 28 C10 36 -30 32 -40 18Z" fill="${WBE}"/>${grooves}
+   ${back?'':`${eyes(34,-6,m)}<circle cx="44" cy="4" r="4" fill="${PINK}" opacity=".75"/>
+   <path d="M38 10 Q48 14 58 6" stroke="${INK}" stroke-width="1.6" fill="none" stroke-linecap="round"/>${tears?tear(36,-1):''}`}
+   <g class="paddle"><ellipse cx="8" cy="20" rx="15" ry="6" fill="${WD}" transform="rotate(28 8 20)"/></g>
+   ${spout?`<g class="spout" style="transform-origin:20px -30px">${[[-6,-46],[0,-52],[6,-46],[-11,-38],[11,-38]].map(([a,b])=>`<circle cx="${20+a}" cy="${b}" r="3.2" fill="#D6F0FF"/>`).join('')}<path d="M20 -30 V-42" stroke="#D6F0FF" stroke-width="4" stroke-linecap="round"/></g>`:''}
+   ${heartSpout?`<path d="M20 -30 V-44" stroke="#D6F0FF" stroke-width="4" stroke-linecap="round"/><g class="spout" style="transform-origin:20px -44px">${heartPath(20,-56,1.3,'#fff')}</g>`:''}
+  </g></g></g>`;
+}
+function dolphin({x,y,s=1.4,f=1,d=0,cls='pop',swimAway=false,jump=false}){
+  const c='#8FA9C4',cd='#6F8BA8',cl='#E3ECF4';
+  return `<g transform="translate(${x} ${y}) scale(${f*s} ${s})"><g class="${swimAway?'swimaway':(jump?'jump':cls)}" style="--d:${d}s"><g class="bob">
+   <g class="fluke"><path d="M-44 -2 L-58 -12 Q-62 -2 -58 2 Q-62 8 -58 14 L-44 4Z" fill="${cd}"/></g>
+   <path d="M-46 0 C-40 -22 20 -26 38 -8 L56 -6 Q58 -1 54 1 L36 4 C20 16 -30 16 -46 0Z" fill="${c}"/>
+   <path d="M-36 4 C-10 14 20 12 36 4 L52 1 Q40 8 30 10 C10 18 -24 16 -36 4Z" fill="${cl}"/>
+   <path d="M-6 -18 Q2 -36 10 -34 Q6 -26 8 -17Z" fill="${cd}"/>
+   <ellipse cx="0" cy="8" rx="11" ry="4" fill="${cd}" transform="rotate(25 0 8)"/>
+   ${eyes(30,-8,'n')}<path d="M40 2 Q47 4 53 0" stroke="${INK}" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+  </g></g></g>`;
+}
+function starfish({x,y,s=1.3,m='h',d=0,cls='pop',wave=false}){
+  let pts='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?9:22;pts+=`${r*Math.cos(a)},${r*Math.sin(a)} `}
+  return `<g transform="translate(${x} ${y}) scale(${s})"><g class="${cls}" style="--d:${d}s"><g class="${wave?'wiggle':'bob'}">
+   <polygon points="${pts}" fill="#F29A6B" stroke="#E07D4E" stroke-width="2" stroke-linejoin="round"/>
+   ${[[-8,-6],[8,-6],[0,8],[-12,6],[12,6]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="1.3" fill="#FFD7BD"/>`).join('')}
+   ${eyes(-4,-2,m)}${eyes(5,-2,m)}<path d="M-3 4 q3.5 3 7 0" stroke="${INK}" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+  </g></g></g>`;
+}
+function octopus({x,y,s=1.4,d=0,cls='pop'}){
+  const c='#E79AB8',cd='#D07CA0';
+  return `<g transform="translate(${x} ${y}) scale(${s})"><g class="${cls}" style="--d:${d}s"><g class="bob">
+   ${[-18,-9,0,9,18].map((t,i)=>`<path class="tent" style="animation-delay:${-i*.3}s" d="M${t} 6 q${-6+i*3} 14 ${2} 24 q6 6 ${-2+i} 10" stroke="${cd}" stroke-width="6" fill="none" stroke-linecap="round"/>`).join('')}
+   <ellipse cx="0" cy="-8" rx="22" ry="22" fill="${c}"/>
+   ${eyes(-7,-6,'n')}${eyes(7,-6,'n')}<ellipse cx="0" cy="3" rx="3" ry="2.5" fill="${cd}"/>
+   ${[[-12,-20],[10,-22],[2,-26]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="2.2" fill="#F6C3D7"/>`).join('')}
+  </g></g></g>`;
+}
+
+// ---------- scenery ----------
+function grad(c1,c2,c3){const id='g'+(uid++);return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/>${c3?`<stop offset=".55" stop-color="${c2}"/><stop offset="1" stop-color="${c3}"/>`:`<stop offset="1" stop-color="${c2}"/>`}</linearGradient></defs><rect width="800" height="500" fill="url(#${id})"/>`}
+const sea=(a='#BFE9F2',b='#3E8FB8',c)=>grad(a,b,c);
+function rays(op=.16){return [[120,60],[300,90],[480,70],[660,100]].map(([x,w],i)=>`<polygon class="shimmer" style="--d:${-i*1.3}s" points="${x},0 ${x+w},0 ${x+w*2.4},500 ${x+w*0.6},500" fill="#fff" opacity="${op}"/>`).join('')}
+function sand(y=430,c='#F1DDB0',amp=8){let d=`M-10 510 L-10 ${y}`;for(let i=0;i<=40;i++){const x=-10+820*i/40;d+=` L${x} ${y+amp*Math.sin(i/40*Math.PI*3)}`}
+  let dots='';for(let i=0;i<30;i++)dots+=`<circle cx="${rnd()*800}" cy="${y+14+rnd()*50}" r="${1+rnd()*1.6}" fill="#D9C08E" opacity=".6"/>`;
+  return `<path d="${d} L810 510Z" fill="${c}"/>${dots}`}
+function weed(x,y,h,c='#5FB07A',w=7){return `<g class="sway" style="--t:${3+rnd()*2.5}s;transform-origin:${x}px ${y}px"><path d="M${x} ${y} C${x-14} ${y-h*.33} ${x+14} ${y-h*.66} ${x} ${y-h}" stroke="${c}" stroke-width="${w}" fill="none" stroke-linecap="round"/></g>`}
+function weeds(list,y){return list.map(([x,h,c])=>weed(x,y,h,c)).join('')}
+function coral(x,y,s=1,c='#F28B9E'){return `<g transform="translate(${x} ${y}) scale(${s})"><g class="sway" style="--t:6s"><path d="M0 0 V-40 M0 -20 L-16 -36 V-50 M0 -28 L14 -42 V-56 M-16 -36 L-24 -44 M14 -42 L22 -48" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></g>`}
+function rock(x,y,w,h,c='#8E9AAF'){return `<path d="M${x-w/2} ${y} C${x-w/2} ${y-h} ${x+w/2} ${y-h*1.1} ${x+w/2} ${y}Z" fill="${c}"/>`}
+function bubbles(n=14,x0=0,x1=800){let b='';for(let i=0;i<n;i++){b+=`<circle class="rise" style="--d:${-rnd()*8}s;--t:${6+rnd()*5}s" cx="${x0+rnd()*(x1-x0)}" cy="${470+rnd()*30}" r="${2+rnd()*5}" fill="none" stroke="#fff" stroke-width="1.4" opacity=".8"/>`}return b}
+function fish(y,c='#FFC857',t=14,d=0,dir=1,s=1){return `<g class="${dir>0?'swim':'swimL'}" style="--t:${t}s;--d:${-d}s"><g transform="translate(0 ${y}) scale(${dir*s} ${s})"><path d="M0 0 C6 -8 22 -8 26 0 C22 8 6 8 0 0Z M0 0 L-9 -6 L-9 6Z" fill="${c}"/><circle cx="20" cy="-1.5" r="1.5" fill="${INK}"/></g></g>`}
+function school(){return fish(120,'#FFC857',16,2)+fish(140,'#FFB347',16,3)+fish(130,'#FFC857',16,5)+fish(220,'#9EE0D2',22,9,-1)+fish(230,'#9EE0D2',22,11,-1)}
+function heartPath(x,y,s,c,o=1,cls=''){return `<path class="${cls}" transform="translate(${x} ${y}) scale(${s})" d="M0 9 C-12.5 .5 -7 -9.5 0 -3.5 C7 -9.5 12.5 .5 0 9Z" fill="${c}" opacity="${o}"/>`}
+function floatHearts(x,y,n=4,cols=[RED,PINK]){let h='';for(let i=0;i<n;i++){h+=`<g class="float" style="--d:${i*0.9}s;--t:${3.5+rnd()}s">${heartPath(x+(rnd()-.5)*50,y,0.8+rnd()*.8,cols[i%cols.length])}</g>`}return h}
+function bubble(x,y,t,tail='l',d=1,fs=14,italic=false,bg='#fff',tc=INK){const w=t.length*fs*0.52+28,h=fs+20;const tx=tail==='l'?x-w/4:x+w/4,dd=tail==='l'?-1:1;
+  return `<g class="pop" style="--d:${d}s"><path d="M${tx-6} ${y+h/2-1} L${tx+dd*10} ${y+h/2+12} L${tx+6} ${y+h/2-1}" fill="${bg}" stroke="#E2D8D0"/><rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="${h/2}" fill="${bg}" stroke="#E2D8D0"/><rect x="${tx-7}" y="${y+h/2-3}" width="14" height="4" fill="${bg}"/>
+  <text x="${x}" y="${y+fs*.35}" text-anchor="middle" font-family="${italic?'Fraunces,Georgia,serif':'Nunito,sans-serif'}" font-style="${italic?'italic':'normal'}" font-weight="${italic?400:700}" font-size="${fs}" fill="${tc}">${t}</text></g>`}
+function txt(x,y,t,size=16,col='#fff',d=1,cls='pop'){return `<g class="${cls}" style="--d:${d}s"><text x="${x}" y="${y}" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="700" font-size="${size}" fill="${col}">${t}</text></g>`}
+function sun(x,y,r,c='#FFD66B'){let rays='';for(let i=0;i<12;i++){const a=i*Math.PI/6;rays+=`<line x1="${x+(r+7)*Math.cos(a)}" y1="${y+(r+7)*Math.sin(a)}" x2="${x+(r+18)*Math.cos(a)}" y2="${y+(r+18)*Math.sin(a)}" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`}return `<g class="spin">${rays}</g><circle class="glow" cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`}
+function cloud(x,y,s,c='#fff',t=16,o=1){return `<g class="drift" style="--t:${t}s" opacity="${o}">${[[-1.1,0,.7],[-.4,-.4,.9],[.5,-.3,.8],[1.2,0,.6],[0,.1,.8]].map(([a,b,r])=>`<circle cx="${x+a*s}" cy="${y+b*s}" r="${r*s}" fill="${c}"/>`).join('')}</g>`}
+function waves(y,c='#fff',op=.6){let d='';for(let i=0;i<24;i++){const x=i*60;d+=`M${x} ${y} q15 -8 30 0 t30 0 `}return `<g class="river"><path d="${d}" stroke="${c}" stroke-width="2.4" fill="none" opacity="${op}" stroke-linecap="round"/></g>`}
+function surface(y,top,bot){const id='w'+(uid++);return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bot}"/></linearGradient></defs><rect y="${y}" width="800" height="${500-y}" fill="url(#${id})"/>`}
+function glowdots(n=26){let r='';for(let i=0;i<n;i++)r+=`<circle class="twinkle" style="--d:${-rnd()*2.5}s" cx="${rnd()*800}" cy="${rnd()*430}" r="${1.4+rnd()*2}" fill="#BFF3FF"/>`;return r}
+function cave(x,y,s=1,c='#7D8BA6'){return `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-100 0 C-110 -120 100 -130 105 0Z" fill="${c}"/><path d="M-40 0 C-40 -60 40 -60 40 0Z" fill="#2F3F5C"/>
+  <circle class="glow" cx="-62" cy="-62" r="12" fill="#FFE8A3"/><circle class="glow" cx="62" cy="-70" r="10" fill="#FFE8A3"/>${coral(-80,0,.7,'#F28B9E')}${coral(85,0,.6,'#FFB347')}</g>`}
+function palace(x,y,s=1,done=true,d=.2){let blocks='';const k=done?14:5;
+  const pos=[[-60,-20],[-30,-20],[0,-20],[30,-20],[60,-20],[-45,-50],[-15,-50],[15,-50],[45,-50],[-30,-80],[0,-80],[30,-80],[-15,-110],[15,-110]];
+  for(let i=0;i<k;i++){const [a,b]=pos[i];blocks+=`<rect x="${a-15}" y="${b-15}" width="30" height="30" rx="8" fill="${['#F7B2C4','#FFD39A','#A8DADC','#C8B6E2'][i%4]}" stroke="#fff" stroke-width="2"/>`}
+  return `<g transform="translate(${x} ${y}) scale(${s})"><g class="pop" style="--d:${d}s">${blocks}${done?`<path d="M-12 -5 C-12 -30 12 -30 12 -5Z" fill="#3E5A80"/><circle class="glow" cx="-30" cy="-50" r="6" fill="#FFF3B0"/><circle class="glow" cx="30" cy="-80" r="6" fill="#FFF3B0"/>${coral(-85,-5,.5,'#F28B9E')}${coral(88,-5,.55,'#FFB347')}<g class="twinkle">${heartPath(0,-140,1.2,RED)}</g>`:''}</g></g>`}
+const svg=inner=>`<svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">${inner}</svg>`;
+const SAND=430;
+const UNDER=(a,b)=>sea(a,b)+rays()+school()+bubbles();
+
+// ---------- story ----------
+const scenes=[
+{cover:true, art:()=>sea('#BFEAF4','#4C9CC4')+rays(.2)+fish(110,'#FFC857',15,1)+fish(130,'#FFB347',15,3)+bubbles(18)+sand(SAND+10)
+  +weeds([[60,90,'#5FB07A'],[85,120,'#4E9E6B'],[720,110,'#5FB07A'],[745,80,'#4E9E6B']],SAND+14)+coral(140,SAND+14,1,'#F28B9E')+coral(660,SAND+14,.9,'#FFB347')
+  +whale({x:350,y:250,s:1.75,m:'h',spout:true,d:.2})+turtle({x:560,y:300,s:1.6,f:-1,m:'h',d:.6})+floatHearts(470,200,5),
+ text:`<h1>La tortuga y la ballena</h1><div class="sub">Un cuento de verdad, para que me entiendas</div><button class="cta" onclick="go(1)">Abrir el cuento</button>`},
+
+{art:()=>UNDER('#C6EEF5','#4FA1C8')+sand(SAND)+cave(170,SAND+6,1)+weeds([[330,80],[350,110,'#4E9E6B'],[760,100]],SAND+8)
+  +whale({x:470,y:270,s:1.3,m:'h',d:.6})+turtle({x:650,y:315,s:1.35,f:-1,m:'h',d:.9}),
+ text:`Había una vez una <strong>tortuga</strong> que se mudó a una cuevita en el fondo del mar. Allí vivía también una <strong>ballena</strong>. Compartían desayunos, charlas hasta las tantas y muchísimas risas. En nada de tiempo se hicieron inseparables.`},
+
+{art:()=>UNDER('#C9EEF5','#4C9FC7')+sand(SAND)+weeds([[70,110],[95,80,'#4E9E6B'],[740,120]],SAND+6)+coral(700,SAND+6,.9,'#F28B9E')
+  +whale({x:330,y:285,s:1.35,m:'n',d:.3})
+  +`<g class="pop" style="--d:1.2s"><circle cx="390" cy="215" r="5" fill="#fff"/><circle cx="410" cy="192" r="8" fill="#fff"/><ellipse cx="500" cy="135" rx="95" ry="55" fill="#fff"/></g>`
+  +dolphin({x:495,y:140,s:.8,d:1.5})+`<g class="pop" style="--d:1.9s">${heartPath(565,105,1.1,RED)}</g>`
+  +turtle({x:620,y:330,s:1.3,f:-1,m:'n',d:.6})+`<g class="pop" style="--d:2.4s">${heartPath(600,280,.9,PINK)}</g>`,
+ text:`Poco a poco, la tortuga empezó a querer mucho a la ballena. Pero la ballena le repetía que su corazón ya estaba ocupado por el delfín, y que la tortuga no era lo que ella buscaba.`},
+
+{art:()=>UNDER('#C6EEF5','#4FA1C8')+sand(SAND)+weeds([[120,140],[150,110,'#4E9E6B'],[100,90]],SAND+6)
+  +turtle({x:190,y:SAND-12,s:1.3,tuck:true,d:.3})
+  +whale({x:430,y:250,s:1.25,m:'h',d:.5})+octopus({x:650,y:250,s:1.25,d:.7})+bubble(420,120,'¡Hola! Aquí no hay nadie','r',1.2),
+ text:`Cuando venía alguien, la ballena hacía como si la tortuga no estuviera. Como si fuera una piedra más del fondo del mar. La tortuga no entendía nada: <em>¿por qué me buscas, si no te gusto? ¿Y por qué me escondes, si me buscas?</em> Cada día le dolía un poquito más.`},
+
+{art:()=>grad('#7F8A9E','#A9B2C2')+`<rect class="flashsky" width="800" height="500" fill="#fff"/>`+cloud(170,70,30,'#5F6878',10)+cloud(450,60,36,'#56607A',12)+cloud(690,85,28,'#5F6878',9)
+  +`<polygon class="lightning" points="450,95 432,140 450,136 434,185 468,128 450,132 464,95" fill="#FFE27A"/>`
+  +[...Array(60)].map(()=>{const x=rnd()*820;return `<line class="rain" style="--d:${-rnd()}s" x1="${x}" y1="0" x2="${x-5}" y2="14" stroke="#E8EEF5" stroke-width="1.4" opacity=".7"/>`}).join('')
+  +surface(250,'#5D7F98','#2E4A63')+`<g class="rock">${waves(252,'#fff',.7)}${waves(275,'#fff',.4)}</g>`
+  +dolphin({x:620,y:245,s:1.1,swimAway:true})
+  +whale({x:260,y:262,s:1.25,m:'s',tears:true,d:.3})+turtle({x:470,y:268,s:1.2,f:-1,m:'s',d:.5})
+  +`<rect y="268" width="800" height="232" fill="#2E4A63" opacity=".45"/>`,
+ text:`Un día todo salió a la luz y el delfín se fue nadando muy, muy lejos. Hubo una tempestad enorme en el mar. Todo el mundo estaba triste, y nadie sabía muy bien qué hacer.`},
+
+{art:()=>UNDER('#CDF0F6','#55A5CB')+sand(SAND)+rock(330,SAND+6,260,110,'#8E9AAF')+weeds([[80,100],[700,120],[730,90,'#4E9E6B']],SAND+6)
+  +starfish({x:280,y:SAND-95,s:1.4,d:.3})+turtle({x:390,y:SAND-100,s:1.2,f:-1,m:'n',d:.5})
+  +`<g class="pop" style="--d:1.3s"><circle cx="420" cy="190" r="5" fill="#fff"/><circle cx="440" cy="168" r="8" fill="#fff"/><ellipse cx="540" cy="120" rx="90" ry="55" fill="#fff"/></g>`
+  +whale({x:545,y:125,s:.6,m:'h',d:1.6})+`<g class="pop" style="--d:1.9s">${heartPath(600,90,1,RED)}</g>`,
+ text:`Con el tiempo, la tortuga conoció a una estrella de mar y empezó algo con ella. Lo intentó de verdad. Pero en su cabecita seguía estando la ballena.`},
+
+{art:()=>UNDER('#FFE7DC','#7FB9D6')+sand(SAND)+weeds([[60,100],[90,70,'#4E9E6B']],SAND+6)
+  +whale({x:330,y:260,s:1.35,m:'h',spout:true,d:.3})+turtle({x:560,y:300,s:1.35,f:-1,m:'h',d:1.1})+floatHearts(450,230,4)
+  +starfish({x:720,y:SAND-10,s:.8,m:'n',wave:true,d:.4})+bubble(270,110,'Te quiero cerca','r',1.4),
+ text:`Unos meses después, la ballena volvió a buscarla. Le dijo que se había dado cuenta de que la quería cerca. Y la tortuga, con el corazón dando un vuelco, volvió a su lado.`},
+
+{art:()=>UNDER('#D6F1F6','#5AA8CC')+sand(SAND)+weeds([[40,110],[770,100]],SAND+6)
+  +octopus({x:150,y:250,s:1.4,d:.3})+whale({x:420,y:270,s:1.2,f:-1,m:'h',d:.5})
+  +bubble(230,110,'Oye, ¿y tú con la tortuga qué?','r',1.1)+bubble(450,170,'¿Yo? Nada, solo somos amigas','l',2.2)
+  +turtle({x:660,y:330,s:1.25,f:-1,m:'w',d:.8})+txt(650,262,'¿¿…??',26,'#7B5BA6',3.2),
+ text:`Desde entonces lo compartían casi todo: se cuidaban, se buscaban, eran lo primero la una para la otra. Pero cuando un pulpo cotilla le preguntaba a la ballena <em>«oye, ¿y tú con la tortuga qué?»</em>, ella le quitaba importancia: <em>«¿Yo? Nada, solo somos amigas.»</em>`},
+
+{art:()=>grad('#1B2B57','#0A1530')+glowdots(30)+sand(SAND+6,'#2E3B5E')
+  +`<g class="pop" style="--d:.1s"><rect x="40" y="40" width="250" height="64" rx="14" fill="#fff" opacity=".95"/>
+     <text x="60" y="66" font-family="Nunito" font-weight="700" font-size="15" fill="${INK}">Reconocimiento</text>
+     <rect x="60" y="78" width="180" height="12" rx="6" fill="#EEE6EC"/><rect class="twinkle" x="60" y="78" width="6" height="12" rx="3" fill="${RED}"/>
+     <text x="252" y="90" font-family="Nunito" font-weight="700" font-size="15" fill="${RED}">0%</text></g>`
+  +whale({x:390,y:330,s:1.5,m:'s',d:.4})+turtle({x:470,y:352,s:1.1,f:-1,m:'w',d:.7})
+  +txt(230,300,'z z z',18,'#BFF3FF',1.2,'pop')
+  +bubble(330,170,'Algún día encontraré a alguien con quien construir una vida…','r',1.6,13)
+  +txt(600,280,'¿¿perdona??',30,'#FFF3C4',2.8),
+ text:`La tortuga la cuidaba, la quería y se preocupaba por ella. ¿Reconocimiento? Un <strong>0 %</strong> redondo. Y lo más surrealista: por las noches dormían abrazaditas… y la ballena le contaba que algún día quería encontrar a alguien con quien construir una vida. Y la tortuga, con los ojos como platos, pensaba: <em>«¿¿perdona??»</em>`},
+
+{art:()=>sea('#B8C8DA','#5E7A99')+rays(.08)+bubbles(8)+sand(SAND,'#D8CDB5')
+  +turtle({x:280,y:320,s:1.6,m:'s',d:.2})
+  +`<g transform="translate(290 170) scale(3.4)"><g class="pop" style="--d:.6s"><path class="crackL" d="M0 9 C-12.5 .5 -7 -9.5 0 -3.5 L-2 0 L1.5 3 L-1 6 Z" fill="${RED}"/><path class="crackR" d="M0 9 C12.5 .5 7 -9.5 0 -3.5 L-2 0 L1.5 3 L-1 6 Z" fill="${RED}"/></g></g>`
+  +`<g class="swimoff">${whale({x:600,y:260,s:1.2,f:1,back:true,cls:''})}</g>`,
+ text:`A principios de este año, la tortuga le pidió algo sencillo: que lo que eran por dentro fuera lo mismo que decían por fuera. La ballena eligió ser solo amigas. Y a la tortuga se le rompió el corazón, porque sintió que la ballena <strong>prefería quererla menos, en vez de quererla más</strong>.`},
+
+{art:()=>UNDER('#CDF0F6','#55A5CB')+sand(SAND)+palace(610,SAND+4,1.05,false,.2)
+  +whale({x:430,y:240,s:1.15,m:'n',d:.4})+`<g class="pop" style="--d:.8s"><rect x="500" y="250" width="26" height="26" rx="7" fill="#FFD39A" stroke="#fff" stroke-width="2"/></g>`
+  +turtle({x:140,y:330,s:1.1,m:'s',d:.6})+bubble(160,250,'Te necesito','l',1.3)+bubble(440,120,'Ahora no puedo…','l',2.2),
+ text:`Por entonces, la ballena se compró un trocito de arrecife y empezó a reformar su propia casa. Coral a coral, día y noche. La tortuga le decía: <em>«Te necesito.»</em> Pero la ballena casi siempre estaba demasiado ocupada. La casa avanzaba a toda velocidad. Lo de la tortuga… bastante menos.`},
+
+{art:()=>grad('#9FD8F2','#FFF0C9')+sun(600,80,30)+surface(260,'#7CC6DE','#3E92B8')+waves(262,'#fff',.8)
+  +`<path d="M-10 262 Q120 200 260 262Z" fill="#F4E1B2"/>`+`<path d="M60 230 q10 -60 30 -70 M90 160 q-30 -5 -40 10 M90 160 q30 -10 40 5 M90 160 q-10 -25 -30 -30 M90 160 q15 -25 35 -25" stroke="#6FAE6C" stroke-width="5" fill="none" stroke-linecap="round"/>`
+  +`<g class="faraway">${whale({x:700,y:330,s:.6,m:'n',cls:''})}${palace(700,380,.35,false,0)}</g>`
+  +`<g class="farther2">${turtle({x:300,y:268,s:1.3,f:-1,m:'h',cls:'',d:0})}</g>`
+  +`<rect y="276" width="800" height="224" fill="#3E92B8" opacity=".25"/>`,
+ text:`Así que este verano, la tortuga tomó una decisión muy difícil: tenía que soltar lo que sentía para poder ser solo su amiga. Se fue a nadar a una playa más lejana y aprendió a estar sola. Le dolió muchísimo. Pero lo consiguió.`},
+
+{art:()=>sea('#FFD8B5','#5E9DC4')+rays(.14)+bubbles(10)+sand(SAND)+palace(220,SAND+4,1.25,true,.2)
+  +`<g class="lookup">${whale({x:500,y:260,s:1.2,f:-1,m:'n',tears:true,d:.6})}</g>`
+  +turtle({x:740,y:120,s:.5,f:-1,m:'n',cls:'fade',d:1.6})
+  +`<path class="fade" style="--d:2s" d="M440 220 Q600 120 715 120" stroke="#fff" stroke-width="1.8" stroke-dasharray="3 6" fill="none"/>`,
+ text:`En septiembre, la ballena terminó su casa. Era preciosa. Se giró para enseñársela a la tortuga… y vio que ya no estaba a su lado. Y entonces, a la ballena también le dolió.`},
+
+{art:()=>UNDER('#E2DDF0','#7FA8CF')+sand(SAND)
+  +whale({x:250,y:280,s:1.15,m:'s',d:.3})+turtle({x:580,y:310,s:1.3,f:-1,m:'n',d:.5})
+  +`<g class="pop" style="--d:1s">${cloud(240,165,14,'#8C97AD',6)}</g>`+[0,1,2,3].map(i=>`<line class="rain" style="--d:${-i*.2}s;animation-duration:1.2s" x1="${222+i*12}" y1="180" x2="${219+i*12}" y2="192" stroke="#BFE6FF" stroke-width="1.8"/>`).join('')
+  +`<g class="pop" style="--d:1.3s">${heartPath(580,205,2.4,RED)}<g transform="translate(580 203) rotate(-30)"><rect x="-16" y="-4.5" width="32" height="9" rx="3" fill="#F7E1C5"/><circle cx="-3" r="1" fill="#D2B48C"/><circle cx="3" r="1" fill="#D2B48C"/></g></g>`
+  +txt(240,120,'su pena, ahora',15,'#fff',1.8,'fade')+txt(580,150,'la mía, ya curándose',15,'#fff',2,'fade'),
+ text:`La tortuga sabe que la ballena también estaba perdida, que no sabía bien lo que sentía, y que ahora lo está pasando mal de verdad. No quiere que sufra. Pero la pena de la ballena llega ahora, cuando la de la tortuga ya pasó… y la pasó sola.`},
+
+{art:()=>sea('#D3E3F0','#6E8FB0')+bubbles(8)+sand(SAND,'#D8D4C8')
+  +[[30,130,300,0],[80,230,340,1.2],[10,320,280,2.2],[200,80,260,3]].map(([x,y,l,d])=>`<path class="wind" style="--d:${d}s" d="M${x} ${y} C${x+l*.35} ${y-14} ${x+l*.65} ${y+14} ${x+l} ${y} c18 0 18 -20 0 -18" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>`).join('')
+  +weeds([[740,100],[760,70]],SAND+6)
+  +turtle({x:620,y:310,s:1.5,f:-1,m:'s',scarf:true,d:.2})
+  +bubble(330,110,'«No eres tú lo que busco»','r',.8,14,true,'#F4F7FA','#6E7690')+bubble(220,205,'«Aquí no hay nadie»','r',1.3,14,true,'#F4F7FA','#6E7690')+bubble(380,295,'«Solo somos amigas»','r',1.8,14,true,'#F4F7FA','#6E7690'),
+ text:`A veces la tortuga está fría. No es para castigar a la ballena. Es que, ahora que su corazón está más tranquilo, le vuelven recuerdos de aquel principio. Llegan como una corriente de agua helada, y necesita tiempo para que dejen de llegar.`},
+
+{art:()=>UNDER('#C9F0F4','#4FA6CC')+sand(SAND)+coral(90,SAND+6,1,'#F28B9E')+coral(720,SAND+6,1.1,'#FFB347')+weeds([[140,90],[680,110]],SAND+6)
+  +whale({x:330,y:260,s:1.25,m:'h',spout:true,d:.3})+turtle({x:540,y:300,s:1.3,f:-1,m:'h',d:.5})+floatHearts(450,220,3,[PINK,'#fff']),
+ text:`Lo que la tortuga quiere es bonito y sencillo: ser amigas. <strong>Buenas amigas.</strong> Verse, reírse, contarse cosas. Pero con el corazón libre, para que algún día pueda conocer a alguien y empezar algo nuevo.`},
+
+{art:()=>sea('#D7F2F6','#7CBCD8')+rays(.12)+bubbles(8)+sand(SAND)
+  +`<g class="pop" style="--d:.2s"><rect x="330" y="40" width="190" height="22" rx="11" fill="#D9B98F"/></g>`
+  +`<g class="unroll"><path d="M340 52 L510 52 L510 ${SAND+10} Q560 ${SAND} 600 ${SAND+30} Q620 ${SAND+50} 580 ${SAND+60} L360 ${SAND+60} L340 ${SAND+10}Z" fill="#FFF8EC" stroke="#E6D3BB"/>
+    ${[0,1,2,3,4,5,6,7,8,9,10,11].map(i=>`<line x1="360" y1="${110+i*28}" x2="${470+((i*37)%30)}" y2="${110+i*28}" stroke="#E2CDB4" stroke-width="3" stroke-linecap="round"/>`).join('')}
+    <text x="425" y="88" text-anchor="middle" font-family="Fraunces,Georgia" font-style="italic" font-size="17" fill="${INK}">Lo que dolió</text></g>`
+  +turtle({x:200,y:330,s:1.4,m:'n',d:.4}),
+ text:`<div class="lst"><h3>La lista de la tortuga: lo que dolió <span>(1/2)</span></h3><ul>
+  <li>El principio: las mentiras, los «no me gustas», que negara lo que pasaba entre nosotras.</li>
+  <li>Escuchar que quería encontrar a alguien con quien construir una vida… mientras dormíamos abrazadas cada noche.</li>
+  <li>Decirle que lo quería todo con ella… y que ella eligiera menos.</li></ul></div>`},
+
+{art:()=>sea('#DCEBF6','#8AB4D2')+bubbles(10)+sand(SAND)
+  +turtle({x:230,y:320,s:1.5,m:'s',scarf:true,d:.3})
+  +`<g transform="translate(500 235)"><g class="pop" style="--d:.6s"><rect x="-70" y="-140" width="140" height="250" rx="22" fill="#3B3340"/><rect x="-60" y="-125" width="120" height="220" rx="14" fill="#FDF2F4"/>
+    <circle cx="0" cy="-68" r="30" fill="${WBE}"/>${whale({x:4,y:-66,s:.36,m:'h',cls:''})}
+    <text x="0" y="-12" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="15" fill="${INK}">Ballena ♥</text>
+    <text x="0" y="10" text-anchor="middle" font-family="Nunito" font-size="12" fill="#8A7F86">¿Llamar?</text>
+    <g class="glow"><circle cx="-30" cy="60" r="17" fill="#6CC27A"/><path d="M-37 55 q2 12 14 12" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/></g>
+    <circle cx="30" cy="60" r="17" fill="${RED}"/><path d="M23 60 h14" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g></g>`
+  ,
+ text:`<div class="lst"><h3>La lista de la tortuga: lo que dolió <span>(2/2)</span></h3><ul>
+  <li>Necesitarla, y que no tuviera tiempo para mí.</li>
+  <li>Marcar distancia cuando me moría por llamarla, por verla, por abrazarla.</li>
+  <li>Que tardara tanto en darse cuenta de que yo ya estaba lejos.</li></ul></div>`},
+
+{art:()=>{const card=(x,n,l1,l2,inner,d)=>`<g class="pop" style="--d:${d}s"><rect x="${x-110}" y="50" width="220" height="400" rx="22" fill="#fff" stroke="#E2ECF2"/><circle cx="${x}" cy="90" r="17" fill="#D6ECF5"/><text x="${x}" y="96" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="17" fill="${INK}">${n}</text>${inner}
+   <text x="${x}" y="375" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="15" fill="${INK}">${l1}</text><text x="${x}" y="397" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="15" fill="${INK}">${l2}</text></g>`;
+  return sea('#E6F5F8','#CDE8F1')+bubbles(10)
+  +card(150,'1','Mi distancia no es un castigo:','es cuidarme',`${turtle({x:150,y:250,s:1.4,tuck:true,d:1.2})}<g class="pop" style="--d:1.8s">${heartPath(150,170,1.5,RED)}</g>`,.2)
+  +card(400,'2','Paciencia:','me estoy curando',`<path d="M375 300 L425 300 L418 270 L382 270Z" fill="#D98A6A"/><g class="grow"><path d="M400 270 V185" stroke="#6FAE6C" stroke-width="4"/><ellipse cx="382" cy="225" rx="18" ry="8" fill="#7CB879" transform="rotate(30 382 225)"/><ellipse cx="418" cy="208" rx="18" ry="8" fill="#7CB879" transform="rotate(-30 418 208)"/><circle cx="400" cy="178" r="11" fill="#F49AC1"/><circle cx="400" cy="178" r="4.5" fill="#F7D35C"/></g>`,.5)
+  +card(650,'3','Que me quiera bien,','de esta manera nueva',`${whale({x:625,y:235,s:.62,m:'h',d:1.6})}${turtle({x:690,y:285,s:.75,f:-1,m:'h',d:1.9})}<g class="fade" style="--d:2.4s">${heartPath(660,180,1.3,RED)}</g>`,.8)},
+ text:`Ahora que lo sabe todo, la tortuga solo le pide tres cositas. No le pide que deje de quererla: le pide que la quiera <strong>así</strong>.`},
+
+{art:()=>grad('#9C8DC8','#E9A3B8','#FBD3A6')+`<circle class="glow" cx="400" cy="250" r="60" fill="#FFE0A3"/>`+surface(255,'#C98FB2','#5E4A7E')+waves(257,'#FFE0A3',.7)+waves(290,'#fff',.3)
+  +whale({x:320,y:262,s:1.3,m:'h',heartSpout:true,d:.3})+turtle({x:500,y:262,s:1.25,f:-1,m:'h',d:.6})
+  +`<rect y="272" width="800" height="228" fill="#5E4A7E" opacity=".4"/>`,
+ text:`<p>La tortuga y la ballena no van a vivir en la misma cueva. Pero pueden seguir encontrándose en el mismo mar, cada una a su ritmo, queriéndose bien.<span class="sign">Te quiero mucho. Por eso te lo cuento así.</span><span class="fin">Fin</span></p>`},
+];
+
+// ---------- build ----------
+const stage=document.getElementById('stage'),dots=document.getElementById('dots');
+scenes.forEach((s,i)=>{
+  const el=document.createElement('section');el.className='scene'+(s.cover?' cover':'');
+  el.innerHTML=`<div class="art">${svg(s.art())}</div><div class="txt">${s.cover?s.text:(s.text.startsWith('<')?s.text:`<p>${s.text}</p>`)}</div>`;
+  stage.appendChild(el);const d=document.createElement('i');dots.appendChild(d);
+});
+let cur=0;const els=[...stage.children],ds=[...dots.children];
+function go(n){n=Math.max(0,Math.min(scenes.length-1,n));els[cur].classList.remove('active');ds[cur].classList.remove('on');cur=n;
+  // restart entrance animations
+  const e=els[cur];e.classList.remove('active');void e.offsetWidth;e.classList.add('active');ds[cur].classList.add('on');
+  document.getElementById('prev').disabled=cur===0;document.getElementById('next').disabled=cur===scenes.length-1;}
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)});
+let sx=null;stage.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
+stage.addEventListener('touchend',e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>45)go(cur+(dx<0?1:-1));sx=null});
+stage.addEventListener('click',e=>{if(e.target.closest('button'))return;const r=stage.getBoundingClientRect();if(cur===0)return;go(cur+((e.clientX-r.left)>r.width/2?1:-1))});
+go(0);
+</script>
+</body>
+</html>
