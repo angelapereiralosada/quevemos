@@ -40,6 +40,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Frau
 .lst li::before{content:'♥';position:absolute;left:0;top:0;color:var(--rose)}
 .active .lst li{opacity:1;transform:none}.active .lst li:nth-child(1){transition-delay:1.2s}.active .lst li:nth-child(2){transition-delay:2.4s}.active .lst li:nth-child(3){transition-delay:3.6s}
 .fin{font-family:'Fraunces';font-weight:600;font-size:clamp(22px,3vw,28px);display:block;margin-top:8px;color:#B5546A}
+.read{display:inline-block;margin-top:12px}
 .sign{display:block;margin-top:6px;font-style:italic;color:var(--soft)}
 
 /* ---------- SVG animation ---------- */
@@ -418,7 +419,7 @@ const scenes=[
 {art:()=>grad('#9C8DC8','#E9A3B8','#FBD3A6')+`<circle class="glow" cx="400" cy="250" r="60" fill="#FFE0A3"/>`+surface(255,'#C98FB2','#5E4A7E')+waves(257,'#FFE0A3',.7)+waves(290,'#fff',.3)
   +whale({x:320,y:262,s:1.3,m:'h',heartSpout:true,d:.3})+turtle({x:500,y:262,s:1.25,f:-1,m:'h',d:.6})
   +`<rect y="272" width="800" height="228" fill="#5E4A7E" opacity=".4"/>`,
- text:`<p>La tortuga y la ballena no van a vivir en la misma cueva. Pero pueden seguir encontrándose en el mismo mar, cada una a su ritmo, queriéndose bien.<span class="sign">Te quiero mucho. Por eso te lo cuento así.</span><span class="fin">Fin</span></p>`},
+ text:`<p>La tortuga y la ballena no van a vivir en la misma cueva. Pero pueden seguir encontrándose en el mismo mar, cada una a su ritmo, queriéndose bien.<span class="sign">Te quiero mucho. Por eso te lo cuento así.</span><span class="fin">Fin</span><button class="cta read" id="readBtn" onclick="leido(this)">Lo he leído ♥</button></p>`},
 ];
 
 // ---------- build ----------
@@ -439,6 +440,9 @@ addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(cur+1);if
 let sx=null;stage.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
 stage.addEventListener('touchend',e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>45)go(cur+(dx<0?1:-1));sx=null});
 stage.addEventListener('click',e=>{if(e.target.closest('button'))return;const r=stage.getBoundingClientRect();if(cur===0)return;go(cur+((e.clientX-r.left)>r.width/2?1:-1))});
+function leido(b){if(b.dataset.done)return;b.dataset.done=1;b.textContent='Enviando…';
+  fetch('https://ntfy.sh/tortuga-ballena-k7q2x9m4',{method:'POST',body:'Elena ha leído el cuento hasta el final 🐢🐋'})
+  .then(()=>{b.textContent='Gracias ♥';b.style.animation='none'}).catch(()=>{b.textContent='Lo he leído ♥';delete b.dataset.done});}
 go(0);
 </script>
 </body>
