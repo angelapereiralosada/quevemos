@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7b5cf0">
+<title>Sabelotodo · La encuesta de la familia</title>
+<meta property="og:title" content="¿Cuánto te conoce tu familia? 💛">
+<meta property="og:description" content="Contesta unas preguntas rápidas y saldrán en el Sabelotodo familiar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;700;800;900&family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#24164f;--violet:#5b3fd6;--soft:#7a6aa8;--accent:#ff5f8f;--disp:'Lilita One','Figtree',system-ui,sans-serif;--ui:'Figtree',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:var(--ui);color:var(--ink);-webkit-font-smoothing:antialiased}
+body{background:linear-gradient(170deg,#7b5cf0 0%,#b06ef2 45%,#ff8fb8 100%);min-height:100vh;min-height:100dvh;overflow-x:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.blob{position:fixed;border-radius:50%;filter:blur(2px);opacity:.35;animation:fl 9s ease-in-out infinite alternate;pointer-events:none}
+.b1{width:60vw;height:60vw;background:#ffd25e;left:-20vw;top:-15vw}.b2{width:50vw;height:50vw;background:#76c7ff;right:-18vw;top:40vh;animation-delay:-3s}.b3{width:40vw;height:40vw;background:#6ee0a2;left:10vw;bottom:-15vw;animation-delay:-6s}
+@keyframes fl{to{transform:translate(4vw,-3vh) scale(1.1)}}
+.wrap{position:relative;max-width:34rem;margin:0 auto;padding:1.2rem 1.1rem 2rem;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;color:#fff;margin-bottom:1rem}
+.brand{font-family:var(--disp);font-size:1.6rem;letter-spacing:.5px;text-shadow:0 3px 0 rgba(0,0,0,.15)}
+.prog{flex:1;height:.6rem;border-radius:99rem;background:rgba(255,255,255,.3);margin-left:1rem;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:#fff;border-radius:99rem;transition:width .4s cubic-bezier(.3,1.4,.5,1)}
+.card{background:#fff;border-radius:2rem;padding:1.6rem 1.3rem 1.4rem;box-shadow:0 .5rem 0 rgba(36,22,79,.15),0 1.4rem 3rem rgba(36,22,79,.25);animation:in .45s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes in{from{opacity:0;transform:translateY(2rem) scale(.96)}}
+.big{font-family:var(--disp);font-size:2.3rem;line-height:1.05;color:var(--violet)}
+.q{font-weight:900;font-size:1.55rem;line-height:1.2;margin:.2rem 0 .3rem}
+.sub{color:var(--soft);font-weight:600;font-size:1rem;line-height:1.4;margin-bottom:1rem}
+.emoji{font-size:3.4rem;line-height:1;margin-bottom:.6rem}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0 .9rem}
+.chip{border:0;background:#f1edff;color:var(--ink);font:inherit;font-weight:800;font-size:1.02rem;padding:.65rem 1rem;border-radius:99rem;cursor:pointer;transition:transform .15s,background .15s}
+.chip:active{transform:scale(.95)}
+.chip.on{background:var(--violet);color:#fff;box-shadow:0 .2rem 0 #3a26a0}
+input[type=text],textarea{width:100%;border:2px solid #e6e0fa;border-radius:1.1rem;padding:.85rem 1rem;font:inherit;font-weight:700;font-size:1.05rem;color:var(--ink);outline:none;background:#fbfaff}
+input[type=text]:focus,textarea:focus{border-color:var(--violet);background:#fff}
+textarea{min-height:5.5rem;resize:none}
+.row{display:flex;gap:.7rem;margin-top:1.1rem}
+.btn{flex:1;border:0;border-radius:99rem;padding:1rem;font-family:var(--disp);font-size:1.35rem;color:#fff;background:linear-gradient(180deg,#ff6b9a,#e8406f);box-shadow:0 .3rem 0 #a51e4a;cursor:pointer}
+.btn:disabled{opacity:.45}
+.btn.ghost{flex:0 0 auto;padding:1rem 1.2rem;background:#f1edff;color:var(--soft);box-shadow:none;font-family:var(--ui);font-weight:800;font-size:1rem}
+.avs{display:grid;grid-template-columns:repeat(6,1fr);gap:.45rem;margin:.7rem 0 .3rem}
+.av{aspect-ratio:1;border:0;border-radius:1rem;background:#f1edff;font-size:1.7rem;cursor:pointer}
+.av.on{background:var(--violet);box-shadow:0 0 0 3px #ffd25e}
+.bin{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.6rem 0}
+.bin .lbl{grid-column:1/-1;font-weight:800;color:var(--soft);font-size:.95rem;margin-top:.4rem}
+.bin button{border:0;border-radius:1.2rem;padding:.9rem .6rem;background:#f1edff;font:inherit;font-weight:900;font-size:1.05rem;color:var(--ink);cursor:pointer}
+.bin button.on{background:var(--accent);color:#fff}
+.tip{font-size:.9rem;color:var(--soft);font-weight:700;margin-top:.4rem}
+.center{text-align:center}
+.summary{display:flex;flex-direction:column;gap:.35rem;margin:1rem 0;text-align:left;font-size:.98rem}
+.summary div{background:#f8f6ff;border-radius:.9rem;padding:.5rem .8rem}
+.summary b{color:var(--violet)}
+.err{color:#d6284c;font-weight:800;margin-top:.6rem}
+.foot{color:rgba(255,255,255,.85);text-align:center;font-weight:700;font-size:.85rem;margin-top:auto;padding-top:1.2rem}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <div class="top"><span class="brand">Sabelotodo</span><span class="prog"><i id="bar"></i></span></div>
+  <div id="app"></div>
+  <p class="foot">Tus respuestas solo se usan para las preguntas del juego familiar.</p>
+</div>
+<script src="../config.js"></script>
+<script>
+const CFG=window.QV_CONFIG||{};
+const FAMILY=(new URLSearchParams(location.search).get('f')||'familia').toLowerCase();
+const AVS=['😀','😎','🤓','🥳','😇','🤠','👵','👴','👩','👨','👧','👦','🧔','👩‍🦰','👱‍♀️','🧑‍🍳','🐶','🐱','🦊','🐼','🐸','🦄','🌻','⚽'];
+const STEPS=[
+ {k:'comida',e:'🍽️',q:'¿Cuál es tu comida favorita?',opts:['Pulpo á feira','Tortilla de patatas','Pizza','Cocido','Croquetas','Sushi','Paella','Lacón con grelos','Empanada','Hamburguesa']},
+ {k:'superpoder',e:'🦸',q:'Si pudieras tener un superpoder…',opts:['Volar','Teletransportarme','Ser invisible','Leer mentes','Parar el tiempo','Comer sin engordar']},
+ {k:'viaje',e:'✈️',q:'¿Cuál sería tu viaje soñado?',opts:['Japón','Nueva York','Maldivas','Islandia','Australia','Una aldea tranquila']},
+ {k:'miedo',e:'😱',q:'¿Qué es lo que más miedo te da?',opts:['Las arañas','Las alturas','Volar en avión','La oscuridad','Las serpientes','Hablar en público']},
+ {k:'pequeno',e:'🧸',q:'De pequeño/a querías ser…',opts:['Futbolista','Astronauta','Médico/a','Profe','Cantante','Veterinario/a']},
+ {k:'karaoke',e:'🎤',q:'¿Qué cantas en un karaoke?',opts:['Bisbal','Rocío Jurado','Queen','Camela','Rosalía','Mecano']},
+ {k:'talento',e:'✨',q:'¿Cuál es tu talento oculto?',opts:['Cocinar','Bailar','Dormir en cualquier sitio','Imitar voces','Arreglar cosas','Ganar discusiones']},
+ {k:'loteria',e:'💰',q:'Si te toca la lotería, lo primero que haces es…',opts:['Viajar','Comprar casa','Invitar a toda la familia','Dejar el trabajo','Comprar un coche','Guardarlo todo']},
+ {k:'mania',e:'🙃',q:'Confiesa una manía tuya',opts:['Ordenarlo todo','Morderme las uñas','Hablar solo/a','Cantar en la ducha','Llegar tarde','Mirar el móvil sin parar'],tip:'En el juego saldrá como «¿De quién es esta manía?»'},
+ {k:'apodo',e:'🏷️',q:'¿Tenías algún mote de pequeño/a?',opts:[],free:true,optional:true,tip:'Si no tenías, pulsa «Paso»'},
+ {k:'secreto',e:'🤫',q:'Cuenta algo que poca gente sabe de ti',opts:[],free:true,long:true,optional:true,tip:'Algo curioso o divertido, nada comprometido. Saldrá como «¿De quién es este secreto?»'},
+ {k:'_bin',e:'⚡',q:'Ronda rápida: elige uno de cada',bins:[['playa','Playa','Montaña','¿Playa o montaña?'],['dulce','Dulce','Salado','¿Dulce o salado?'],['dia','Madrugador/a','Dormilón/a','¿Madrugas o duermes?'],['mascota','Perros','Gatos','¿Perros o gatos?']]}
+];
+let D={nombre:'',avatar:'😀',datos:{}};try{const s=JSON.parse(localStorage.getItem('sbt_fam_'+FAMILY));if(s)D=s}catch(e){}
+let i=-1;const app=document.getElementById('app'),bar=document.getElementById('bar');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function keep(){try{localStorage.setItem('sbt_fam_'+FAMILY,JSON.stringify(D))}catch(e){}}
+function total(){return STEPS.length+2}
+function prog(){bar.style.width=Math.max(4,Math.min(100,((i+1)/total())*100))+'%'}
+function go(n){i=n;prog();window.scrollTo({top:0,behavior:'smooth'});
+  if(i===-1)return intro();if(i===0)return who();if(i<=STEPS.length)return step(STEPS[i-1]);return finish()}
+function intro(){app.innerHTML=`<div class="card center"><div class="emoji">🎲💛</div><div class="big">¿Cuánto te conoce tu familia?</div>
+  <p class="sub" style="margin-top:.8rem">Estamos preparando un trivial familiar para jugar en la tele. Contesta unas preguntas rápidas sobre ti: son <b>2 minutos</b> y casi todo es tocar botones.</p>
+  <p class="sub">Luego saldrán preguntas como «¿Cuál es la comida favorita de ${D.nombre?esc(D.nombre):'la abuela'}?»… ¡a ver quién acierta!</p>
+  <div class="row"><button class="btn" id="go">¡Vamos!</button></div></div>`;document.getElementById('go').onclick=()=>go(0)}
+function who(){app.innerHTML=`<div class="card"><div class="emoji">👋</div><div class="q">¿Cómo te llaman en la familia?</div><p class="sub">Pon el nombre con el que todos te conocen: «Tía Carmen», «el abuelo», «Nacho»…</p>
+  <input type="text" id="nm" maxlength="30" placeholder="Tu nombre" value="${esc(D.nombre)}" autocomplete="off">
+  <div class="q" style="font-size:1.15rem;margin-top:1.1rem">Elige tu cara</div><div class="avs">${AVS.map(a=>`<button class="av ${a===D.avatar?'on':''}">${a}</button>`).join('')}</div>
+  <div class="row"><button class="btn ghost" id="bk">Atrás</button><button class="btn" id="nx" ${D.nombre.trim()?'':'disabled'}>Siguiente</button></div></div>`;
+  const nm=document.getElementById('nm'),nx=document.getElementById('nx');nm.oninput=()=>{D.nombre=nm.value;nx.disabled=!nm.value.trim();keep()};
+  nm.onkeydown=e=>{if(e.key==='Enter'&&nm.value.trim())go(1)};
+  app.querySelectorAll('.av').forEach(b=>b.onclick=()=>{D.avatar=b.textContent;app.querySelectorAll('.av').forEach(x=>x.classList.toggle('on',x===b));keep()});
+  document.getElementById('bk').onclick=()=>go(-1);nx.onclick=()=>go(1)}
+function step(s){
+  if(s.bins){app.innerHTML=`<div class="card"><div class="emoji">${s.e}</div><div class="q">${s.q}</div><div class="bin">${s.bins.map(([k,a,b,l])=>`<span class="lbl">${l}</span><button data-k="${k}" class="${D.datos[k]===a?'on':''}">${a}</button><button data-k="${k}" class="${D.datos[k]===b?'on':''}">${b}</button>`).join('')}</div>
+    <div class="row"><button class="btn ghost" id="bk">Atrás</button><button class="btn" id="nx">Terminar</button></div></div>`;
+    app.querySelectorAll('.bin button').forEach(b=>b.onclick=()=>{D.datos[b.dataset.k]=b.textContent;app.querySelectorAll(`[data-k="${b.dataset.k}"]`).forEach(x=>x.classList.toggle('on',x===b));keep()});
+    document.getElementById('bk').onclick=()=>go(i-1);document.getElementById('nx').onclick=()=>go(i+1);return}
+  const v=D.datos[s.k]||'';const inOpts=s.opts.includes(v);
+  app.innerHTML=`<div class="card"><div class="emoji">${s.e}</div><div class="q">${s.q}</div>${s.tip?`<p class="sub">${s.tip}</p>`:'<p class="sub">Toca una opción o escribe la tuya</p>'}
+   ${s.opts.length?`<div class="chips">${s.opts.map(o=>`<button class="chip ${o===v?'on':''}">${esc(o)}</button>`).join('')}</div>`:''}
+   ${s.long?`<textarea id="tx" maxlength="160" placeholder="Escribe aquí…">${esc(!inOpts?v:'')}</textarea>`:`<input type="text" id="tx" maxlength="50" placeholder="${s.opts.length?'Otra cosa…':'Escribe aquí…'}" value="${esc(!inOpts?v:'')}">`}
+   <div class="row"><button class="btn ghost" id="bk">Atrás</button><button class="btn ghost" id="sk">Paso</button><button class="btn" id="nx" ${v?'':'disabled'}>Siguiente</button></div></div>`;
+  const tx=document.getElementById('tx'),nx=document.getElementById('nx');
+  app.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{D.datos[s.k]=b.textContent;tx.value='';keep();app.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));nx.disabled=false;setTimeout(()=>go(i+1),260)});
+  tx.oninput=()=>{const t=tx.value.trim();if(t){D.datos[s.k]=t;app.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'))}else if(!s.opts.includes(D.datos[s.k]))delete D.datos[s.k];nx.disabled=!D.datos[s.k];keep()};
+  tx.onkeydown=e=>{if(e.key==='Enter'&&!s.long&&D.datos[s.k])go(i+1)};
+  document.getElementById('bk').onclick=()=>go(i-1);document.getElementById('sk').onclick=()=>{delete D.datos[s.k];keep();go(i+1)};nx.onclick=()=>go(i+1)}
+async function finish(){
+  app.innerHTML=`<div class="card center"><div class="emoji">⏳</div><div class="q">Guardando…</div></div>`;
+  let ok=false,msg='';
+  try{if(!CFG.supabaseUrl)throw new Error('sin configuración');
+    const base=CFG.supabaseUrl.replace(/\/+$/,''),h={apikey:CFG.supabaseAnonKey,'Content-Type':'application/json'};if(CFG.supabaseAnonKey.startsWith('eyJ'))h.Authorization='Bearer '+CFG.supabaseAnonKey;
+    const r=await fetch(`${base}/rest/v1/rpc/sbt_guardar`,{method:'POST',headers:h,body:JSON.stringify({p_familia:FAMILY,p_nombre:D.nombre.trim(),p_avatar:D.avatar,p_datos:D.datos})});
+    if(!r.ok)throw new Error(await r.text());ok=true}catch(e){msg=String(e.message||e)}
+  if(!ok){app.innerHTML=`<div class="card center"><div class="emoji">😬</div><div class="q">No se ha podido guardar</div><p class="sub">Tus respuestas siguen aquí. Prueba otra vez en un momento.</p><p class="err">${esc(msg).slice(0,140)}</p><div class="row"><button class="btn" id="re">Reintentar</button></div></div>`;document.getElementById('re').onclick=finish;return}
+  const lab={comida:'Comida',superpoder:'Superpoder',viaje:'Viaje soñado',miedo:'Miedo',pequeno:'De peque',karaoke:'Karaoke',talento:'Talento',loteria:'Con la lotería',mania:'Manía',apodo:'Mote',secreto:'Secreto',playa:'',dulce:'',dia:'',mascota:''};
+  const items=Object.entries(D.datos).filter(([k])=>lab[k]).map(([k,v])=>`<div><b>${lab[k]}:</b> ${esc(v)}</div>`).join('');
+  app.innerHTML=`<div class="card center"><div class="emoji">${esc(D.avatar)}🎉</div><div class="big">¡Gracias, ${esc(D.nombre.trim())}!</div><p class="sub" style="margin-top:.6rem">Ya estás en el Sabelotodo. Ahora a ver quién de la familia te conoce de verdad…</p>
+   <div class="summary">${items}</div><div class="row"><button class="btn ghost" id="ed" style="flex:1">Cambiar algo</button></div></div>`;
+  document.getElementById('ed').onclick=()=>go(1);confetti();
+}
+function confetti(){const cv=document.getElementById('confetti'),cx=cv.getContext('2d');const d=Math.min(devicePixelRatio||1,2);cv.width=innerWidth*d;cv.height=innerHeight*d;
+  const P=Array.from({length:160},()=>({x:Math.random()*cv.width,y:-Math.random()*cv.height*.5,vx:(Math.random()-.5)*3*d,vy:(Math.random()*3+2)*d,r:(Math.random()*7+5)*d,a:Math.random()*6,c:['#ff5f8f','#ffd25e','#6ee0a2','#76c7ff','#b596ff','#fff'][Math.random()*6|0]}));
+  let t0=performance.now();(function f(t){cx.clearRect(0,0,cv.width,cv.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.a+=.1;cx.save();cx.translate(p.x,p.y);cx.rotate(p.a);cx.fillStyle=p.c;cx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);cx.restore()});if(t-t0<4500)requestAnimationFrame(f);else cx.clearRect(0,0,cv.width,cv.height)})(t0)}
+go(-1);
+</script>
+</body>
+</html>
