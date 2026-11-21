@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sabelotodo · Trivial en familia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Shrikhand&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cobalt:#1E3FD8; --cobalt2:#2B52F2; --navy:#0E1F7A;
+  --red:#E2231A; --yellow:#FFC627; --teal:#00B3A4; --pink:#FF7AB6; --cream:#FFF4DC; --ink:#000;
+  --green:#2FBF4A; --cat:#FFC627;
+  --sh:.45rem .45rem 0 #000; --sh-sm:.28rem .28rem 0 #000; --ol:.22rem solid #000;
+  --show:'Shrikhand',Georgia,serif; --ui:'Archivo',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--cobalt);color:#000;font-family:var(--ui);-webkit-font-smoothing:antialiased}
+html{font-size:clamp(11px, calc(0.95vmin + 0.42vmax), 30px)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+/* ---------- Fondo: rayos de sol del plató ---------- */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:var(--cobalt)}
+.sun{position:absolute;left:50%;top:50%;width:260vmax;height:260vmax;margin:-130vmax 0 0 -130vmax;
+  background:repeating-conic-gradient(from 0deg,var(--cobalt) 0 6deg,var(--cobalt2) 6deg 12deg);animation:rot 140s linear infinite}
+.sun.fast{animation-duration:14s}
+@keyframes rot{to{transform:rotate(360deg)}}
+.halftone{position:absolute;inset:0;background:radial-gradient(circle,rgba(14,31,122,.55) 30%,transparent 33%) 0 0/1.1rem 1.1rem;
+  -webkit-mask:radial-gradient(ellipse at center,transparent 45%,#000 95%);mask:radial-gradient(ellipse at center,transparent 45%,#000 95%)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:22vh;background:linear-gradient(var(--navy),#08134f);border-top:.3rem solid #000}
+#s-intro~.floor,.no-floor .floor{display:none}
+#confetti{position:fixed;inset:0;width:100%;height:100%;z-index:50;pointer-events:none}
+
+/* ---------- Pantallas ---------- */
+.screen{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;visibility:hidden;opacity:0;transition:opacity .35s}
+.screen.active{visibility:visible;opacity:1}
+
+/* ---------- Botones ---------- */
+.btn{border:var(--ol);border-radius:999px;padding:.9rem 2.4rem;font-family:var(--ui);font-weight:900;font-stretch:125%;font-size:1.7rem;
+  color:#fff;background:var(--red);box-shadow:var(--sh);transition:transform .08s,box-shadow .08s;outline:none;white-space:nowrap}
+.btn:active{transform:translate(.3rem,.3rem);box-shadow:.12rem .12rem 0 #000}
+.btn.yellow{background:var(--yellow);color:#000}
+.btn.plain{background:var(--cream);color:#000}
+.btn.big{font-size:2.3rem;padding:1.1rem 3.2rem}
+[data-f]{outline:none}
+[data-f]:focus{outline:.3rem solid #fff;outline-offset:.35rem;animation:focusbob 1.2s ease-in-out infinite}
+@keyframes focusbob{50%{outline-color:var(--yellow)}}
+input[data-f]:focus{outline-offset:.1rem}
+
+/* ---------- Bombillas (marco de feria) ---------- */
+.bulbs{position:relative;padding:1.25rem;border:var(--ol);border-radius:2rem;background:var(--red);box-shadow:var(--sh)}
+.bulbs::before{content:"";position:absolute;inset:.18rem;border-radius:1.8rem;padding:.85rem;
+  background:radial-gradient(circle,#fffbe6 0 .2rem,var(--yellow) .22rem .34rem,#7a1a00 .36rem .4rem,transparent .42rem) 0 0/1.5rem 1.5rem;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);pointer-events:none}
+.bulbs.live::before{animation:flick .35s steps(2) infinite}
+@keyframes flick{50%{filter:brightness(.45)}}
+
+/* ---------- Intro ---------- */
+#s-intro{align-items:center;justify-content:center;gap:2.4rem;text-align:center}
+.logo{font-family:var(--show);font-size:min(12rem,17vw);line-height:1;color:var(--yellow);transform:rotate(-5deg);
+  -webkit-text-stroke:.05em #000;paint-order:stroke fill;
+  text-shadow:.04em .04em 0 var(--red),.08em .08em 0 var(--red),.11em .11em 0 #000;animation:stamp .8s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes stamp{0%{transform:rotate(-25deg) scale(3);opacity:0}100%{transform:rotate(-5deg) scale(1);opacity:1}}
+.ribbon{background:var(--cream);border:var(--ol);box-shadow:var(--sh);padding:.6rem 2.2rem;font-weight:800;font-stretch:115%;font-size:1.9rem;transform:rotate(2deg);
+  clip-path:polygon(0 0,100% 0,97% 50%,100% 100%,0 100%,3% 50%)}
+.intro-cta{margin-top:1rem}
+.hint{font-size:1.15rem;color:#fff;font-weight:600}
+kbd{font-family:var(--ui);font-weight:800;background:var(--cream);color:#000;border:.12rem solid #000;border-radius:.4rem;padding:.05rem .45rem;box-shadow:.12rem .12rem 0 #000}
+
+/* ---------- Setup ---------- */
+#s-setup{padding:2rem 3rem;gap:1.4rem}
+.s-head{display:flex;align-items:baseline;gap:1.4rem;color:#fff}
+.s-head h1{font-family:var(--show);font-weight:400;font-size:3.4rem;color:var(--yellow);-webkit-text-stroke:.06em #000;paint-order:stroke fill;text-shadow:.2rem .2rem 0 #000}
+.s-head p{font-size:1.2rem;font-weight:600}
+.setup-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:2.2rem;min-height:0}
+.card{background:var(--cream);border:var(--ol);border-radius:1.6rem;box-shadow:var(--sh);padding:1.5rem 1.8rem;display:flex;flex-direction:column;gap:1rem;min-height:0}
+.card h2{font-weight:900;font-stretch:125%;font-size:1.8rem}
+.card h2 small{font-weight:600;font-stretch:100%;font-size:1.05rem;opacity:.65;margin-left:.5rem}
+.teams{display:flex;flex-direction:column;gap:.8rem;overflow:auto;padding:.3rem .5rem .6rem .2rem}
+.team{display:flex;align-items:center;gap:1rem;padding:.55rem .8rem;border:var(--ol);border-radius:1.2rem;background:var(--c);box-shadow:var(--sh-sm)}
+.av{flex:none;width:4rem;height:4rem;border-radius:50%;border:var(--ol);background:#fff;font-size:2.3rem;display:grid;place-items:center}
+.team input{flex:1;min-width:0;background:#fff;border:var(--ol);border-radius:.7rem;font-weight:800;font-stretch:110%;font-size:1.6rem;padding:.35rem .7rem}
+.x{flex:none;width:2.8rem;height:2.8rem;border-radius:50%;border:var(--ol);background:#fff;font-weight:900;font-size:1.2rem}
+.add{border:.2rem dashed #000;background:transparent;border-radius:1.2rem;padding:.8rem;font-weight:800;font-size:1.3rem}
+.diffs{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.opt{border:var(--ol);background:#fff;border-radius:1.2rem;padding:.9rem 1.1rem;text-align:left;display:flex;flex-direction:column;gap:.15rem;box-shadow:var(--sh-sm)}
+.opt .t{font-weight:900;font-stretch:120%;font-size:1.5rem}
+.opt .d{font-size:1.02rem;font-weight:500}
+.opt.sel{background:var(--oc)}
+.row{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.row .lbl{font-weight:800;font-size:1.25rem;min-width:7.5rem}
+.pill{border:var(--ol);background:#fff;border-radius:99rem;padding:.45rem 1.2rem;font-weight:900;font-size:1.25rem;box-shadow:.18rem .18rem 0 #000}
+.pill.sel{background:#000;color:var(--yellow)}
+.setup-foot{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.keys{color:#fff;font-size:1.05rem;font-weight:600;display:flex;gap:1.4rem;flex-wrap:wrap}
+
+/* ---------- Juego ---------- */
+#s-game{padding:1.2rem 2.4rem 0}
+.top{display:flex;align-items:center;gap:1rem;height:4.6rem;flex:none}
+.mini-logo{font-family:var(--show);font-size:2.4rem;color:var(--yellow);-webkit-text-stroke:.07em #000;paint-order:stroke fill;text-shadow:.15rem .15rem 0 #000;transform:rotate(-4deg)}
+.round{margin-left:auto;background:var(--cream);border:var(--ol);box-shadow:var(--sh-sm);border-radius:.8rem;padding:.45rem 1.1rem;font-weight:900;font-stretch:115%;font-size:1.3rem}
+.round.gold{background:var(--yellow);animation:wob .6s ease-in-out infinite alternate}
+@keyframes wob{to{transform:rotate(-2deg) scale(1.04)}}
+.icon-btn{width:3.4rem;height:3.4rem;border-radius:50%;border:var(--ol);background:var(--cream);box-shadow:var(--sh-sm);font-size:1.3rem;font-weight:900;display:grid;place-items:center}
+.stage{flex:1;position:relative;min-height:0}
+.view{position:absolute;inset:0;display:flex;visibility:hidden;opacity:0;transition:opacity .3s}
+.view.active{visibility:visible;opacity:1}
+
+/* Atriles de los concursantes */
+.desks{flex:none;height:21vh;display:flex;justify-content:center;align-items:flex-end;gap:1.4rem;padding:0 1rem}
+.desk{--c:#fff;position:relative;width:min(17rem,15vw);display:flex;flex-direction:column;align-items:center;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.desk .head{width:5.2rem;height:5.2rem;border-radius:50%;border:var(--ol);background:#fff;display:grid;place-items:center;font-size:3rem;margin-bottom:-.8rem;z-index:1;box-shadow:var(--sh-sm)}
+.desk .front{width:100%;height:12vh;background:var(--c);border:var(--ol);border-bottom:0;border-radius:1rem 1rem 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.5rem;padding-top:1.1rem;
+  clip-path:polygon(0 0,100% 0,94% 100%,6% 100%)}
+.desk .nm{background:var(--cream);border:.16rem solid #000;border-radius:.4rem;padding:.12rem .7rem;font-weight:900;font-stretch:105%;font-size:1.05rem;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.desk .sc{background:#000;color:var(--yellow);border-radius:.5rem;padding:.1rem .8rem;font-weight:900;font-stretch:62%;font-size:2.4rem;font-variant-numeric:tabular-nums;letter-spacing:.06em;min-width:6.5rem;text-align:center;text-shadow:0 0 .6rem rgba(255,198,39,.8)}
+.desk .fl{position:absolute;top:-.3rem;right:.4rem;background:var(--red);color:#fff;border:.16rem solid #000;border-radius:99rem;padding:.05rem .5rem;font-weight:900;font-size:.95rem;z-index:2}
+.desk.active{transform:translateY(-1.4rem)}
+.desk.active .head{animation:hop .8s ease-in-out infinite}
+.desk.active::after{content:"";position:absolute;bottom:-1rem;left:10%;right:10%;height:1rem;background:radial-gradient(ellipse,rgba(255,198,39,.9),transparent 70%)}
+@keyframes hop{50%{transform:translateY(-.6rem)}}
+
+/* ---------- Ruleta ---------- */
+#v-wheel{align-items:center;justify-content:center;gap:4.5rem}
+.wheel-wrap{position:relative;width:min(36rem,56vh);aspect-ratio:1}
+#wheel{width:100%;height:100%;display:block;transition:transform 5.2s cubic-bezier(.12,.75,.1,1);will-change:transform;filter:drop-shadow(.5rem .5rem 0 #000)}
+.pointer{position:absolute;top:-6%;left:50%;width:13%;transform:translateX(-50%);transform-origin:50% 25%;z-index:4}
+.hub{position:absolute;left:50%;top:50%;width:25%;height:25%;transform:translate(-50%,-50%);border-radius:50%;border:var(--ol);z-index:3;
+  font-weight:900;font-stretch:120%;font-size:1.4rem;background:var(--yellow);box-shadow:var(--sh-sm)}
+.lights circle{fill:#fff3b0;animation:blink 1.2s steps(2) infinite}
+.lights circle:nth-child(odd){animation-delay:-.6s}
+.spinning .lights circle{animation-duration:.16s}
+@keyframes blink{50%{fill:#6b4a00}}
+.turn{width:26rem;display:flex;flex-direction:column;align-items:flex-start;gap:1.2rem}
+.turn .card{width:100%;transform:rotate(-2deg);align-items:center;text-align:center;gap:.4rem;padding:1.6rem}
+.turn .who{font-size:1.4rem;font-weight:700}
+.turn .bigav{width:8rem;height:8rem;border-radius:50%;border:var(--ol);background:var(--c);display:grid;place-items:center;font-size:4.6rem;box-shadow:var(--sh-sm)}
+.turn .tn{font-family:var(--show);font-size:3rem;line-height:1.1;color:var(--c);-webkit-text-stroke:.06em #000;paint-order:stroke fill}
+.turn .ts{font-weight:700;font-size:1.2rem}
+.turn .btn{align-self:center}
+
+/* ---------- Revelación ---------- */
+.overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;visibility:hidden;opacity:0;transition:opacity .2s}
+.overlay.show{visibility:visible;opacity:1}
+.burst{position:absolute;inset:0;overflow:hidden}
+.burst::before{content:"";position:absolute;left:50%;top:50%;width:260vmax;height:260vmax;margin:-130vmax 0 0 -130vmax;
+  background:repeating-conic-gradient(from 0deg,var(--bc) 0 7.5deg,var(--bc2) 7.5deg 15deg);animation:rot 12s linear infinite}
+#reveal{--bc:var(--cat);--bc2:#fff}
+#reveal .burst::before{background:repeating-conic-gradient(from 0deg,var(--cat) 0 7.5deg,color-mix(in srgb,var(--cat) 75%,#fff) 7.5deg 15deg)}
+.rv{position:relative;display:flex;flex-direction:column;align-items:center;gap:.6rem}
+.rv .em{width:18rem;height:18rem;border-radius:50%;background:#fff;border:.35rem solid #000;box-shadow:.7rem .7rem 0 #000;display:grid;place-items:center;font-size:11rem}
+.rv .nm{font-family:var(--show);font-size:7rem;line-height:1;color:#fff;-webkit-text-stroke:.07em #000;paint-order:stroke fill;text-shadow:.35rem .35rem 0 #000;transform:rotate(-6deg)}
+#reveal.show .em{animation:pop .6s cubic-bezier(.3,1.8,.5,1) both}
+#reveal.show .nm{animation:stampS .5s .2s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes pop{0%{transform:scale(0) rotate(-90deg)}100%{transform:none}}
+@keyframes stampS{0%{transform:rotate(-6deg) scale(2.5);opacity:0}100%{transform:rotate(-6deg) scale(1);opacity:1}}
+#banner .burst::before{background:repeating-conic-gradient(from 0deg,var(--yellow) 0 7.5deg,#ffdb6e 7.5deg 15deg)}
+#banner .bn{position:relative;text-align:center}
+#banner .bn b{display:block;font-family:var(--show);font-weight:400;font-size:9rem;line-height:1;color:var(--red);-webkit-text-stroke:.06em #000;paint-order:stroke fill;text-shadow:.4rem .4rem 0 #000;transform:rotate(-4deg)}
+#banner .bn span{display:inline-block;margin-top:1.6rem;background:#000;color:var(--yellow);padding:.5rem 1.6rem;font-weight:900;font-stretch:125%;font-size:2.2rem;border-radius:.6rem}
+#banner.show .bn b{animation:stampS .6s cubic-bezier(.3,1.6,.5,1) both}
+
+/* ---------- Elegir dificultad ---------- */
+#v-diff{flex-direction:column;align-items:center;justify-content:center;gap:2.2rem}
+.dh{font-family:var(--show);font-size:4rem;color:#fff;-webkit-text-stroke:.07em #000;paint-order:stroke fill;text-shadow:.25rem .25rem 0 #000;transform:rotate(-3deg)}
+.dcards{display:flex;gap:2.2rem}
+.dcard{width:16rem;padding:1.8rem 1.2rem;border-radius:1.6rem;border:var(--ol);background:var(--oc);box-shadow:var(--sh);display:flex;flex-direction:column;align-items:center;gap:.4rem}
+.dcard:nth-child(1){transform:rotate(-3deg)}.dcard:nth-child(3){transform:rotate(3deg)}
+.dcard .t{font-weight:900;font-stretch:125%;font-size:2rem}
+.dcard .p{font-family:var(--show);font-size:4.6rem;line-height:1;color:#fff;-webkit-text-stroke:.06em #000;paint-order:stroke fill;text-shadow:.2rem .2rem 0 #000}
+.dcard .d{font-weight:700;font-size:1.1rem}
+
+/* ---------- Pregunta ---------- */
+#v-q{flex-direction:column;gap:1.2rem;padding-top:.6rem}
+.qrow{display:flex;gap:1.8rem;align-items:stretch}
+.screenq{flex:1}
+.screenq .inner{position:relative;background:var(--cream);border:var(--ol);border-radius:1rem;min-height:11.5rem;padding:1.8rem 2.6rem 1.6rem;display:flex;align-items:center}
+.tab{position:absolute;top:-1.5rem;left:1.6rem;display:flex;gap:.6rem;align-items:center}
+.tab span{border:var(--ol);border-radius:.6rem;padding:.25rem .9rem;font-weight:900;font-stretch:115%;font-size:1.2rem;box-shadow:var(--sh-sm);background:#fff}
+.tab .c{background:var(--cat);transform:rotate(-3deg)}
+.tab .x2{background:#000;color:var(--yellow)}
+#qText{font-weight:800;font-stretch:108%;font-size:2.9rem;line-height:1.15;letter-spacing:-.01em;max-width:60ch}
+#qText.long{font-size:2.35rem}
+.clock{position:relative;flex:none;width:11.5rem;display:grid;place-items:center}
+.clock .face{width:11rem;height:11rem;border-radius:50%;border:.3rem solid #000;box-shadow:var(--sh);
+  background:conic-gradient(var(--yellow) calc(var(--p,1)*360deg),#fff 0);display:grid;place-items:center;transition:background .2s}
+.clock .num{width:6.6rem;height:6.6rem;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font-weight:900;font-stretch:62%;font-size:4rem;font-variant-numeric:tabular-nums}
+.clock.urgent .face{background:conic-gradient(var(--red) calc(var(--p,1)*360deg),#fff 0);animation:shk .25s linear infinite}
+.clock.urgent .num{color:var(--yellow)}
+@keyframes shk{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem 1.6rem;flex:1;min-height:0;padding:0 .4rem .4rem 0}
+.ans{--ac:#fff;position:relative;display:flex;align-items:center;gap:1.1rem;padding:.8rem 1.4rem;border-radius:1.2rem;text-align:left;border:var(--ol);background:var(--ac);color:#000;
+  box-shadow:var(--sh);font-weight:800;font-stretch:105%;font-size:1.95rem;line-height:1.15;transition:transform .08s,box-shadow .08s,opacity .3s,background .2s}
+.ans:nth-child(1){--ac:var(--red);color:#fff}.ans:nth-child(2){--ac:var(--teal)}.ans:nth-child(3){--ac:var(--yellow)}.ans:nth-child(4){--ac:var(--pink)}
+.ans .k{flex:none;width:3.6rem;height:3.6rem;border-radius:50%;display:grid;place-items:center;background:#000;color:#fff;font-weight:900;font-size:1.8rem}
+.ans:active:not(:disabled){transform:translate(.3rem,.3rem);box-shadow:.12rem .12rem 0 #000}
+.ans:disabled{cursor:default}
+.ans.correct{background:var(--green);color:#000;animation:jump .6s cubic-bezier(.3,1.8,.5,1)}
+.ans.correct .k{background:#fff;color:#000}
+.ans.correct::after{content:"¡Sí!";position:absolute;right:1.2rem;top:50%;font-family:var(--show);font-size:2.8rem;color:#fff;-webkit-text-stroke:.07em #000;paint-order:stroke fill;transform:translateY(-50%) rotate(-8deg);animation:stampS2 .4s .1s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes stampS2{0%{transform:translateY(-50%) rotate(-8deg) scale(2.5);opacity:0}100%{transform:translateY(-50%) rotate(-8deg) scale(1);opacity:1}}
+.ans.wrong{background:#9a9a9a;color:#000;animation:shake .45s}
+.ans.wrong::after{content:"✕";position:absolute;right:1.4rem;top:50%;transform:translateY(-50%);font-size:3rem;font-weight:900;color:var(--red);-webkit-text-stroke:.05em #000}
+.ans.dim{opacity:.55;filter:grayscale(1) brightness(.85);box-shadow:none}
+.ans.gone{opacity:0;pointer-events:none}
+@keyframes jump{0%{transform:none}40%{transform:translateY(-.8rem) scale(1.03)}100%{transform:none}}
+@keyframes shake{20%,60%{transform:translateX(-.9rem)}40%,80%{transform:translateX(.9rem)}}
+.qbot{display:flex;align-items:center;gap:1rem;min-height:4.6rem;padding-bottom:.6rem}
+.life{display:flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:99rem;border:var(--ol);background:var(--cream);box-shadow:var(--sh-sm);font-weight:900;font-size:1.2rem}
+.life:disabled{opacity:.35;box-shadow:none;text-decoration:line-through}
+.res{flex:1;text-align:center;color:#fff}
+.res .big{font-family:var(--show);font-size:3rem;line-height:1;-webkit-text-stroke:.07em #000;paint-order:stroke fill;text-shadow:.2rem .2rem 0 #000;display:inline-block;transform:rotate(-3deg)}
+.res.ok .big{color:var(--yellow)}.res.ko .big{color:var(--pink)}
+.res .sub{display:block;margin-top:.3rem;font-weight:700;font-size:1.2rem}
+.res .sub b{background:var(--green);color:#000;padding:0 .4rem;border-radius:.3rem;border:.12rem solid #000}
+#next{visibility:hidden}
+#next.on{visibility:visible}
+.flypts{position:fixed;z-index:30;font-family:var(--show);font-size:6rem;color:var(--yellow);-webkit-text-stroke:.07em #000;paint-order:stroke fill;text-shadow:.3rem .3rem 0 #000;pointer-events:none;animation:fly 1.5s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes fly{0%{transform:translate(-50%,-50%) scale(.3) rotate(-10deg);opacity:0}25%{transform:translate(-50%,-90%) scale(1.2) rotate(-6deg);opacity:1}100%{transform:translate(-50%,-240%) scale(.9) rotate(-6deg);opacity:0}}
+
+/* ---------- Pausa ---------- */
+#pause{background:rgba(14,31,122,.85)}
+.pbox{display:flex;flex-direction:column;align-items:center;gap:1.3rem;padding:2.6rem 3.6rem}
+.pbox h2{font-family:var(--show);font-weight:400;font-size:3.6rem}
+
+/* ---------- Final ---------- */
+#s-end{align-items:center;justify-content:flex-end;gap:1.6rem;padding:2rem 2rem 0}
+.end-t{position:absolute;top:3vh;left:0;right:0;text-align:center;font-family:var(--show);font-size:6rem;line-height:1;color:var(--yellow);-webkit-text-stroke:.06em #000;paint-order:stroke fill;text-shadow:.3rem .3rem 0 var(--red),.55rem .55rem 0 #000;transform:rotate(-3deg)}
+.end-sub{margin-top:-1rem}
+.podium{display:flex;align-items:flex-end;gap:1.4rem}
+.pcol{display:flex;flex-direction:column;align-items:center;width:15rem}
+.pcol .crown{font-size:3.4rem;margin-bottom:-1.2rem;z-index:2;animation:hop 1.4s ease-in-out infinite}
+.pcol .av{width:7rem;height:7rem;font-size:4rem;box-shadow:var(--sh-sm);z-index:1;margin-bottom:-1rem}
+.pbar{width:100%;height:0;background:var(--c);border:var(--ol);border-bottom:0;border-radius:1rem 1rem 0 0;display:flex;flex-direction:column;align-items:center;gap:.4rem;padding-top:1.6rem;overflow:hidden;transition:height 1.1s cubic-bezier(.3,1.3,.5,1)}
+.pbar .pos{font-family:var(--show);font-size:4.4rem;line-height:1;color:#fff;-webkit-text-stroke:.07em #000;paint-order:stroke fill;text-shadow:.2rem .2rem 0 #000}
+.pbar .pn{background:var(--cream);border:.16rem solid #000;border-radius:.4rem;padding:.1rem .7rem;font-weight:900;font-size:1.2rem;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbar .ps{background:#000;color:var(--yellow);border-radius:.5rem;padding:.05rem .8rem;font-weight:900;font-stretch:62%;font-size:2.4rem;font-variant-numeric:tabular-nums}
+.side{position:absolute;right:2.4rem;top:22vh;display:flex;flex-direction:column;gap:1rem;width:20rem}
+.side .card{padding:1rem 1.2rem;gap:.3rem;transform:rotate(2deg)}
+.side .card:nth-child(2){transform:rotate(-1.5deg)}
+.side .k{font-weight:700;font-size:1.05rem}
+.side .v{font-weight:900;font-stretch:115%;font-size:1.4rem}
+.rest{position:absolute;left:2.4rem;top:22vh;display:flex;flex-direction:column;gap:.8rem}
+.rest .row{background:var(--cream);border:var(--ol);border-radius:1rem;box-shadow:var(--sh-sm);padding:.4rem 1rem .4rem .4rem;font-weight:800;font-size:1.2rem}
+.rest .av{width:3rem;height:3rem;font-size:1.7rem}
+.end-btns{position:absolute;bottom:3vh;right:2.4rem;display:flex;flex-direction:column;gap:1.1rem;align-items:flex-end}
+
+@media (orientation:portrait){
+  .setup-grid{grid-template-columns:1fr;overflow:auto}
+  #v-wheel{flex-direction:column;gap:1.4rem}.turn{width:auto}.turn .card{flex-direction:row}
+  .answers{grid-template-columns:1fr}.qrow{flex-direction:column-reverse;align-items:center}
+  .dcards{flex-direction:column;gap:1rem}.desk{width:22vw}.desk .head{width:3.4rem;height:3.4rem;font-size:2rem}
+  .side,.rest,.end-btns{position:static}
+}
+@media (prefers-reduced-motion:reduce){.sun,.burst::before{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="bg"><div class="sun" id="sun"></div><div class="halftone"></div></div>
+<canvas id="confetti"></canvas>
+
+<!-- INTRO -->
+<section class="screen active" id="s-intro">
+  <div class="logo">Sabelotodo</div>
+  <div class="ribbon">El concurso de la familia</div>
+  <div class="intro-cta"><button class="btn big yellow" data-f id="goSetup">Empezar</button></div>
+  <div class="hint">Pulsa <kbd>OK</kbd> en el mando o <kbd>Enter</kbd> en el teclado</div>
+</section>
+
+<!-- SETUP -->
+<section class="screen" id="s-setup">
+  <div class="s-head"><h1>Preparad la partida</h1><p>Muévete con las flechas y elige con OK</p></div>
+  <div class="setup-grid">
+    <div class="card">
+      <h2>Concursantes <small>toca el avatar para cambiarlo</small></h2>
+      <div class="teams" id="teams"></div>
+      <button class="add" data-f id="addTeam">＋ Añadir equipo</button>
+    </div>
+    <div class="card">
+      <h2>Dificultad</h2>
+      <div class="diffs" id="diffs">
+        <button class="opt" data-f data-diff="f" style="--oc:#7ED957"><span class="t">Fácil</span><span class="d">Para los peques y para calentar</span></button>
+        <button class="opt" data-f data-diff="m" style="--oc:#FFC627"><span class="t">Media</span><span class="d">Cultura general de sobremesa</span></button>
+        <button class="opt" data-f data-diff="d" style="--oc:#FF7AB6"><span class="t">Difícil</span><span class="d">Solo para sabelotodos</span></button>
+        <button class="opt" data-f data-diff="x" style="--oc:#00B3A4"><span class="t">A elegir</span><span class="d">Cada turno decidís: 100, 200 o 300 puntos</span></button>
+      </div>
+      <h2 style="margin-top:.4rem">Ajustes</h2>
+      <div class="row"><span class="lbl">Rondas</span><span class="row" id="rounds"></span></div>
+      <div class="row"><span class="lbl">Tiempo</span><span class="row" id="times"></span></div>
+      <div class="row"><span class="lbl">Sonido</span><span class="row" id="snd"></span></div>
+    </div>
+  </div>
+  <div class="setup-foot">
+    <div class="keys"><span><kbd>←↑→↓</kbd> moverse</span><span><kbd>1</kbd>–<kbd>4</kbd> responder</span><span><kbd>F</kbd> pantalla completa</span><span><kbd>Esc</kbd> pausa</span></div>
+    <button class="btn big" data-f id="play">¡A jugar!</button>
+  </div>
+</section>
+
+<!-- GAME -->
+<section class="screen" id="s-game">
+  <div class="top">
+    <div class="mini-logo">Sabelotodo</div>
+    <div class="round" id="roundLbl">Ronda 1 de 5</div>
+    <button class="icon-btn" data-f id="fsBtn" title="Pantalla completa">⛶</button>
+    <button class="icon-btn" data-f id="pauseBtn" title="Pausa">II</button>
+  </div>
+  <div class="stage">
+    <section class="view" id="v-wheel">
+      <div class="wheel-wrap" id="wheelWrap">
+        <svg class="pointer" id="pointer" viewBox="0 0 40 52"><path d="M20 50 L3 10 Q20 -3 37 10 Z" fill="#E2231A" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/><circle cx="20" cy="15" r="5.5" fill="#FFC627" stroke="#000" stroke-width="2.5"/></svg>
+        <svg id="wheel" viewBox="-112 -112 224 224"></svg>
+        <button class="hub" data-f id="hub">Girar</button>
+      </div>
+      <div class="turn">
+        <div class="card" id="turnBox"></div>
+        <button class="btn big yellow" data-f id="spinBtn">¡Gira la ruleta!</button>
+      </div>
+    </section>
+    <section class="view" id="v-diff">
+      <div class="tab" style="position:static" id="dCat"></div>
+      <div class="dh">¿Cuánto os arriesgáis?</div>
+      <div class="dcards">
+        <button class="dcard" data-f data-pick="f" style="--oc:#7ED957"><span class="t">Fácil</span><span class="p">100</span><span class="d">puntos</span></button>
+        <button class="dcard" data-f data-pick="m" style="--oc:#FFC627"><span class="t">Media</span><span class="p">200</span><span class="d">puntos</span></button>
+        <button class="dcard" data-f data-pick="d" style="--oc:#FF7AB6"><span class="t">Difícil</span><span class="p">300</span><span class="d">puntos</span></button>
+      </div>
+    </section>
+    <section class="view" id="v-q">
+      <div class="qrow">
+        <div class="screenq bulbs" id="qScreen"><div class="inner"><div class="tab" id="qTop"></div><h2 id="qText"></h2></div></div>
+        <div class="clock" id="clock"><div class="face"><div class="num" id="tNum">30</div></div></div>
+      </div>
+      <div class="answers" id="answers"></div>
+      <div class="qbot">
+        <button class="life" data-f id="l50">✂️ 50:50</button>
+        <button class="life" data-f id="lTime">⏱️ +15 s</button>
+        <div class="res" id="res"></div>
+        <button class="btn" data-f id="next">Siguiente</button>
+      </div>
+    </section>
+  </div>
+  <div class="desks" id="desks"></div>
+</section>
+
+<!-- END -->
+<section class="screen" id="s-end">
+  <div class="end-t">¡Tenemos campeones!</div>
+  <div class="rest" id="rest"></div>
+  <div class="side" id="stats"></div>
+  <div class="podium" id="podium"></div>
+  <div class="end-btns">
+    <button class="btn big yellow" data-f id="again">Revancha</button>
+    <button class="btn plain" data-f id="newGame">Nueva partida</button>
+  </div>
+</section>
+
+<!-- OVERLAYS -->
+<div class="overlay" id="reveal"><div class="burst"></div><div class="rv"><div class="em" id="rvEm"></div><div class="nm" id="rvNm"></div></div></div>
+<div class="overlay" id="banner"><div class="burst"></div><div class="bn"><b>¡Ronda final!</b><span>Cada acierto vale el doble</span></div></div>
+<div class="overlay" id="pause"><div class="card pbox"><h2>Pausa</h2>
+  <button class="btn yellow" data-f id="resume">Continuar</button>
+  <button class="btn plain" data-f id="toggleSnd">Sonido: sí</button>
+  <button class="btn plain" data-f id="quit">Salir al inicio</button></div></div>
+
+<script>
+/* =================== DATOS =================== */
+const CATS=[
+ {id:'geo',name:'Geografía',short:'GEOGRAFÍA',emoji:'🌍',color:'#00B3A4'},
+ {id:'his',name:'Historia',short:'HISTORIA',emoji:'🏛️',color:'#FFC627'},
+ {id:'cie',name:'Ciencia',short:'CIENCIA',emoji:'🧪',color:'#7ED957'},
+ {id:'cin',name:'Cine y Música',short:'CINE',emoji:'🎬',color:'#FF7AB6'},
+ {id:'dep',name:'Deportes',short:'DEPORTES',emoji:'⚽',color:'#FF6B1A'},
+ {id:'art',name:'Arte y Letras',short:'ARTE',emoji:'🎨',color:'#A77BFF'},
+];
+// [pregunta, correcta, incorrecta1, incorrecta2, incorrecta3]
+const Q={
+geo:{
+f:[["¿Cuál es la capital de Francia?","París","Lyon","Marsella","Niza"],
+["¿En qué continente está Egipto?","África","Asia","Europa","Oceanía"],
+["¿Cuál es el océano más grande del planeta?","Pacífico","Atlántico","Índico","Ártico"],
+["¿Qué río pasa por Sevilla?","Guadalquivir","Ebro","Tajo","Duero"],
+["¿Qué país tiene forma de bota?","Italia","Grecia","Portugal","Croacia"],
+["¿Cuál es el país más grande del mundo?","Rusia","Canadá","China","Estados Unidos"],
+["¿Cuál es la capital de Galicia?","Santiago de Compostela","A Coruña","Vigo","Lugo"],
+["¿Cuál es la montaña más alta del mundo?","Everest","K2","Kilimanjaro","Mont Blanc"]],
+m:[["¿Cuál es la capital de Australia?","Canberra","Sídney","Melbourne","Perth"],
+["¿Cuál es el río más largo de la península ibérica?","Tajo","Ebro","Duero","Guadiana"],
+["¿Cuál es el pico más alto de España?","Teide","Mulhacén","Aneto","Veleta"],
+["¿Cuántas comunidades autónomas tiene España?","17","15","19","16"],
+["¿Cuál es la capital de Canadá?","Ottawa","Toronto","Montreal","Vancouver"],
+["¿Cuál es el desierto cálido más grande del mundo?","Sáhara","Gobi","Kalahari","Atacama"],
+["¿En qué país está Machu Picchu?","Perú","Bolivia","Chile","Ecuador"],
+["¿Cuál es la capital de Nueva Zelanda?","Wellington","Auckland","Christchurch","Queenstown"]],
+d:[["¿Cuál es la capital de Kazajistán?","Astaná","Almaty","Taskent","Biskek"],
+["¿Cuál es el lago más profundo del mundo?","Baikal","Tanganica","Superior","Titicaca"],
+["¿Qué país tiene más husos horarios contando sus territorios?","Francia","Rusia","Estados Unidos","Reino Unido"],
+["¿Cuál es la capital de Bután?","Timbu","Katmandú","Daca","Lhasa"],
+["¿Qué estrecho separa Asia de América?","Bering","Magallanes","Ormuz","Malaca"],
+["¿Cuál es el país más pequeño de África continental?","Gambia","Yibuti","Ruanda","Burundi"],
+["¿Por cuántos países pasa el río Danubio?","10","7","8","12"],
+["¿Cuál es el punto más al norte de la España peninsular?","Estaca de Bares","Cabo Ortegal","Cabo Finisterre","Cabo de Peñas"]]
+},
+his:{
+f:[["¿En qué año llegó Colón a América?","1492","1592","1392","1500"],
+["¿Quién fue la primera persona en pisar la Luna?","Neil Armstrong","Buzz Aldrin","Yuri Gagarin","Michael Collins"],
+["¿Qué civilización construyó las pirámides de Guiza?","La egipcia","La romana","La maya","La griega"],
+["¿Cómo se llamaba el barco que se hundió en 1912 tras chocar con un iceberg?","Titanic","Lusitania","Britannic","Queen Mary"],
+["¿En qué ciudad está el Coliseo?","Roma","Atenas","Pompeya","Cartago"],
+["¿Qué muro cayó en 1989?","El Muro de Berlín","La Gran Muralla","El Muro de Adriano","El Muro de las Lamentaciones"],
+["¿Cómo se llamaban los guerreros nórdicos que navegaban en drakkars?","Vikingos","Celtas","Godos","Hunos"],
+["¿Qué emperador francés fue derrotado en Waterloo?","Napoleón","Luis XIV","Carlomagno","Luis XVI"]],
+m:[["¿En qué año empezó la Primera Guerra Mundial?","1914","1918","1939","1905"],
+["¿Cómo se llamaban los Reyes Católicos?","Isabel y Fernando","Carlos y Juana","Felipe e Isabel","Alfonso y Leonor"],
+["¿En qué año se aprobó la Constitución española actual?","1978","1975","1981","1982"],
+["¿Qué pueblo fundó Tenochtitlan, la actual Ciudad de México?","Los aztecas","Los incas","Los mayas","Los olmecas"],
+["¿Quién fue el primer presidente de Estados Unidos?","George Washington","Abraham Lincoln","Thomas Jefferson","John Adams"],
+["¿En qué año terminó la Segunda Guerra Mundial?","1945","1944","1946","1939"],
+["¿Qué reina británica reinó más de 70 años?","Isabel II","Victoria","Isabel I","Ana"],
+["¿Qué ciudad romana sepultó el Vesubio en el año 79?","Pompeya","Nápoles","Roma","Siracusa"]],
+d:[["¿En qué año se libró la batalla de Lepanto?","1571","1588","1492","1605"],
+["¿Quién fue el último rey visigodo antes de la invasión musulmana del 711?","Don Rodrigo","Recaredo","Wamba","Leovigildo"],
+["¿Quién fue el primer emperador romano?","Augusto","Julio César","Nerón","Trajano"],
+["¿Cuántos años duró realmente la Guerra de los Cien Años?","116","100","99","130"],
+["¿En qué año cayó Constantinopla en manos otomanas?","1453","1492","1204","1517"],
+["¿Qué tratado de 1494 repartió el Nuevo Mundo entre España y Portugal?","Tordesillas","Utrecht","Versalles","Westfalia"],
+["¿De qué faraón se descubrió la tumba casi intacta en 1922?","Tutankamón","Ramsés II","Keops","Akenatón"],
+["¿Quién fue el primer presidente de la Segunda República española?","Niceto Alcalá-Zamora","Manuel Azaña","Largo Caballero","Juan Negrín"]]
+},
+cie:{
+f:[["¿Qué planeta es conocido como el planeta rojo?","Marte","Júpiter","Venus","Saturno"],
+["¿Cuál es la fórmula química del agua?","H₂O","CO₂","O₂","NaCl"],
+["¿Cuántas patas tiene una araña?","8","6","10","12"],
+["¿Qué órgano bombea la sangre por el cuerpo?","El corazón","Los pulmones","El hígado","El riñón"],
+["¿Qué gas necesitamos respirar para vivir?","Oxígeno","Nitrógeno","Helio","Dióxido de carbono"],
+["¿Cuál es el planeta más grande del sistema solar?","Júpiter","Saturno","Neptuno","La Tierra"],
+["¿Cuál es el animal más grande del mundo?","La ballena azul","El elefante africano","El tiburón ballena","La jirafa"],
+["¿A cuántos grados hierve el agua a nivel del mar?","100 °C","90 °C","120 °C","80 °C"]],
+m:[["¿Cuál es el símbolo químico del oro?","Au","Ag","Or","Go"],
+["¿Cuántos huesos tiene una persona adulta?","206","186","226","256"],
+["¿Cuál es el planeta más cercano al Sol?","Mercurio","Venus","Marte","La Tierra"],
+["¿Quién formuló la teoría de la relatividad?","Albert Einstein","Isaac Newton","Stephen Hawking","Niels Bohr"],
+["¿Qué vitamina fabrica nuestra piel con la luz del sol?","Vitamina D","Vitamina C","Vitamina A","Vitamina B12"],
+["¿Cuál es el hueso más largo del cuerpo humano?","El fémur","La tibia","El húmero","El radio"],
+["¿A qué velocidad viaja aproximadamente la luz?","300.000 km/s","30.000 km/s","3.000.000 km/s","150.000 km/s"],
+["¿En qué parte de la célula se guarda la mayor parte del ADN?","El núcleo","El ribosoma","La membrana","La vacuola"]],
+d:[["¿Cuál es el elemento más abundante del universo?","Hidrógeno","Helio","Oxígeno","Carbono"],
+["¿Cuál es el número atómico del carbono?","6","8","12","4"],
+["¿Qué científica ganó dos premios Nobel en ciencias distintas?","Marie Curie","Rosalind Franklin","Lise Meitner","Ada Lovelace"],
+["¿Cuántos cromosomas tiene una célula humana normal?","46","23","48","44"],
+["¿En qué planeta un día dura más que un año?","Venus","Mercurio","Neptuno","Urano"],
+["¿Cuál es el metal más ligero?","Litio","Aluminio","Sodio","Magnesio"],
+["¿Qué unidad mide la resistencia eléctrica?","Ohmio","Voltio","Amperio","Vatio"],
+["¿Qué científico español ganó el Nobel de Medicina en 1906?","Santiago Ramón y Cajal","Severo Ochoa","Isaac Peral","Gregorio Marañón"]]
+},
+cin:{
+f:[["¿Cómo se llama el muñeco de nieve de «Frozen»?","Olaf","Sven","Kristoff","Hans"],
+["¿Cómo se llama el padre de Simba en «El Rey León»?","Mufasa","Scar","Rafiki","Timón"],
+["¿En qué colegio de magia estudia Harry Potter?","Hogwarts","Narnia","Mordor","Nunca Jamás"],
+["¿Cómo se llama el pez payaso perdido de la película de Pixar?","Nemo","Dory","Marlin","Gill"],
+["¿Qué superhéroe es Peter Parker?","Spider-Man","Batman","Superman","Iron Man"],
+["¿Qué grupo cantaba «Yellow Submarine»?","The Beatles","The Rolling Stones","Queen","ABBA"],
+["¿Qué instrumento tiene normalmente 88 teclas?","El piano","El acordeón","El arpa","El xilófono"],
+["¿Quién vive en una piña debajo del mar?","Bob Esponja","Patricio","Calamardo","Don Cangrejo"]],
+m:[["¿Quién dirigió «Titanic» (1997)?","James Cameron","Steven Spielberg","Ridley Scott","Christopher Nolan"],
+["¿A qué cantante se la conoce como la «Reina del Pop»?","Madonna","Beyoncé","Lady Gaga","Britney Spears"],
+["¿Qué película de Almodóvar ganó el Óscar a mejor película extranjera en 2000?","Todo sobre mi madre","Volver","Mujeres al borde de un ataque de nervios","Dolor y gloria"],
+["¿Qué banda británica lideraba Freddie Mercury?","Queen","Led Zeppelin","The Who","Pink Floyd"],
+["¿En qué serie es protagonista el profesor de química Walter White?","Breaking Bad","Los Soprano","The Wire","Narcos"],
+["¿Cuántas películas forman la saga principal de Star Wars (la de los Skywalker)?","9","6","8","12"],
+["¿Quién compuso «Las cuatro estaciones»?","Vivaldi","Mozart","Bach","Beethoven"],
+["¿Qué actor interpreta a Jack Sparrow en «Piratas del Caribe»?","Johnny Depp","Orlando Bloom","Brad Pitt","Leonardo DiCaprio"]],
+d:[["¿Qué película ganó el primer Óscar a mejor película?","Alas","Lo que el viento se llevó","Casablanca","Metrópolis"],
+["¿Cuántos Óscar ganó «El Señor de los Anillos: el retorno del rey»?","11","9","12","7"],
+["¿Quién dirigió «El laberinto del fauno»?","Guillermo del Toro","Alejandro Amenábar","Alfonso Cuarón","Álex de la Iglesia"],
+["¿En qué año se estrenó la primera «Toy Story»?","1995","1998","1992","2001"],
+["¿Por qué película ganó Almodóvar el Óscar a mejor guion original?","Hable con ella","Todo sobre mi madre","Volver","La piel que habito"],
+["¿Cuál fue el primer largometraje de animación de Disney?","Blancanieves y los siete enanitos","Pinocho","Fantasía","Bambi"],
+["¿Qué grupo sueco ganó Eurovisión en 1974?","ABBA","Roxette","Ace of Base","Europe"],
+["¿Qué compositor siguió componiendo tras quedarse completamente sordo?","Beethoven","Mozart","Chopin","Haydn"]]
+},
+dep:{
+f:[["¿Cuántos jugadores tiene cada equipo de fútbol en el campo?","11","10","9","12"],
+["¿En qué deporte se usan una raqueta y un volante de plumas?","Bádminton","Tenis","Squash","Pádel"],
+["¿Cada cuántos años se celebran los Juegos Olímpicos de verano?","4","2","3","5"],
+["¿Qué tenista español es el rey de Roland Garros, con 14 títulos?","Rafa Nadal","Carlos Alcaraz","Carlos Moyá","David Ferrer"],
+["¿En qué deporte se hacen mates y triples?","Baloncesto","Tenis","Fútbol","Golf"],
+["¿De qué color es el maillot del líder del Tour de Francia?","Amarillo","Rojo","Verde","Rosa"],
+["¿Con qué no pueden tocar el balón los jugadores de fútbol, salvo el portero?","Con las manos","Con la cabeza","Con el pecho","Con la rodilla"],
+["¿Qué selección ganó el Mundial de fútbol de 2010?","España","Países Bajos","Alemania","Brasil"]],
+m:[["¿Cuántos anillos tiene la bandera olímpica?","5","4","6","7"],
+["¿Cuánto mide una maratón?","42,195 km","40 km","42 km","45 km"],
+["¿En qué ciudad se celebraron los Juegos Olímpicos de 1992?","Barcelona","Madrid","Sevilla","Atlanta"],
+["¿Cuántos sets hay que ganar en un partido masculino de Grand Slam?","3","2","4","5"],
+["¿Qué piloto español ha sido dos veces campeón del mundo de Fórmula 1?","Fernando Alonso","Carlos Sainz","Pedro de la Rosa","Marc Gené"],
+["¿Cuánto dura un partido de baloncesto FIBA, sin prórrogas?","40 minutos","48 minutos","60 minutos","36 minutos"],
+["¿En qué deporte es una leyenda Michael Phelps?","Natación","Atletismo","Gimnasia","Remo"],
+["¿Qué club ha ganado más Copas de Europa de fútbol?","Real Madrid","AC Milan","Bayern de Múnich","Liverpool"]],
+d:[["¿Cuántos jugadores tiene en el campo un equipo de rugby a XV?","15","13","11","12"],
+["¿En qué año ganó España su primera Eurocopa de fútbol?","1964","2008","1984","1972"],
+["¿Quién tiene el récord mundial de los 100 metros lisos (9,58 s)?","Usain Bolt","Tyson Gay","Yohan Blake","Carl Lewis"],
+["¿Qué ciclista español ganó cinco Tours de Francia seguidos?","Miguel Induráin","Perico Delgado","Alberto Contador","Carlos Sastre"],
+["¿Dónde se celebraron los primeros Juegos Olímpicos modernos, en 1896?","Atenas","París","Londres","Roma"],
+["¿A qué distancia de la portería está el punto de penalti?","11 metros","9 metros","12 metros","10 metros"],
+["¿Qué deporte practica la campeona olímpica Carolina Marín?","Bádminton","Tenis","Squash","Tenis de mesa"],
+["¿Cuántos puntos hacen falta para ganar un set normal de voleibol?","25","21","15","30"]]
+},
+art:{
+f:[["¿Quién escribió «Don Quijote de la Mancha»?","Miguel de Cervantes","Lope de Vega","Quevedo","Góngora"],
+["¿Quién pintó la «Mona Lisa»?","Leonardo da Vinci","Miguel Ángel","Rafael","Botticelli"],
+["¿Cómo se llama el caballo de Don Quijote?","Rocinante","Babieca","Bucéfalo","Pegaso"],
+["¿Qué pintor se cortó un trozo de oreja?","Van Gogh","Picasso","Dalí","Monet"],
+["¿Quién escribió «Romeo y Julieta»?","Shakespeare","Cervantes","Dante","Molière"],
+["¿Qué niño que no quería crecer vivía en Nunca Jamás?","Peter Pan","Pinocho","Oliver Twist","Tom Sawyer"],
+["¿Cuántas letras tiene el abecedario español?","27","26","28","29"],
+["¿Qué pintor malagueño pintó el «Guernica»?","Picasso","Dalí","Miró","Goya"]],
+m:[["¿En qué museo se exhibe «Las Meninas» de Velázquez?","Museo del Prado","Reina Sofía","Thyssen-Bornemisza","Louvre"],
+["¿Quién escribió «Cien años de soledad»?","Gabriel García Márquez","Mario Vargas Llosa","Julio Cortázar","Jorge Luis Borges"],
+["¿Qué pintor es famoso por sus relojes blandos?","Salvador Dalí","René Magritte","Joan Miró","Pablo Picasso"],
+["¿Quién escribió «La casa de Bernarda Alba»?","Federico García Lorca","Antonio Machado","Valle-Inclán","Unamuno"],
+["¿Quién esculpió el «David» de Florencia?","Miguel Ángel","Donatello","Bernini","Rodin"],
+["¿Qué poeta gallega escribió «Cantares gallegos»?","Rosalía de Castro","Emilia Pardo Bazán","Concepción Arenal","Gloria Fuertes"],
+["¿Qué arquitecto diseñó la Sagrada Familia?","Antoni Gaudí","Santiago Calatrava","Domènech i Montaner","Frank Gehry"],
+["¿Quién escribió la novela «1984»?","George Orwell","Aldous Huxley","Ray Bradbury","H. G. Wells"]],
+d:[["¿Quién pintó «El jardín de las delicias»?","El Bosco","Brueghel","Durero","Van Eyck"],
+["¿Qué escritor español ganó el Nobel de Literatura en 1989?","Camilo José Cela","Juan Ramón Jiménez","Vicente Aleixandre","Jacinto Benavente"],
+["¿Cuántos versos tiene un soneto?","14","12","16","10"],
+["¿Qué movimiento artístico fundó André Breton?","Surrealismo","Cubismo","Dadaísmo","Futurismo"],
+["¿Quién escribió «La Regenta»?","Leopoldo Alas «Clarín»","Benito Pérez Galdós","Emilia Pardo Bazán","Juan Valera"],
+["¿Qué pintor holandés pintó «La joven de la perla»?","Vermeer","Rembrandt","Van Gogh","Frans Hals"],
+["¿Qué seudónimo usaba el escritor Samuel Clemens?","Mark Twain","O. Henry","Lewis Carroll","George Eliot"],
+["¿En qué idioma escribía Franz Kafka?","Alemán","Checo","Polaco","Húngaro"]]
+}};
+
+const EMOJIS=['🦊','🐼','🦁','🐸','🦄','🐙','🐯','🐨','🐧','🦖','🐝','🐶','🐱','🦉','🚀','👑','🍕','👵','👴','🤖'];
+const COLORS=['#E2231A','#00B3A4','#FFC627','#FF7AB6','#A77BFF','#FF6B1A'];
+const DIFF={f:{name:'Fácil',stars:'⭐',pts:100},m:{name:'Media',stars:'⭐⭐',pts:200},d:{name:'Difícil',stars:'⭐⭐⭐',pts:300}};
+const CHEERS=['¡Toma ya!','¡Crack!','¡Así se hace!','¡Cerebrito!','¡Impresionante!','¡Bravo!','¡Qué máquina!','¡Correcto!'];
+const FAILS=['¡Uy, casi!','¡Ay, ay, ay!','¡Nooo!','¡A la próxima!','¡Vaya!','¡Fallo!'];
+
+
+/* =================== ESTADO =================== */
+const S={teams:[],diff:'m',rounds:5,time:30,sound:true,turn:0,used:{},lastCat:-1,rot:0,q:null,cat:null,d:null,locked:true,phase:'s-intro',view:null};
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const rnd=a=>a[Math.random()*a.length|0];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function store(k,v){try{localStorage.setItem('sabelotodo_'+k,JSON.stringify(v))}catch(e){}}
+function load(k){try{return JSON.parse(localStorage.getItem('sabelotodo_'+k))}catch(e){return null}}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* =================== SONIDO =================== */
+let AC=null;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{});return AC}
+function tone(f,d=.15,type='sine',v=.2,t0=0,f2){
+  if(!S.sound)return;const a=ac();if(!a)return;const t=a.currentTime+t0;
+  const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
+  if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g).connect(a.destination);o.start(t);o.stop(t+d+.05);
+}
+const SFX={
+  tick:()=>tone(1500,.035,'square',.035),
+  move:()=>tone(520,.05,'triangle',.06),
+  select:()=>{tone(660,.08,'square',.07);tone(990,.1,'square',.06,.06)},
+  correct:()=>{[523,659,784,1047].forEach((f,i)=>tone(f,.22,'square',.08,i*.09));tone(1047,.5,'triangle',.12,.36)},
+  wrong:()=>{tone(150,.6,'sawtooth',.14,0,110);tone(155,.6,'sawtooth',.1,0,112)},
+  reveal:()=>{[392,523,659,784].forEach((f,i)=>tone(f,.16,'square',.07,i*.06));tone(220,.6,'sine',.1,0,1200)},
+  beep:()=>tone(880,.09,'square',.07),
+  timeup:()=>{tone(440,.25,'square',.09);tone(330,.25,'square',.09,.25);tone(220,.5,'square',.09,.5)},
+  fanfare:()=>{[[523,0],[523,.15],[523,.3],[659,.45],[784,.75],[659,1.05],[784,1.2],[1047,1.4]].forEach(([f,t])=>{tone(f,.35,'square',.08,t);tone(f/2,.35,'triangle',.1,t)})},
+  whoosh:()=>tone(900,.35,'sine',.06,0,120),
+};
+
+/* =================== CONFETI =================== */
+const CF=(function(){
+  const cv=$('#confetti'),cx=cv.getContext('2d');let W,H,d=1,P=[],run=false,rainUntil=0;
+  function rs(){d=Math.min(devicePixelRatio||1,2);W=cv.width=innerWidth*d;H=cv.height=innerHeight*d}rs();addEventListener('resize',rs);
+  const pal=['#E2231A','#FFC627','#00B3A4','#FF7AB6','#FFFFFF','#7ED957'];
+  function add(x,y,vx,vy,cols){P.push({x,y,vx,vy,r:(Math.random()*8+7)*d,a:Math.random()*6.28,va:(Math.random()-.5)*.3,c:rnd(cols||pal),sh:Math.random()<.6,life:1,w:Math.random()*.06})}
+  function burst(x,y,n=140,cols){x*=d;y*=d;for(let i=0;i<n;i++){const ang=Math.random()*6.28,sp=(Math.random()*16+6)*d;add(x,y,Math.cos(ang)*sp,Math.sin(ang)*sp-8*d,cols)}go()}
+  function rain(ms=4000){rainUntil=performance.now()+ms;go()}
+  function go(){if(run)return;run=true;requestAnimationFrame(loop)}
+  function loop(t){
+    if(t<rainUntil)for(let i=0;i<5;i++)add(Math.random()*W,-20,(Math.random()-.5)*4*d,Math.random()*4*d+2*d);
+    cx.clearRect(0,0,W,H);cx.lineWidth=1.6*d;cx.strokeStyle='#000';
+    for(const p of P){p.vy+=.38*d;p.vx*=.985;p.vy*=.985;p.x+=p.vx+Math.sin(p.a*2)*p.w*20;p.y+=p.vy;p.a+=p.va;if(p.y>H+30)p.life=0;
+      cx.save();cx.translate(p.x,p.y);cx.rotate(p.a);cx.fillStyle=p.c;
+      if(p.sh){const h=p.r/2*Math.abs(Math.cos(p.a*3))+2;cx.fillRect(-p.r/2,-h/2,p.r,h);cx.strokeRect(-p.r/2,-h/2,p.r,h)}else{cx.beginPath();cx.arc(0,0,p.r/2.4,0,6.283);cx.fill();cx.stroke()}cx.restore()}
+    P=P.filter(p=>p.life>0);
+    if(P.length||t<rainUntil)requestAnimationFrame(loop);else{run=false;cx.clearRect(0,0,W,H)}
+  }
+  return{burst,rain};
+})();
+
+/* =================== PANTALLAS Y NAVEGACIÓN =================== */
+function show(id){$$('.screen').forEach(s=>s.classList.toggle('active',s.id===id));S.phase=id;setTimeout(focusFirst,80)}
+function view(id){$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));setTimeout(focusFirst,80)}
+function setAuto(el){$$('[data-autofocus]').forEach(e=>e.removeAttribute('data-autofocus'));if(el)el.setAttribute('data-autofocus','')}
+function focusFirst(){const list=focusables();const pref=list.find(e=>e.hasAttribute('data-autofocus'));const el=pref||list[0];if(el)el.focus({preventScroll:true})}
+function visible(el){if(el.disabled)return false;const r=el.getBoundingClientRect();if(!r.width||!r.height)return false;
+  let n=el;while(n&&n!==document.body){const cs=getComputedStyle(n);if(cs.visibility==='hidden'||cs.display==='none'||(n.classList&&n.classList.contains('view')&&!n.classList.contains('active')))return false;n=n.parentElement}return true}
+function focusables(){const ov=document.querySelector('.overlay.show');const root=ov||document.querySelector('.screen.active');if(!root)return[];return [...root.querySelectorAll('[data-f]')].filter(visible)}
+function move(dir){
+  const list=focusables();if(!list.length)return;const cur=document.activeElement;
+  if(!list.includes(cur)){list[0].focus();return}
+  const r=cur.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let best=null,bs=1e9;
+  for(const el of list){if(el===cur)continue;const b=el.getBoundingClientRect(),x=b.left+b.width/2,y=b.top+b.height/2,dx=x-cx,dy=y-cy;
+    const h=dir==='left'||dir==='right';const ok=dir==='left'?dx<-8:dir==='right'?dx>8:dir==='up'?dy<-8:dy>8;if(!ok)continue;
+    const s=(h?Math.abs(dx):Math.abs(dy))+(h?Math.abs(dy):Math.abs(dx))*2.2;if(s<bs){bs=s;best=el}}
+  if(best){best.focus();SFX.move()}
+}
+addEventListener('keydown',e=>{
+  const k=e.key,ae=document.activeElement,inInput=ae&&ae.tagName==='INPUT';
+  const pauseOpen=$('#pause').classList.contains('show');
+  if(k==='Escape'||(k==='Backspace'&&!inInput)||k==='GoBack'||k==='BrowserBack'){if(S.phase==='s-game'){e.preventDefault();togglePause()}return}
+  if(!inInput&&(k==='f'||k==='F')){toggleFS();return}
+  if(S.phase==='s-game'&&!pauseOpen&&S.view==='q'&&!S.locked&&!inInput){
+    const map={'1':0,'2':1,'3':2,'4':3,'a':0,'b':1,'c':2,'d':3,'A':0,'B':1,'C':2,'D':3};
+    if(k in map){const b=$$('.ans')[map[k]];if(b&&!b.classList.contains('gone')){e.preventDefault();answer(map[k])}return}
+  }
+  if(k==='ArrowUp'||k==='ArrowDown'||(!inInput&&(k==='ArrowLeft'||k==='ArrowRight'))){e.preventDefault();move(k.replace('Arrow','').toLowerCase());return}
+  if(inInput&&k==='Enter'){e.preventDefault();move('down');return}
+  if(k===' '&&(!ae||ae===document.body)&&S.view==='wheel'&&S.phase==='s-game'){e.preventDefault();spin()}
+  if(k==='Enter'&&(!ae||ae===document.body))focusFirst();
+});
+document.addEventListener('click',e=>{if(e.target.closest('button'))ac()},true);
+function toggleFS(){try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}}
+
+/* =================== INTRO =================== */
+$('#goSetup').onclick=()=>{SFX.select();show('s-setup')};
+
+/* =================== SETUP =================== */
+let draft=(load('teams')||[{name:'Los Zorros',emoji:'🦊'},{name:'Los Pandas',emoji:'🐼'}]).slice(0,6);
+const saved=load('cfg');if(saved){S.diff=saved.diff||S.diff;S.rounds=saved.rounds||S.rounds;S.time=saved.time===null?Infinity:(saved.time||S.time);S.sound=saved.sound!==false}
+function renderTeams(){
+  const box=$('#teams');
+  box.innerHTML=draft.map((t,i)=>`<div class="team" style="--c:${COLORS[i]}">
+    <button class="av" data-f data-av="${i}" title="Cambiar avatar">${t.emoji}</button>
+    <input data-f data-nm="${i}" value="${esc(t.name)}" maxlength="18" aria-label="Nombre del equipo ${i+1}">
+    ${draft.length>2?`<button class="x" data-f data-rm="${i}" title="Quitar equipo">✕</button>`:''}</div>`).join('');
+  box.querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{const i=+b.dataset.av;const j=EMOJIS.indexOf(draft[i].emoji);draft[i].emoji=EMOJIS[(j+1)%EMOJIS.length];b.textContent=draft[i].emoji;b.animate([{transform:'scale(1.3) rotate(-15deg)'},{transform:'none'}],{duration:300,easing:'cubic-bezier(.3,1.6,.5,1)'});SFX.move()});
+  box.querySelectorAll('[data-nm]').forEach(inp=>inp.oninput=()=>{draft[+inp.dataset.nm].name=inp.value});
+  box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{draft.splice(+b.dataset.rm,1);renderTeams();SFX.whoosh();focusFirst()});
+  $('#addTeam').style.display=draft.length>=6?'none':'';
+}
+$('#addTeam').onclick=()=>{if(draft.length>=6)return;const used=draft.map(t=>t.emoji);draft.push({name:'Equipo '+(draft.length+1),emoji:EMOJIS.find(e=>!used.includes(e))});renderTeams();SFX.select();const inp=$$('[data-nm]').pop();inp&&inp.focus()};
+function pills(el,opts,get,set){
+  el.innerHTML=opts.map(o=>`<button class="pill" data-f data-v="${o.v}">${o.l}</button>`).join('');
+  const upd=()=>el.querySelectorAll('.pill').forEach(b=>b.classList.toggle('sel',String(get())===b.dataset.v));
+  el.querySelectorAll('.pill').forEach(b=>b.onclick=()=>{set(b.dataset.v);upd();SFX.move()});upd();
+}
+function sndPills(){pills($('#snd'),[{v:'true',l:'Sí'},{v:'false',l:'No'}],()=>S.sound,v=>{S.sound=v==='true';updSndBtn()})}
+pills($('#rounds'),[3,5,8,10].map(v=>({v,l:v})),()=>S.rounds,v=>S.rounds=+v);
+pills($('#times'),[{v:20,l:'20 s'},{v:30,l:'30 s'},{v:45,l:'45 s'},{v:'Infinity',l:'Sin límite'}],()=>S.time,v=>S.time=v==='Infinity'?Infinity:+v);
+sndPills();
+function updDiff(){$$('#diffs .opt').forEach(b=>b.classList.toggle('sel',b.dataset.diff===S.diff))}
+$$('#diffs .opt').forEach(b=>b.onclick=()=>{S.diff=b.dataset.diff;updDiff();SFX.move()});
+updDiff();renderTeams();
+$('#play').onclick=()=>{
+  draft.forEach((t,i)=>{if(!t.name.trim())t.name='Equipo '+(i+1)});
+  store('teams',draft);store('cfg',{diff:S.diff,rounds:S.rounds,time:S.time===Infinity?null:S.time,sound:S.sound});
+  startGame();
+};
+
+/* =================== JUEGO =================== */
+function cur(){return S.teams[S.turn%S.teams.length]}
+function roundNo(){return Math.floor(S.turn/S.teams.length)+1}
+function isFinal(){return S.rounds>=3&&roundNo()===S.rounds}
+function startGame(){
+  S.teams=draft.map((t,i)=>({name:t.name.trim(),emoji:t.emoji,color:COLORS[i],score:0,shown:0,streak:0,best:0,ok:0,f50:1,ft:1}));
+  S.turn=0;S.lastCat=-1;S.used={};SFX.select();show('s-game');buildWheel();nextTurn();
+}
+function renderDesks(){
+  const c=cur();
+  $('#desks').innerHTML=S.teams.map((t,i)=>`<div class="desk ${t===c?'active':''}" style="--c:${t.color}" id="desk${i}">
+    ${t.streak>=2?`<span class="fl">🔥 ${t.streak}</span>`:''}<div class="head">${t.emoji}</div>
+    <div class="front"><span class="nm">${esc(t.name)}</span><span class="sc">${t.shown}</span></div></div>`).join('');
+  S.teams.forEach((t,i)=>{if(t.shown!==t.score)countUp(t,$('#desk'+i+' .sc'))});
+}
+function countUp(t,el){const from=t.shown,to=t.score,st=performance.now(),dur=900;
+  (function f(n){const p=Math.min(1,(n-st)/dur),e=1-Math.pow(1-p,3);el.textContent=Math.round(from+(to-from)*e);if(p<1){if(Math.random()<.3)SFX.tick();requestAnimationFrame(f)}else t.shown=to})(st)}
+
+function nextTurn(){
+  if(S.turn>=S.teams.length*S.rounds)return endGame();
+  const t=cur();
+  $('#roundLbl').textContent=isFinal()?`Ronda final, puntos dobles`:`Ronda ${roundNo()} de ${S.rounds}`;
+  $('#roundLbl').classList.toggle('gold',isFinal());
+  $('#turnBox').style.setProperty('--c',t.color);
+  $('#turnBox').innerHTML=`<span class="who">Le toca a</span><div class="bigav">${t.emoji}</div><div class="tn">${esc(t.name)}</div><span class="ts">${t.score} puntos${t.streak>=2?`, racha de ${t.streak} 🔥`:''}</span>`;
+  renderDesks();
+  S.view='wheel';setAuto($('#spinBtn'));$('#spinBtn').disabled=false;$('#hub').disabled=false;
+  view('v-wheel');
+  if(isFinal()&&S.turn%S.teams.length===0)showBanner();
+}
+function showBanner(){const b=$('#banner');b.classList.add('show');SFX.fanfare();CF.rain(1600);setTimeout(()=>{b.classList.remove('show');focusFirst()},2700)}
+
+/* ---- Ruleta ---- */
+function buildWheel(){
+  const n=CATS.length,seg=360/n,R=100;const pt=(a,r)=>[Math.sin(a*Math.PI/180)*r,-Math.cos(a*Math.PI/180)*r];
+  let h=`<circle r="110" fill="#E2231A" stroke="#000" stroke-width="3"/>`;
+  CATS.forEach((c,i)=>{const a0=i*seg,a1=a0+seg,[x0,y0]=pt(a0,R),[x1,y1]=pt(a1,R),mid=a0+seg/2,flip=mid>90&&mid<270;
+    h+=`<path d="M0 0 L${x0.toFixed(2)} ${y0.toFixed(2)} A${R} ${R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z" fill="${c.color}" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/>`;
+    h+=`<g transform="rotate(${mid})"><circle cy="-72" r="17" fill="#fff" stroke="#000" stroke-width="2.4"/><text y="-71" text-anchor="middle" dominant-baseline="central" font-size="20">${c.emoji}</text>
+      <text y="-45" text-anchor="middle" dominant-baseline="central" font-size="7.8" font-weight="900" font-family="Archivo, system-ui, sans-serif" letter-spacing=".3" fill="#000">${c.short}</text></g>`});
+  h+=`<g class="lights">`;for(let i=0;i<24;i++){const [x,y]=pt(i*15+7.5,105.5);h+=`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="3" stroke="#000" stroke-width="1.2"/>`}h+=`</g>`;
+  $('#wheel').innerHTML=h;
+}
+let spinning=false;
+function spin(){
+  if(spinning||S.view!=='wheel')return;spinning=true;ac();
+  $('#spinBtn').disabled=true;$('#hub').disabled=true;$('#sun').classList.add('fast');
+  const n=CATS.length,seg=360/n;let k;do{k=Math.random()*n|0}while(k===S.lastCat&&Math.random()<.75);S.lastCat=k;
+  const center=k*seg+seg/2,jitter=(Math.random()-.5)*seg*.7;
+  const base=S.rot-(S.rot%360);const target=base+360*(6+(Math.random()*2|0))+(360-center)+jitter;
+  S.rot=target;const w=$('#wheel');$('#wheelWrap').classList.add('spinning');w.style.transform=`rotate(${target}deg)`;
+  let lastIdx=-1;const ptr=$('#pointer');
+  (function watch(){if(!spinning)return;const m=getComputedStyle(w).transform;const v=m&&m.match(/matrix\(([^)]+)\)/);
+    if(v){const p=v[1].split(',').map(parseFloat);const deg=Math.atan2(p[1],p[0])*180/Math.PI;const idx=Math.floor(((((-deg)%360)+360)%360)/seg);
+      if(idx!==lastIdx){if(lastIdx!==-1){SFX.tick();ptr.animate([{transform:'translateX(-50%) rotate(-22deg)'},{transform:'translateX(-50%) rotate(0)'}],{duration:140})}lastIdx=idx}}
+    requestAnimationFrame(watch)})();
+  w.addEventListener('transitionend',function te(){w.removeEventListener('transitionend',te);spinning=false;$('#wheelWrap').classList.remove('spinning');$('#sun').classList.remove('fast');landed(CATS[k])});
+}
+$('#spinBtn').onclick=spin;$('#hub').onclick=spin;
+
+function landed(cat){
+  S.cat=cat;document.documentElement.style.setProperty('--cat',cat.color);
+  $('#rvEm').textContent=cat.emoji;$('#rvNm').textContent=cat.name;
+  const r=$('#reveal');r.classList.add('show');SFX.reveal();
+  setTimeout(()=>CF.burst(innerWidth/2,innerHeight/2,90),250);
+  setTimeout(()=>{r.classList.remove('show');
+    if(S.diff==='x'){S.view='diff';$('#dCat').innerHTML=`<span class="c">${cat.emoji} ${cat.name}</span>`;setAuto($('[data-pick="m"]'));view('v-diff')}
+    else ask(S.diff);
+  },1800);
+}
+$$('[data-pick]').forEach(b=>b.onclick=()=>{SFX.select();ask(b.dataset.pick)});
+
+/* ---- Pregunta ---- */
+function pick(catId,d){
+  const key=catId+d,pool=Q[catId][d];S.used[key]=S.used[key]||[];if(S.used[key].length>=pool.length)S.used[key]=[];
+  const avail=pool.map((_,i)=>i).filter(i=>!S.used[key].includes(i));const i=rnd(avail);S.used[key].push(i);
+  const [q,c,...w]=pool[i];const opts=shuffle([c,...w]);return{q,opts,correct:opts.indexOf(c),answer:c};
+}
+function ask(d){
+  S.d=d;S.q=pick(S.cat.id,d);const t=cur(),cat=S.cat,q=S.q;
+  $('#qTop').innerHTML=`<span class="c">${cat.emoji} ${cat.name}</span><span>${DIFF[d].name}, ${DIFF[d].pts} puntos</span>${isFinal()?'<span class="x2">×2</span>':''}`;
+  const qt=$('#qText');qt.textContent=q.q;qt.classList.toggle('long',q.q.length>70);
+  $('#answers').innerHTML=q.opts.map((o,i)=>`<button class="ans" data-f data-i="${i}"><span class="k">${i+1}</span><span>${esc(o)}</span></button>`).join('');
+  $$('.ans').forEach(b=>b.onclick=()=>answer(+b.dataset.i));
+  $('#res').innerHTML='';$('#res').className='res';$('#next').classList.remove('on');
+  $('#l50').disabled=!t.f50;$('#lTime').disabled=!t.ft||S.time===Infinity;
+  $('#qScreen').classList.remove('live');
+  S.locked=false;S.view='q';setAuto($$('.ans')[0]);view('v-q');SFX.whoosh();
+  startTimer(S.time);
+}
+$('#l50').onclick=()=>{const t=cur();if(!t.f50||S.locked)return;t.f50=0;$('#l50').disabled=true;SFX.select();
+  shuffle([0,1,2,3].filter(i=>i!==S.q.correct)).slice(0,2).forEach(i=>{const b=$$('.ans')[i];b.classList.add('gone');b.disabled=true});
+  const f=$$('.ans').find(b=>!b.disabled);f&&f.focus()};
+$('#lTime').onclick=()=>{const t=cur();if(!t.ft||S.locked||T.total===Infinity)return;t.ft=0;$('#lTime').disabled=true;SFX.select();
+  T.left+=15;T.total=Math.max(T.total,T.left);$('#clock').animate([{transform:'scale(1.2) rotate(-8deg)'},{transform:'none'}],{duration:400});
+  const f=$$('.ans').find(b=>!b.disabled);f&&f.focus()};
+
+/* ---- Reloj ---- */
+const T={total:30,left:30,running:false,last:0,sec:null,paused:false};
+function startTimer(sec){T.total=sec;T.left=sec;T.sec=null;T.last=0;T.paused=false;$('#clock').classList.remove('urgent');
+  if(sec===Infinity){T.running=false;$('#tNum').textContent='∞';$('#clock').style.setProperty('--p',1);return}
+  T.running=true;requestAnimationFrame(tloop)}
+function tloop(ts){if(!T.running)return;if(T.last)T.left-=(ts-T.last)/1000;T.last=ts;
+  if(T.left<=0){T.left=0;rTimer();T.running=false;timeUp();return}rTimer();requestAnimationFrame(tloop)}
+function rTimer(){$('#clock').style.setProperty('--p',(T.left/T.total).toFixed(4));const s=Math.ceil(T.left);
+  if(s!==T.sec){T.sec=s;$('#tNum').textContent=s;if(s<=5&&s>0){$('#clock').classList.add('urgent');SFX.beep()}}}
+function stopTimer(){T.running=false}
+function pauseTimer(){if(T.running){T.running=false;T.paused=true}}
+function resumeTimer(){if(T.paused){T.paused=false;T.running=true;T.last=0;requestAnimationFrame(tloop)}}
+function timeUp(){if(S.locked)return;SFX.timeup();answer(-1)}
+
+/* ---- Respuesta ---- */
+function answer(i){
+  if(S.locked)return;S.locked=true;stopTimer();$('#clock').classList.remove('urgent');
+  const q=S.q,t=cur(),btns=$$('.ans'),ok=i===q.correct,res=$('#res');
+  btns.forEach((b,j)=>{b.disabled=true;if(j===q.correct)b.classList.add('correct');else if(j===i)b.classList.add('wrong');else if(!b.classList.contains('gone'))b.classList.add('dim')});
+  if(ok){
+    const base=DIFF[S.d].pts,speed=T.total===Infinity?0:Math.round(base*.5*(T.left/T.total)/10)*10,
+      streak=t.streak>=1?Math.min(50*t.streak,200):0,mult=isFinal()?2:1,pts=(base+speed+streak)*mult;
+    t.score+=pts;t.streak++;t.best=Math.max(t.best,t.streak);t.ok++;
+    SFX.correct();$('#qScreen').classList.add('live');
+    const r=btns[q.correct].getBoundingClientRect();CF.burst(r.left+r.width/2,r.top+r.height/2,150);fly('+'+pts,r.left+r.width/2,r.top);
+    const parts=[`${base} por acertar`];if(speed)parts.push(`${speed} por rapidez`);if(streak)parts.push(`${streak} por racha`);
+    res.className='res ok';res.innerHTML=`<span class="big">${rnd(CHEERS)}</span><span class="sub">${parts.join(' + ')}${mult>1?', y todo por dos':''}</span>`;
+  }else{
+    t.streak=0;if(i>=0)SFX.wrong();
+    $('#qScreen').animate([{transform:'translateX(0)'},{transform:'translateX(-12px)'},{transform:'translateX(12px)'},{transform:'translateX(0)'}],{duration:350});
+    res.className='res ko';res.innerHTML=`<span class="big">${i<0?'¡Se acabó el tiempo!':rnd(FAILS)}</span><span class="sub">Era <b>${esc(q.answer)}</b></span>`;
+  }
+  renderDesks();
+  const nx=$('#next');nx.classList.add('on');nx.textContent=S.turn+1>=S.teams.length*S.rounds?'Ver resultados':'Siguiente';
+  setAuto(nx);setTimeout(()=>nx.focus(),60);
+}
+function fly(txt,x,y){const el=document.createElement('div');el.className='flypts';el.textContent=txt;el.style.left=x+'px';el.style.top=y+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1600)}
+$('#next').onclick=()=>{if(!S.locked)return;SFX.select();S.turn++;nextTurn()};
+
+/* ---- Pausa ---- */
+function updSndBtn(){$('#toggleSnd').textContent=S.sound?'Sonido: sí':'Sonido: no'}
+function togglePause(){const p=$('#pause');if(p.classList.contains('show')){p.classList.remove('show');resumeTimer();setTimeout(focusFirst,60)}else{p.classList.add('show');pauseTimer();setTimeout(()=>$('#resume').focus(),60)}}
+$('#pauseBtn').onclick=togglePause;$('#resume').onclick=togglePause;$('#fsBtn').onclick=toggleFS;
+$('#toggleSnd').onclick=()=>{S.sound=!S.sound;updSndBtn();SFX.select()};updSndBtn();
+$('#quit').onclick=()=>{$('#pause').classList.remove('show');stopTimer();T.paused=false;S.view=null;sndPills();show('s-setup')};
+
+/* ---- Final ---- */
+function endGame(){
+  S.view=null;const rank=S.teams.slice().sort((a,b)=>b.score-a.score);
+  show('s-end');setAuto($('#again'));
+  const order=[1,0,2].filter(i=>rank[i]);const H={0:44,1:32,2:24};
+  $('#podium').innerHTML=order.map(i=>{const t=rank[i];return`<div class="pcol" style="--c:${t.color}">
+    ${i===0?'<div class="crown">👑</div>':''}<div class="av">${t.emoji}</div>
+    <div class="pbar" data-h="${H[i]}"><span class="pos">${i+1}º</span><span class="pn">${esc(t.name)}</span><span class="ps">${t.score}</span></div></div>`}).join('');
+  $('#rest').innerHTML=rank.slice(3).map((t,i)=>`<div class="row"><div class="av">${t.emoji}</div>${i+4}º ${esc(t.name)}, ${t.score}</div>`).join('');
+  const streak=S.teams.slice().sort((a,b)=>b.best-a.best)[0],acc=S.teams.slice().sort((a,b)=>b.ok-a.ok)[0];
+  $('#stats').innerHTML=`<div class="card"><span class="k">Mejor racha</span><span class="v">${streak.emoji} ${esc(streak.name)}, ${streak.best} seguidas</span></div>
+    <div class="card"><span class="k">Más aciertos</span><span class="v">${acc.emoji} ${esc(acc.name)}, ${acc.ok} de ${S.rounds}</span></div>`;
+  setTimeout(()=>$$('.pbar').forEach(b=>b.style.height=b.dataset.h+'vh'),300);
+  SFX.fanfare();setTimeout(()=>CF.rain(5500),500);
+}
+$('#again').onclick=()=>{SFX.select();startGame()};
+$('#newGame').onclick=()=>{SFX.select();show('s-setup')};
+</script>
+</body>
+</html>
